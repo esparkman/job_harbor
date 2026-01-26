@@ -1,0 +1,13 @@
+<% if @queues.empty? %>
+  <%= render SolidqueueDashboard::EmptyStateComponent.new(
+    title: "No queues found",
+    description: "Queues will appear here once jobs are enqueued.",
+    icon: :queues
+  ) %>
+<% else %>
+  <div class="sqd-card-grid">
+    <% @queues.each do |queue| %>
+      <%= render SolidqueueDashboard::QueueCardComponent.new(queue: queue) %>
+    <% end %>
+  </div>
+<% end %>

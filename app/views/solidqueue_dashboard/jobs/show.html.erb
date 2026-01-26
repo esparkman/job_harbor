@@ -1,0 +1,133 @@
+<% content_for :header_actions do %>
+  <div class="sqd-actions">
+    <% if @job.can_retry? %>
+      <%= button_to "Retry Job", retry_job_path(@job), method: :post, class: "sqd-btn sqd-btn-primary" %>
+    <% end %>
+    <% if @job.can_discard? %>
+      <%= button_to "Discard Job", discard_job_path(@job), method: :delete, class: "sqd-btn sqd-btn-danger",
+          data: { confirm: "Are you sure you want to discard this job?" } %>
+    <% end %>
+    <%= link_to "← Back to Jobs", jobs_path, class: "sqd-btn sqd-btn-secondary" %>
+  </div>
+<% end %>
+
+<div class="sqd-detail-grid">
+  <div class="sqd-card">
+    <div class="sqd-card-header">
+      <h2 class="sqd-card-title">Job Details</h2>
+    </div>
+    <div class="sqd-card-body">
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Status</div>
+        <div class="sqd-detail-value">
+          <%= render SolidqueueDashboard::BadgeComponent.new(status: @job.status) %>
+        </div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Job Class</div>
+        <div class="sqd-detail-value">
+          <code class="sqd-code"><%= @job.class_name %></code>
+        </div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Queue</div>
+        <div class="sqd-detail-value">
+          <%= link_to @job.queue_name, queue_path(@job.queue_name), class: "sqd-table-link" %>
+        </div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Priority</div>
+        <div class="sqd-detail-value"><%= @job.priority || "Default" %></div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Active Job ID</div>
+        <div class="sqd-detail-value">
+          <code class="sqd-code"><%= @job.active_job_id %></code>
+        </div>
+      </div>
+
+      <% if @job.worker_name %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Worker</div>
+          <div class="sqd-detail-value"><%= @job.worker_name %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="sqd-card">
+    <div class="sqd-card-header">
+      <h2 class="sqd-card-title">Timing</h2>
+    </div>
+    <div class="sqd-card-body">
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Created At</div>
+        <div class="sqd-detail-value"><%= @job.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></div>
+      </div>
+
+      <% if @job.scheduled_at %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Scheduled At</div>
+          <div class="sqd-detail-value"><%= @job.scheduled_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></div>
+        </div>
+      <% end %>
+
+      <% if @job.finished_at %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Finished At</div>
+          <div class="sqd-detail-value"><%= @job.finished_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></div>
+        </div>
+      <% end %>
+
+      <% if @job.failed_at %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Failed At</div>
+          <div class="sqd-detail-value"><%= @job.failed_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="sqd-card" style="margin-top: 1.5rem;">
+  <div class="sqd-card-header">
+    <h2 class="sqd-card-title">Arguments</h2>
+  </div>
+  <div class="sqd-card-body">
+    <pre class="sqd-code"><%= JSON.pretty_generate(@job.parsed_arguments) rescue @job.arguments %></pre>
+  </div>
+</div>
+
+<% if @job.status == "failed" %>
+  <div class="sqd-card" style="margin-top: 1.5rem; border-color: var(--sqd-danger);">
+    <div class="sqd-card-header" style="background-color: rgba(239, 68, 68, 0.1);">
+      <h2 class="sqd-card-title" style="color: var(--sqd-danger);">Error Details</h2>
+    </div>
+    <div class="sqd-card-body">
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Exception Class</div>
+        <div class="sqd-detail-value">
+          <code class="sqd-code"><%= @job.error_class || "Unknown" %></code>
+        </div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Error Message</div>
+        <div class="sqd-detail-value"><%= @job.error_message || "No error message available" %></div>
+      </div>
+
+      <% if @job.error_backtrace.present? %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Backtrace</div>
+          <div class="sqd-detail-value">
+            <pre class="sqd-code" style="max-height: 400px; overflow-y: auto;"><%= @job.error_backtrace %></pre>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

@@ -1,0 +1,43 @@
+<% content_for :header_actions do %>
+  <%= form_with url: search_path, method: :get, class: "sqd-search-form" do |f| %>
+    <%= f.text_field :q, placeholder: "Search jobs...", class: "sqd-input", value: params[:q] %>
+    <%= f.submit "Search", class: "sqd-btn sqd-btn-secondary" %>
+  <% end %>
+<% end %>
+
+<p style="margin-bottom: 1rem; color: var(--sqd-text-secondary);">
+  Found <%= @pagy.count %> results for "<%= params[:q] %>"
+  <%= link_to "Clear search", jobs_path, class: "sqd-table-link", style: "margin-left: 0.5rem;" %>
+</p>
+
+<% if @jobs.empty? %>
+  <%= render SolidqueueDashboard::EmptyStateComponent.new(
+    title: "No results found",
+    description: "Try a different search term or check your spelling.",
+    icon: :search
+  ) %>
+<% else %>
+  <div class="sqd-card">
+    <div class="sqd-table-container">
+      <table class="sqd-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Job Class</th>
+            <th>Queue</th>
+            <th>Status</th>
+            <th>Scheduled At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <%= render SolidqueueDashboard::JobRowComponent.new(job: job) %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%= render SolidqueueDashboard::PaginationComponent.new(pagy: @pagy) %>
+<% end %>

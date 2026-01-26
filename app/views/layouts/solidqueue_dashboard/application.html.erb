@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title><%= @page_title ? "#{@page_title} - Solid Queue" : "Solid Queue Dashboard" %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+
+  <style>
+/* Solid Queue Dashboard - Self-contained CSS */
+/* Uses CSS variables for theming */
+
+:root {
+  /* Colors - Amber/Dark theme */
+  --sqd-primary: #f59e0b;
+  --sqd-primary-hover: #d97706;
+  --sqd-primary-light: rgba(245, 158, 11, 0.1);
+
+  --sqd-success: #10b981;
+  --sqd-warning: #f59e0b;
+  --sqd-danger: #ef4444;
+  --sqd-info: #3b82f6;
+
+  /* Dark theme (default) */
+  --sqd-bg-primary: #111827;
+  --sqd-bg-secondary: #1f2937;
+  --sqd-bg-tertiary: #374151;
+  --sqd-border: #374151;
+  --sqd-text-primary: #f9fafb;
+  --sqd-text-secondary: #9ca3af;
+  --sqd-text-muted: #6b7280;
+
+  /* Spacing */
+  --sqd-space-1: 0.25rem;
+  --sqd-space-2: 0.5rem;
+  --sqd-space-3: 0.75rem;
+  --sqd-space-4: 1rem;
+  --sqd-space-6: 1.5rem;
+  --sqd-space-8: 2rem;
+
+  /* Sizing */
+  --sqd-sidebar-width: 240px;
+  --sqd-radius: 0.5rem;
+  --sqd-radius-sm: 0.25rem;
+}
+
+.sqd-theme-light {
+  --sqd-bg-primary: #ffffff;
+  --sqd-bg-secondary: #f9fafb;
+  --sqd-bg-tertiary: #f3f4f6;
+  --sqd-border: #e5e7eb;
+  --sqd-text-primary: #111827;
+  --sqd-text-secondary: #4b5563;
+  --sqd-text-muted: #9ca3af;
+}
+
+/* Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.sqd-body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  background-color: var(--sqd-bg-primary);
+  color: var(--sqd-text-primary);
+  min-height: 100vh;
+}
+
+/* Layout */
+.sqd-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar */
+.sqd-sidebar {
+  width: var(--sqd-sidebar-width);
+  background-color: var(--sqd-bg-secondary);
+  border-right: 1px solid var(--sqd-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 50;
+}
+
+.sqd-sidebar-header {
+  padding: var(--sqd-space-4);
+  border-bottom: 1px solid var(--sqd-border);
+}
+
+.sqd-logo-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+  text-decoration: none;
+  color: var(--sqd-text-primary);
+}
+
+.sqd-logo {
+  width: 24px;
+  height: 24px;
+  color: var(--sqd-primary);
+}
+
+.sqd-logo-text {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.sqd-nav {
+  flex: 1;
+  padding: var(--sqd-space-4) 0;
+  overflow-y: auto;
+}
+
+.sqd-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sqd-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-3);
+  padding: var(--sqd-space-3) var(--sqd-space-4);
+  color: var(--sqd-text-secondary);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sqd-nav-link:hover {
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-nav-link.active {
+  background-color: var(--sqd-primary-light);
+  color: var(--sqd-primary);
+  border-right: 2px solid var(--sqd-primary);
+}
+
+.sqd-nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.sqd-sidebar-footer {
+  padding: var(--sqd-space-4);
+  border-top: 1px solid var(--sqd-border);
+}
+
+.sqd-version {
+  font-size: 12px;
+  color: var(--sqd-text-muted);
+}
+
+/* Main Content */
+.sqd-main {
+  flex: 1;
+  margin-left: var(--sqd-sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sqd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sqd-space-4) var(--sqd-space-6);
+  background-color: var(--sqd-bg-secondary);
+  border-bottom: 1px solid var(--sqd-border);
+}
+
+.sqd-page-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.sqd-header-actions {
+  display: flex;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-content {
+  flex: 1;
+  padding: var(--sqd-space-6);
+}
+
+/* Flash Messages */
+.sqd-flash {
+  padding: 0 var(--sqd-space-6);
+  margin-top: var(--sqd-space-4);
+}
+
+.sqd-flash-notice,
+.sqd-flash-alert {
+  padding: var(--sqd-space-3) var(--sqd-space-4);
+  border-radius: var(--sqd-radius);
+  margin-bottom: var(--sqd-space-2);
+}
+
+.sqd-flash-notice {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--sqd-success);
+  color: var(--sqd-success);
+}
+
+.sqd-flash-alert {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--sqd-danger);
+  color: var(--sqd-danger);
+}
+
+/* Cards */
+.sqd-card {
+  background-color: var(--sqd-bg-secondary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius);
+  overflow: hidden;
+}
+
+.sqd-card-header {
+  padding: var(--sqd-space-4);
+  border-bottom: 1px solid var(--sqd-border);
+}
+
+.sqd-card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sqd-card-body {
+  padding: var(--sqd-space-4);
+}
+
+/* Stat Cards */
+.sqd-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--sqd-space-4);
+}
+
+.sqd-stat-card {
+  background-color: var(--sqd-bg-secondary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius);
+  padding: var(--sqd-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-stat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sqd-stat-label {
+  font-size: 14px;
+  color: var(--sqd-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sqd-stat-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--sqd-text-muted);
+}
+
+.sqd-stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+a.sqd-stat-value:hover {
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.sqd-stat-value.success { color: var(--sqd-success); }
+.sqd-stat-value.warning { color: var(--sqd-warning); }
+.sqd-stat-value.danger { color: var(--sqd-danger); }
+.sqd-stat-value.info { color: var(--sqd-info); }
+
+/* Badges */
+.sqd-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--sqd-space-1) var(--sqd-space-2);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--sqd-radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sqd-badge-pending {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: var(--sqd-info);
+}
+
+.sqd-badge-scheduled {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--sqd-warning);
+}
+
+.sqd-badge-in_progress {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: var(--sqd-info);
+}
+
+.sqd-badge-failed {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--sqd-danger);
+}
+
+.sqd-badge-finished {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--sqd-success);
+}
+
+.sqd-badge-blocked {
+  background-color: rgba(156, 163, 175, 0.1);
+  color: var(--sqd-text-secondary);
+}
+
+.sqd-badge-active {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--sqd-success);
+}
+
+.sqd-badge-paused {
+  background-color: rgba(245, 158, 11, 0.1);
+  color: var(--sqd-warning);
+}
+
+/* Tables */
+.sqd-table-container {
+  overflow-x: auto;
+}
+
+.sqd-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sqd-table th,
+.sqd-table td {
+  padding: var(--sqd-space-3) var(--sqd-space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--sqd-border);
+}
+
+.sqd-table th {
+  font-weight: 600;
+  color: var(--sqd-text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--sqd-bg-tertiary);
+}
+
+.sqd-table tr:hover {
+  background-color: var(--sqd-bg-tertiary);
+}
+
+.sqd-table-link {
+  color: var(--sqd-primary);
+  text-decoration: none;
+}
+
+.sqd-table-link:hover {
+  text-decoration: underline;
+}
+
+/* Buttons */
+.sqd-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sqd-space-2);
+  padding: var(--sqd-space-2) var(--sqd-space-4);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: var(--sqd-radius);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sqd-btn-primary {
+  background-color: var(--sqd-primary);
+  color: #000;
+}
+
+.sqd-btn-primary:hover {
+  background-color: var(--sqd-primary-hover);
+}
+
+.sqd-btn-secondary {
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-primary);
+  border: 1px solid var(--sqd-border);
+}
+
+.sqd-btn-secondary:hover {
+  background-color: var(--sqd-border);
+}
+
+.sqd-btn-danger {
+  background-color: var(--sqd-danger);
+  color: #fff;
+}
+
+.sqd-btn-danger:hover {
+  background-color: #dc2626;
+}
+
+.sqd-btn-sm {
+  padding: var(--sqd-space-1) var(--sqd-space-2);
+  font-size: 12px;
+}
+
+.sqd-btn-icon {
+  padding: var(--sqd-space-2);
+}
+
+/* Forms */
+.sqd-form-group {
+  margin-bottom: var(--sqd-space-4);
+}
+
+.sqd-label {
+  display: block;
+  margin-bottom: var(--sqd-space-1);
+  font-weight: 500;
+  color: var(--sqd-text-secondary);
+}
+
+.sqd-input,
+.sqd-select {
+  width: 100%;
+  padding: var(--sqd-space-2) var(--sqd-space-3);
+  font-size: 14px;
+  background-color: var(--sqd-bg-tertiary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-input:focus,
+.sqd-select:focus {
+  outline: none;
+  border-color: var(--sqd-primary);
+  box-shadow: 0 0 0 2px var(--sqd-primary-light);
+}
+
+.sqd-search-form {
+  display: flex;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-search-form .sqd-input {
+  flex: 1;
+}
+
+/* Pagination */
+.sqd-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sqd-space-1);
+  margin-top: var(--sqd-space-4);
+}
+
+.sqd-pagination-link,
+.sqd-pagination-current {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 var(--sqd-space-2);
+  border-radius: var(--sqd-radius);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sqd-pagination-link {
+  background-color: var(--sqd-bg-secondary);
+  color: var(--sqd-text-secondary);
+  border: 1px solid var(--sqd-border);
+}
+
+.sqd-pagination-link:hover {
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-pagination-current {
+  background-color: var(--sqd-primary);
+  color: #000;
+}
+
+.sqd-pagination-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Empty State */
+.sqd-empty-state {
+  text-align: center;
+  padding: var(--sqd-space-8);
+}
+
+.sqd-empty-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--sqd-text-muted);
+  margin-bottom: var(--sqd-space-4);
+}
+
+.sqd-empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 var(--sqd-space-2);
+}
+
+.sqd-empty-description {
+  color: var(--sqd-text-secondary);
+  margin: 0;
+}
+
+/* Job Details */
+.sqd-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--sqd-space-4);
+}
+
+.sqd-detail-item {
+  padding: var(--sqd-space-3) 0;
+  border-bottom: 1px solid var(--sqd-border);
+}
+
+.sqd-detail-label {
+  font-size: 12px;
+  color: var(--sqd-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--sqd-space-1);
+}
+
+.sqd-detail-value {
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.sqd-code {
+  font-family: "SF Mono", Monaco, Menlo, monospace;
+  font-size: 13px;
+  background-color: var(--sqd-bg-tertiary);
+  padding: var(--sqd-space-3);
+  border-radius: var(--sqd-radius);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Queue/Worker Cards */
+.sqd-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--sqd-space-4);
+}
+
+.sqd-queue-card,
+.sqd-worker-card {
+  background-color: var(--sqd-bg-secondary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius);
+  padding: var(--sqd-space-4);
+}
+
+.sqd-queue-header,
+.sqd-worker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--sqd-space-3);
+}
+
+.sqd-queue-name,
+.sqd-worker-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.sqd-queue-stats,
+.sqd-worker-stats {
+  display: flex;
+  gap: var(--sqd-space-4);
+}
+
+.sqd-queue-stat,
+.sqd-worker-stat {
+  text-align: center;
+}
+
+.sqd-queue-stat-value,
+.sqd-worker-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sqd-queue-stat-label,
+.sqd-worker-stat-label {
+  font-size: 11px;
+  color: var(--sqd-text-muted);
+  text-transform: uppercase;
+}
+
+/* Filter Tabs */
+.sqd-tabs {
+  display: flex;
+  gap: var(--sqd-space-1);
+  margin-bottom: var(--sqd-space-4);
+  border-bottom: 1px solid var(--sqd-border);
+  padding-bottom: var(--sqd-space-2);
+  overflow-x: auto;
+}
+
+.sqd-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+  padding: var(--sqd-space-2) var(--sqd-space-3);
+  color: var(--sqd-text-secondary);
+  text-decoration: none;
+  border-radius: var(--sqd-radius-sm);
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.sqd-tab:hover {
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-tab.active {
+  background-color: var(--sqd-primary-light);
+  color: var(--sqd-primary);
+}
+
+.sqd-tab-count {
+  background-color: var(--sqd-bg-tertiary);
+  padding: var(--sqd-space-1) var(--sqd-space-2);
+  border-radius: var(--sqd-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sqd-tab.active .sqd-tab-count {
+  background-color: var(--sqd-primary);
+  color: #000;
+}
+
+/* Actions */
+.sqd-actions {
+  display: flex;
+  gap: var(--sqd-space-2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sqd-sidebar {
+    width: 60px;
+  }
+
+  .sqd-logo-text,
+  .sqd-nav-label {
+    display: none;
+  }
+
+  .sqd-main {
+    margin-left: 60px;
+  }
+
+  .sqd-nav-link {
+    justify-content: center;
+    padding: var(--sqd-space-3);
+  }
+
+  .sqd-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sqd-space-2);
+  }
+
+  .sqd-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+  </style>
+</head>
+<body class="sqd-body sqd-theme-<%= sq_config.theme %>">
+  <div class="sqd-layout">
+    <!-- Sidebar -->
+    <aside class="sqd-sidebar">
+      <div class="sqd-sidebar-header">
+        <a href="<%= main_app.root_path rescue root_path %>" class="sqd-logo-link">
+          <svg class="sqd-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span class="sqd-logo-text">Solid Queue</span>
+        </a>
+      </div>
+
+      <nav class="sqd-nav">
+        <ul class="sqd-nav-list">
+          <li>
+            <%= render SolidqueueDashboard::NavLinkComponent.new(
+              path: root_path,
+              label: "Dashboard",
+              icon: "dashboard",
+              active: controller_name == "dashboard"
+            ) %>
+          </li>
+          <li>
+            <%= render SolidqueueDashboard::NavLinkComponent.new(
+              path: jobs_path,
+              label: "Jobs",
+              icon: "jobs",
+              active: controller_name == "jobs"
+            ) %>
+          </li>
+          <li>
+            <%= render SolidqueueDashboard::NavLinkComponent.new(
+              path: queues_path,
+              label: "Queues",
+              icon: "queues",
+              active: controller_name == "queues"
+            ) %>
+          </li>
+          <li>
+            <%= render SolidqueueDashboard::NavLinkComponent.new(
+              path: workers_path,
+              label: "Workers",
+              icon: "workers",
+              active: controller_name == "workers"
+            ) %>
+          </li>
+          <% if sq_config.enable_recurring_tasks %>
+            <li>
+              <%= render SolidqueueDashboard::NavLinkComponent.new(
+                path: recurring_tasks_path,
+                label: "Recurring",
+                icon: "recurring",
+                active: controller_name == "recurring_tasks"
+              ) %>
+            </li>
+          <% end %>
+        </ul>
+      </nav>
+
+      <div class="sqd-sidebar-footer">
+        <span class="sqd-version">v<%= SolidqueueDashboard::VERSION %></span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="sqd-main">
+      <header class="sqd-header">
+        <h1 class="sqd-page-title"><%= @page_title || "Dashboard" %></h1>
+        <% if content_for?(:header_actions) %>
+          <div class="sqd-header-actions">
+            <%= yield :header_actions %>
+          </div>
+        <% end %>
+      </header>
+
+      <% if flash[:notice] || flash[:alert] %>
+        <div class="sqd-flash">
+          <% if flash[:notice] %>
+            <div class="sqd-flash-notice"><%= flash[:notice] %></div>
+          <% end %>
+          <% if flash[:alert] %>
+            <div class="sqd-flash-alert"><%= flash[:alert] %></div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="sqd-content">
+        <%= yield %>
+      </div>
+    </main>
+  </div>
+
+  <% if sq_config.enable_real_time_updates %>
+    <script>
+      (function() {
+        var pollInterval = <%= sq_config.poll_interval * 1000 %>;
+        var refreshTimer;
+
+        function refreshContent() {
+          var url = window.location.href;
+          fetch(url, {
+            headers: {
+              'Accept': 'text/html',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          })
+          .then(function(response) { return response.text(); })
+          .then(function(html) {
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var newContent = doc.querySelector('.sqd-content');
+            var currentContent = document.querySelector('.sqd-content');
+            if (newContent && currentContent) {
+              currentContent.innerHTML = newContent.innerHTML;
+            }
+          })
+          .catch(function(error) {
+            console.error('SQD refresh error:', error);
+          });
+        }
+
+        function startPolling() {
+          refreshTimer = setInterval(refreshContent, pollInterval);
+        }
+
+        function stopPolling() {
+          if (refreshTimer) {
+            clearInterval(refreshTimer);
+          }
+        }
+
+        document.addEventListener('visibilitychange', function() {
+          if (document.hidden) {
+            stopPolling();
+          } else {
+            startPolling();
+          }
+        });
+
+        startPolling();
+      })();
+    </script>
+  <% end %>
+</body>
+</html>

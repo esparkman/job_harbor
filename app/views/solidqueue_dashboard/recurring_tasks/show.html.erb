@@ -1,0 +1,97 @@
+<% content_for :header_actions do %>
+  <div class="sqd-actions">
+    <%= button_to "Run Now", enqueue_now_recurring_task_path(@task), method: :post, class: "sqd-btn sqd-btn-primary" %>
+    <%= link_to "← Back to Tasks", recurring_tasks_path, class: "sqd-btn sqd-btn-secondary" %>
+  </div>
+<% end %>
+
+<div class="sqd-detail-grid">
+  <div class="sqd-card">
+    <div class="sqd-card-header">
+      <h2 class="sqd-card-title">Task Details</h2>
+    </div>
+    <div class="sqd-card-body">
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Key</div>
+        <div class="sqd-detail-value"><%= @task.key %></div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Job Class</div>
+        <div class="sqd-detail-value">
+          <code class="sqd-code"><%= @task.class_name %></code>
+        </div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Schedule</div>
+        <div class="sqd-detail-value"><%= @task.schedule %></div>
+      </div>
+
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Queue</div>
+        <div class="sqd-detail-value"><%= @task.queue_name || "default" %></div>
+      </div>
+
+      <% if @task.respond_to?(:arguments) && @task.arguments.present? %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Arguments</div>
+          <div class="sqd-detail-value">
+            <pre class="sqd-code"><%= JSON.pretty_generate(@task.arguments) rescue @task.arguments %></pre>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="sqd-card">
+    <div class="sqd-card-header">
+      <h2 class="sqd-card-title">Statistics</h2>
+    </div>
+    <div class="sqd-card-body">
+      <div class="sqd-detail-item">
+        <div class="sqd-detail-label">Total Executions</div>
+        <div class="sqd-detail-value"><%= @recent_executions.count %></div>
+      </div>
+
+      <% if @recent_executions.any? %>
+        <div class="sqd-detail-item">
+          <div class="sqd-detail-label">Last Run</div>
+          <div class="sqd-detail-value"><%= @recent_executions.first.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<% if @recent_executions.any? %>
+  <div class="sqd-card" style="margin-top: 1.5rem;">
+    <div class="sqd-card-header">
+      <h2 class="sqd-card-title">Recent Executions</h2>
+    </div>
+    <div class="sqd-table-container">
+      <table class="sqd-table">
+        <thead>
+          <tr>
+            <th>Job ID</th>
+            <th>Run At</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @recent_executions.each do |execution| %>
+            <tr>
+              <td>
+                <% if execution.job_id %>
+                  <%= link_to execution.job_id, job_path(execution.job_id), class: "sqd-table-link" %>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+              <td><%= execution.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>
