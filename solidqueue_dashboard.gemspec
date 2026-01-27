@@ -5,14 +5,14 @@ Gem::Specification.new do |spec|
   spec.version     = SolidqueueDashboard::VERSION
   spec.authors     = [ "Evan Sparkman" ]
   spec.email       = [ "evan@mountaingapcoffee.com" ]
-  spec.homepage    = "https://github.com/mountaingapcoffee/solidqueue_dashboard"
+  spec.homepage    = "https://github.com/esparkman/solidqueue_dashboard"
   spec.summary     = "A modern dashboard for monitoring and managing Solid Queue jobs"
   spec.description = "A mountable Rails engine providing a beautiful, self-contained dashboard for Solid Queue. Monitor jobs, queues, workers, and recurring tasks with a modern UI built on ViewComponents."
   spec.license     = "MIT"
 
   spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://github.com/mountaingapcoffee/solidqueue_dashboard"
-  spec.metadata["changelog_uri"] = "https://github.com/mountaingapcoffee/solidqueue_dashboard/blob/main/CHANGELOG.md"
+  spec.metadata["source_code_uri"] = "https://github.com/esparkman/solidqueue_dashboard"
+  spec.metadata["changelog_uri"] = "https://github.com/esparkman/solidqueue_dashboard/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
