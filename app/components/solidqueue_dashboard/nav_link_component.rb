@@ -10,19 +10,21 @@ module SolidqueueDashboard
       recurring: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>'
     }.freeze
 
-    def initialize(path:, label:, icon:, active: false)
+    def initialize(path:, label:, icon:, active: false, badge: nil)
       @path = path
       @label = label
       @icon = icon.to_sym
       @active = active
+      @badge = badge
     end
 
     def call
       link_to @path, class: css_classes do
         safe_join([
           icon_svg,
-          content_tag(:span, @label, class: "sqd-nav-label")
-        ])
+          content_tag(:span, @label, class: "sqd-nav-label"),
+          badge_tag
+        ].compact)
       end
     end
 
@@ -37,6 +39,12 @@ module SolidqueueDashboard
     def icon_svg
       icon_path = ICONS[@icon] || ICONS[:dashboard]
       content_tag(:svg, icon_path.html_safe, class: "sqd-nav-icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor")
+    end
+
+    def badge_tag
+      return nil unless @badge.present? && @badge.to_i > 0
+
+      content_tag(:span, @badge, class: "sqd-nav-badge")
     end
   end
 end

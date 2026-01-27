@@ -154,14 +154,341 @@
   flex-shrink: 0;
 }
 
+.sqd-nav-badge {
+  margin-left: auto;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: var(--sqd-bg-tertiary);
+  border-radius: var(--sqd-radius-sm);
+  color: var(--sqd-text-secondary);
+}
+
+.sqd-nav-link.active .sqd-nav-badge {
+  background-color: var(--sqd-primary);
+  color: #000;
+}
+
 .sqd-sidebar-footer {
   padding: var(--sqd-space-4);
   border-top: 1px solid var(--sqd-border);
 }
 
+.sqd-sidebar-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .sqd-version {
   font-size: 12px;
   color: var(--sqd-text-muted);
+}
+
+/* Theme Toggle */
+.sqd-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius);
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sqd-theme-toggle:hover {
+  background-color: var(--sqd-border);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-theme-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Dark theme: show sun icon, hide moon */
+.sqd-body:not(.sqd-theme-light) .sqd-theme-icon-sun {
+  display: block;
+}
+
+.sqd-body:not(.sqd-theme-light) .sqd-theme-icon-moon {
+  display: none;
+}
+
+/* Light theme: show moon icon, hide sun */
+.sqd-body.sqd-theme-light .sqd-theme-icon-sun {
+  display: none;
+}
+
+.sqd-body.sqd-theme-light .sqd-theme-icon-moon {
+  display: block;
+}
+
+/* Refresh Selector */
+.sqd-refresh-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-refresh-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--sqd-text-muted);
+}
+
+.sqd-refresh-select {
+  padding: var(--sqd-space-1) var(--sqd-space-2);
+  font-size: 13px;
+  background-color: var(--sqd-bg-tertiary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius-sm);
+  color: var(--sqd-text-primary);
+  cursor: pointer;
+}
+
+.sqd-refresh-select:focus {
+  outline: none;
+  border-color: var(--sqd-primary);
+}
+
+.sqd-refresh-select option {
+  background-color: var(--sqd-bg-secondary);
+  color: var(--sqd-text-primary);
+}
+
+/* Per-Page Selector */
+.sqd-per-page-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-per-page-label {
+  font-size: 13px;
+  color: var(--sqd-text-muted);
+}
+
+.sqd-per-page-select {
+  padding: var(--sqd-space-1) var(--sqd-space-2);
+  font-size: 13px;
+  background-color: var(--sqd-bg-tertiary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius-sm);
+  color: var(--sqd-text-primary);
+  cursor: pointer;
+}
+
+.sqd-per-page-select:focus {
+  outline: none;
+  border-color: var(--sqd-primary);
+}
+
+.sqd-per-page-select option {
+  background-color: var(--sqd-bg-secondary);
+  color: var(--sqd-text-primary);
+}
+
+/* Pagination Row */
+.sqd-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--sqd-space-4);
+  gap: var(--sqd-space-4);
+}
+
+@media (max-width: 768px) {
+  .sqd-pagination-row {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Retry Badge */
+.sqd-retry-badge {
+  margin-left: var(--sqd-space-2);
+  padding: 1px 5px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--sqd-warning);
+  border-radius: var(--sqd-radius-sm);
+}
+
+/* Running Duration */
+.sqd-running-duration {
+  font-size: 12px;
+  color: var(--sqd-info);
+}
+
+/* Relative Time */
+.sqd-relative-time {
+  font-size: 12px;
+}
+
+/* Job Filters */
+.sqd-filters {
+  display: flex;
+  gap: var(--sqd-space-4);
+  margin-bottom: var(--sqd-space-4);
+  flex-wrap: wrap;
+}
+
+.sqd-filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-filter-label {
+  font-size: 13px;
+  color: var(--sqd-text-muted);
+}
+
+.sqd-filter-select {
+  padding: var(--sqd-space-1) var(--sqd-space-3);
+  font-size: 13px;
+  background-color: var(--sqd-bg-tertiary);
+  border: 1px solid var(--sqd-border);
+  border-radius: var(--sqd-radius-sm);
+  color: var(--sqd-text-primary);
+  cursor: pointer;
+  min-width: 150px;
+}
+
+.sqd-filter-select:focus {
+  outline: none;
+  border-color: var(--sqd-primary);
+}
+
+.sqd-filter-select option {
+  background-color: var(--sqd-bg-secondary);
+  color: var(--sqd-text-primary);
+}
+
+@media (max-width: 768px) {
+  .sqd-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* Failure Rates */
+.sqd-failure-rates {
+  margin-bottom: var(--sqd-space-4);
+}
+
+.sqd-failure-table {
+  font-size: 13px;
+}
+
+.sqd-rate-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--sqd-radius-sm);
+}
+
+.sqd-rate-low {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: var(--sqd-success);
+}
+
+.sqd-rate-medium {
+  background-color: rgba(245, 158, 11, 0.15);
+  color: var(--sqd-warning);
+}
+
+.sqd-rate-high {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: var(--sqd-danger);
+}
+
+/* Chart */
+.sqd-chart-card {
+  margin-bottom: var(--sqd-space-4);
+}
+
+.sqd-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--sqd-space-2);
+}
+
+.sqd-chart-ranges {
+  display: flex;
+  gap: var(--sqd-space-1);
+}
+
+.sqd-chart-range-btn {
+  padding: var(--sqd-space-1) var(--sqd-space-2);
+  font-size: 12px;
+  border-radius: var(--sqd-radius-sm);
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-secondary);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sqd-chart-range-btn:hover {
+  background-color: var(--sqd-border);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-chart-range-btn.active {
+  background-color: var(--sqd-primary);
+  color: #000;
+}
+
+.sqd-chart-legend {
+  display: flex;
+  gap: var(--sqd-space-4);
+  margin-bottom: var(--sqd-space-3);
+}
+
+.sqd-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+  font-size: 12px;
+}
+
+.sqd-legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+.sqd-chart-completed {
+  background-color: var(--sqd-success);
+}
+
+.sqd-chart-failed {
+  background-color: var(--sqd-danger);
+}
+
+.sqd-chart-enqueued {
+  background-color: var(--sqd-info);
+}
+
+.sqd-chart {
+  position: relative;
+  width: 100%;
+  height: 200px;
+}
+
+.sqd-chart canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 /* Main Content */
@@ -765,7 +1092,8 @@ a.sqd-stat-value:hover {
               path: workers_path,
               label: "Workers",
               icon: "workers",
-              active: controller_name == "workers"
+              active: controller_name == "workers",
+              badge: nav_counts[:workers]
             ) %>
           </li>
           <% if sq_config.enable_recurring_tasks %>
@@ -774,7 +1102,8 @@ a.sqd-stat-value:hover {
                 path: recurring_tasks_path,
                 label: "Recurring",
                 icon: "recurring",
-                active: controller_name == "recurring_tasks"
+                active: controller_name == "recurring_tasks",
+                badge: nav_counts[:recurring_tasks]
               ) %>
             </li>
           <% end %>
@@ -782,7 +1111,10 @@ a.sqd-stat-value:hover {
       </nav>
 
       <div class="sqd-sidebar-footer">
-        <span class="sqd-version">v<%= SolidqueueDashboard::VERSION %></span>
+        <div class="sqd-sidebar-footer-row">
+          <%= render SolidqueueDashboard::ThemeToggleComponent.new %>
+          <span class="sqd-version">v<%= SolidqueueDashboard::VERSION %></span>
+        </div>
       </div>
     </aside>
 
@@ -790,11 +1122,12 @@ a.sqd-stat-value:hover {
     <main class="sqd-main">
       <header class="sqd-header">
         <h1 class="sqd-page-title"><%= @page_title || "Dashboard" %></h1>
-        <% if content_for?(:header_actions) %>
-          <div class="sqd-header-actions">
+        <div class="sqd-header-actions">
+          <%= render SolidqueueDashboard::RefreshSelectorComponent.new %>
+          <% if content_for?(:header_actions) %>
             <%= yield :header_actions %>
-          </div>
-        <% end %>
+          <% end %>
+        </div>
       </header>
 
       <% if flash[:notice] || flash[:alert] %>
@@ -814,56 +1147,288 @@ a.sqd-stat-value:hover {
     </main>
   </div>
 
-  <% if sq_config.enable_real_time_updates %>
-    <script>
-      (function() {
-        var pollInterval = <%= sq_config.poll_interval * 1000 %>;
-        var refreshTimer;
+  <!-- Theme Toggle -->
+  <script>
+    (function() {
+      var STORAGE_KEY = 'sqd-theme';
 
-        function refreshContent() {
-          var url = window.location.href;
-          fetch(url, {
-            headers: {
-              'Accept': 'text/html',
-              'X-Requested-With': 'XMLHttpRequest'
-            }
-          })
-          .then(function(response) { return response.text(); })
-          .then(function(html) {
-            var parser = new DOMParser();
-            var doc = parser.parseFromString(html, 'text/html');
-            var newContent = doc.querySelector('.sqd-content');
-            var currentContent = document.querySelector('.sqd-content');
-            if (newContent && currentContent) {
-              currentContent.innerHTML = newContent.innerHTML;
-            }
-          })
-          .catch(function(error) {
-            console.error('SQD refresh error:', error);
-          });
+      function getStoredTheme() {
+        return localStorage.getItem(STORAGE_KEY);
+      }
+
+      function setStoredTheme(theme) {
+        localStorage.setItem(STORAGE_KEY, theme);
+      }
+
+      function applyTheme(theme) {
+        var body = document.body;
+        if (theme === 'light') {
+          body.classList.add('sqd-theme-light');
+        } else {
+          body.classList.remove('sqd-theme-light');
         }
+      }
 
-        function startPolling() {
-          refreshTimer = setInterval(refreshContent, pollInterval);
+      function getCurrentTheme() {
+        return document.body.classList.contains('sqd-theme-light') ? 'light' : 'dark';
+      }
+
+      function toggleTheme() {
+        var newTheme = getCurrentTheme() === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        setStoredTheme(newTheme);
+      }
+
+      // Apply stored theme on page load
+      var storedTheme = getStoredTheme();
+      if (storedTheme) {
+        applyTheme(storedTheme);
+      }
+
+      // Set up theme toggle click handler
+      document.addEventListener('click', function(e) {
+        var toggle = e.target.closest('.sqd-theme-toggle');
+        if (toggle) {
+          toggleTheme();
         }
+      });
+    })();
+  </script>
 
-        function stopPolling() {
-          if (refreshTimer) {
-            clearInterval(refreshTimer);
+  <!-- Auto-Refresh Controller -->
+  <script>
+    (function() {
+      var STORAGE_KEY = 'sqd-refresh-interval';
+      var refreshTimer = null;
+      var currentInterval = 0;
+
+      function getStoredInterval() {
+        var stored = localStorage.getItem(STORAGE_KEY);
+        if (stored !== null) {
+          return parseInt(stored, 10);
+        }
+        return <%= sq_config.enable_real_time_updates ? sq_config.poll_interval : 0 %>;
+      }
+
+      function setStoredInterval(interval) {
+        localStorage.setItem(STORAGE_KEY, interval);
+      }
+
+      function refreshContent() {
+        var url = window.location.href;
+        fetch(url, {
+          headers: {
+            'Accept': 'text/html',
+            'X-Requested-With': 'XMLHttpRequest'
           }
-        }
-
-        document.addEventListener('visibilitychange', function() {
-          if (document.hidden) {
-            stopPolling();
-          } else {
-            startPolling();
+        })
+        .then(function(response) { return response.text(); })
+        .then(function(html) {
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(html, 'text/html');
+          var newContent = doc.querySelector('.sqd-content');
+          var currentContent = document.querySelector('.sqd-content');
+          if (newContent && currentContent) {
+            currentContent.innerHTML = newContent.innerHTML;
           }
+        })
+        .catch(function(error) {
+          console.error('SQD refresh error:', error);
         });
+      }
 
-        startPolling();
-      })();
-    </script>
-  <% end %>
+      function startPolling(intervalSeconds) {
+        stopPolling();
+        currentInterval = intervalSeconds;
+        if (intervalSeconds > 0) {
+          refreshTimer = setInterval(refreshContent, intervalSeconds * 1000);
+        }
+      }
+
+      function stopPolling() {
+        if (refreshTimer) {
+          clearInterval(refreshTimer);
+          refreshTimer = null;
+        }
+      }
+
+      function initRefreshSelector() {
+        var select = document.querySelector('.sqd-refresh-select');
+        if (select) {
+          var interval = getStoredInterval();
+          select.value = interval;
+          startPolling(interval);
+        }
+      }
+
+      // Handle visibility changes
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          stopPolling();
+        } else if (currentInterval > 0) {
+          startPolling(currentInterval);
+        }
+      });
+
+      // Handle refresh interval changes
+      document.addEventListener('change', function(e) {
+        var select = e.target.closest('.sqd-refresh-select');
+        if (select) {
+          var interval = parseInt(select.value, 10);
+          setStoredInterval(interval);
+          startPolling(interval);
+        }
+      });
+
+      // Initialize on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initRefreshSelector);
+      } else {
+        initRefreshSelector();
+      }
+    })();
+  </script>
+
+  <!-- Per-Page Selector and Filter Selector -->
+  <script>
+    (function() {
+      document.addEventListener('change', function(e) {
+        // Per-page selector
+        var perPageSelect = e.target.closest('.sqd-per-page-select');
+        if (perPageSelect) {
+          var url = perPageSelect.value;
+          if (url) {
+            window.location.href = url;
+          }
+          return;
+        }
+
+        // Filter selector
+        var filterSelect = e.target.closest('.sqd-filter-select');
+        if (filterSelect) {
+          var url = filterSelect.value;
+          if (url) {
+            window.location.href = url;
+          }
+        }
+      });
+    })();
+  </script>
+
+  <!-- Chart Rendering -->
+  <script>
+    (function() {
+      function initChart() {
+        var chartContainer = document.querySelector('.sqd-chart');
+        if (!chartContainer) return;
+
+        var canvas = document.getElementById('sqd-job-chart');
+        if (!canvas) return;
+
+        var data = JSON.parse(chartContainer.dataset.chartData || '{}');
+        if (!data.labels || data.labels.length === 0) return;
+
+        var ctx = canvas.getContext('2d');
+        var rect = chartContainer.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = 400;
+
+        var isDark = !document.body.classList.contains('sqd-theme-light');
+        var gridColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+        var textColor = isDark ? '#9ca3af' : '#6b7280';
+
+        var colors = {
+          completed: '#10b981',
+          failed: '#ef4444',
+          enqueued: '#3b82f6'
+        };
+
+        // Find max value for scaling
+        var allValues = [].concat(data.completed || [], data.failed || [], data.enqueued || []);
+        var maxVal = Math.max.apply(null, allValues) || 10;
+        maxVal = Math.ceil(maxVal * 1.1); // Add 10% padding
+
+        var padding = { top: 20, right: 20, bottom: 40, left: 50 };
+        var chartWidth = canvas.width - padding.left - padding.right;
+        var chartHeight = canvas.height - padding.top - padding.bottom;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw grid lines
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 1;
+        var gridLines = 5;
+        for (var i = 0; i <= gridLines; i++) {
+          var y = padding.top + (chartHeight / gridLines) * i;
+          ctx.beginPath();
+          ctx.moveTo(padding.left, y);
+          ctx.lineTo(canvas.width - padding.right, y);
+          ctx.stroke();
+
+          // Y-axis labels
+          var value = Math.round(maxVal - (maxVal / gridLines) * i);
+          ctx.fillStyle = textColor;
+          ctx.font = '20px -apple-system, sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillText(value, padding.left - 10, y + 6);
+        }
+
+        // X-axis labels
+        ctx.textAlign = 'center';
+        var labelStep = Math.ceil(data.labels.length / 8);
+        for (var i = 0; i < data.labels.length; i += labelStep) {
+          var x = padding.left + (chartWidth / (data.labels.length - 1)) * i;
+          ctx.fillText(data.labels[i], x, canvas.height - 10);
+        }
+
+        // Draw lines
+        function drawLine(series, color) {
+          if (!series || series.length === 0) return;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          for (var i = 0; i < series.length; i++) {
+            var x = padding.left + (chartWidth / (series.length - 1)) * i;
+            var y = padding.top + chartHeight - (series[i] / maxVal) * chartHeight;
+            if (i === 0) {
+              ctx.moveTo(x, y);
+            } else {
+              ctx.lineTo(x, y);
+            }
+          }
+          ctx.stroke();
+
+          // Draw dots
+          ctx.fillStyle = color;
+          for (var i = 0; i < series.length; i++) {
+            var x = padding.left + (chartWidth / (series.length - 1)) * i;
+            var y = padding.top + chartHeight - (series[i] / maxVal) * chartHeight;
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        drawLine(data.completed, colors.completed);
+        drawLine(data.failed, colors.failed);
+        drawLine(data.enqueued, colors.enqueued);
+      }
+
+      // Initialize on DOM ready
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initChart);
+      } else {
+        initChart();
+      }
+
+      // Re-render on theme change
+      document.addEventListener('click', function(e) {
+        if (e.target.closest('.sqd-theme-toggle')) {
+          setTimeout(initChart, 100);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

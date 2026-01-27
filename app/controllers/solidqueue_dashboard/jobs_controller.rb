@@ -6,12 +6,19 @@ module SolidqueueDashboard
 
     def index
       @status = params[:status]
+      @per_page = per_page_param
+      @class_name = params[:class_name]
+      @queue_name = params[:queue_name]
+
       @pagy, @jobs = JobPresenter.all_with_status(
         @status,
         page: params[:page],
-        per_page: sq_config.jobs_per_page
+        per_page: @per_page,
+        class_name: @class_name,
+        queue_name: @queue_name
       )
       @counts = job_counts
+      @filter_data = filter_data
       set_page_title @status ? "#{@status.titleize} Jobs" : "All Jobs"
     end
 
@@ -22,7 +29,8 @@ module SolidqueueDashboard
     def search
       query = params[:q].to_s.strip
       if query.present?
-        @pagy, @jobs = JobPresenter.search(query, page: params[:page], per_page: sq_config.jobs_per_page)
+        @per_page = per_page_param
+        @pagy, @jobs = JobPresenter.search(query, page: params[:page], per_page: @per_page)
         set_page_title "Search Results"
       else
         redirect_to jobs_path
@@ -65,6 +73,19 @@ module SolidqueueDashboard
       @job = JobPresenter.find(params[:id])
     rescue ActiveRecord::RecordNotFound
       redirect_to jobs_path, alert: "Job not found."
+    end
+
+    def per_page_param
+      per_page = params[:per_page].to_i
+      valid_sizes = SolidqueueDashboard::PerPageSelectorComponent::PAGE_SIZES
+      valid_sizes.include?(per_page) ? per_page : sq_config.jobs_per_page
+    end
+
+    def filter_data
+      {
+        class_names: SolidQueue::Job.distinct.pluck(:class_name).sort,
+        queue_names: SolidQueue::Job.distinct.pluck(:queue_name).sort
+      }
     end
 
     def job_counts

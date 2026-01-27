@@ -4,6 +4,8 @@ require "ostruct"
 
 module SolidqueueDashboard
   class JobPresenter
+    include ActionView::Helpers::DateHelper
+
     delegate :id, :created_at, :updated_at, :queue_name, :priority,
              :active_job_id, :arguments, :scheduled_at, :finished_at,
              to: :@job
@@ -54,6 +56,33 @@ module SolidqueueDashboard
 
     def worker_name
       @claimed_execution&.process&.name
+    end
+
+    def execution_count
+      args = parsed_arguments
+      return 1 unless args.is_a?(Hash)
+
+      (args["executions"] || args[:executions] || 1).to_i
+    end
+
+    def running_duration
+      return nil unless status == "in_progress"
+
+      claimed = @claimed_execution || SolidQueue::ClaimedExecution.find_by(job_id: @job.id)
+      return nil unless claimed
+
+      distance_of_time_in_words(claimed.created_at, Time.current)
+    end
+
+    def relative_created_at
+      time_ago_in_words(@job.created_at) + " ago"
+    end
+
+    def retry_badge
+      count = execution_count
+      return nil if count <= 1
+
+      "(x#{count})"
     end
 
     def can_retry?
@@ -118,7 +147,7 @@ module SolidqueueDashboard
         new(job, failed_execution: failed, claimed_execution: claimed)
       end
 
-      def all_with_status(status = nil, page: 1, per_page: 25)
+      def all_with_status(status = nil, page: 1, per_page: 25, class_name: nil, queue_name: nil)
         jobs = case status&.to_s
         when "pending"
           pending_jobs
@@ -136,8 +165,15 @@ module SolidqueueDashboard
           all_jobs
         end
 
+        jobs = apply_filters(jobs, class_name: class_name, queue_name: queue_name)
         jobs = jobs.order(created_at: :desc)
         paginate(jobs, page: page, per_page: per_page)
+      end
+
+      def apply_filters(scope, class_name: nil, queue_name: nil)
+        scope = scope.where(class_name: class_name) if class_name.present?
+        scope = scope.where(queue_name: queue_name) if queue_name.present?
+        scope
       end
 
       def search(query, page: 1, per_page: 25)

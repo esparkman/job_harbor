@@ -42,6 +42,15 @@
   <% end %>
 </nav>
 
+<%= render SolidqueueDashboard::JobFiltersComponent.new(
+  class_names: @filter_data[:class_names],
+  queue_names: @filter_data[:queue_names],
+  current_class: @class_name,
+  current_queue: @queue_name,
+  current_path: request.path,
+  params: request.query_parameters
+) %>
+
 <% if @status == "failed" && @counts[:failed] > 0 %>
   <div class="sqd-actions" style="margin-bottom: 1rem;">
     <%= button_to "Retry All Failed", retry_all_jobs_path(status: "failed"), method: :post, class: "sqd-btn sqd-btn-secondary",
@@ -80,5 +89,12 @@
     </div>
   </div>
 
-  <%= render SolidqueueDashboard::PaginationComponent.new(pagy: @pagy) %>
+  <div class="sqd-pagination-row">
+    <%= render SolidqueueDashboard::PaginationComponent.new(pagy: @pagy) %>
+    <%= render SolidqueueDashboard::PerPageSelectorComponent.new(
+      current_per_page: @per_page,
+      current_path: request.path,
+      params: request.query_parameters
+    ) %>
+  </div>
 <% end %>

@@ -8,7 +8,7 @@ module SolidqueueDashboard
 
     layout "solidqueue_dashboard/application"
 
-    helper_method :sq_config
+    helper_method :sq_config, :nav_counts
 
     private
 
@@ -24,6 +24,21 @@ module SolidqueueDashboard
 
     def set_page_title(title)
       @page_title = title
+    end
+
+    def nav_counts
+      @nav_counts ||= {
+        workers: SolidQueue::Process.where(kind: "Worker").count,
+        recurring_tasks: recurring_task_count
+      }
+    end
+
+    def recurring_task_count
+      return 0 unless sq_config.enable_recurring_tasks
+
+      SolidQueue::RecurringTask.count
+    rescue
+      0
     end
   end
 end

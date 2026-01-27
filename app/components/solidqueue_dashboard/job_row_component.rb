@@ -29,8 +29,17 @@ module SolidqueueDashboard
 
     def class_cell
       content_tag(:td) do
-        content_tag(:code, @job.class_name, class: "sqd-code")
+        safe_join([
+          content_tag(:code, @job.class_name, class: "sqd-code"),
+          retry_badge_tag
+        ].compact)
       end
+    end
+
+    def retry_badge_tag
+      return nil unless @job.respond_to?(:retry_badge) && @job.retry_badge.present?
+
+      content_tag(:span, @job.retry_badge, class: "sqd-retry-badge")
     end
 
     def queue_cell
@@ -41,8 +50,17 @@ module SolidqueueDashboard
 
     def status_cell
       content_tag(:td) do
-        render BadgeComponent.new(status: @job.status)
+        safe_join([
+          render(BadgeComponent.new(status: @job.status)),
+          running_duration_tag
+        ].compact)
       end
+    end
+
+    def running_duration_tag
+      return nil unless @job.respond_to?(:running_duration) && @job.running_duration.present?
+
+      content_tag(:span, " (#{@job.running_duration})", class: "sqd-running-duration")
     end
 
     def scheduled_cell
@@ -50,8 +68,16 @@ module SolidqueueDashboard
         if @job.scheduled_at
           time_tag(@job.scheduled_at, @job.scheduled_at.strftime("%b %d, %H:%M:%S"))
         else
-          content_tag(:span, "—", class: "sqd-text-muted")
+          relative_time_tag
         end
+      end
+    end
+
+    def relative_time_tag
+      if @job.respond_to?(:relative_created_at)
+        content_tag(:span, @job.relative_created_at, class: "sqd-text-muted sqd-relative-time")
+      else
+        content_tag(:span, "—", class: "sqd-text-muted")
       end
     end
 

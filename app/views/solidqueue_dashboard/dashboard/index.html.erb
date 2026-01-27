@@ -62,6 +62,18 @@
   ) %>
 </div>
 
+<% if @chart_data.present? %>
+  <div style="margin-top: 2rem;">
+    <%= render SolidqueueDashboard::ChartComponent.new(series: @chart_data, current_range: @chart_range) %>
+  </div>
+<% end %>
+
+<% if @failure_stats.present? && @failure_stats.any? %>
+  <div style="margin-top: 2rem;">
+    <%= render SolidqueueDashboard::FailureRatesComponent.new(stats: @failure_stats) %>
+  </div>
+<% end %>
+
 <% if @stats.recent_failures.any? %>
   <div class="sqd-card" style="margin-top: 2rem;">
     <div class="sqd-card-header">

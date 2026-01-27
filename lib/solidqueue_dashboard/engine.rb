@@ -11,7 +11,9 @@ module SolidqueueDashboard
 
     # Set up component paths
     initializer "solidqueue_dashboard.components" do |app|
-      app.config.view_component.preview_paths << root.join("app/components")
+      if app.config.respond_to?(:view_component)
+        app.config.view_component.preview_paths << root.join("app/components")
+      end
     end
 
     # Add assets to pipeline
