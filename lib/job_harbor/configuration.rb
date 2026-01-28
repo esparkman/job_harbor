@@ -9,7 +9,9 @@ module JobHarbor
                   :poll_interval,
                   :enable_failure_stats,
                   :enable_charts,
-                  :default_chart_range
+                  :default_chart_range,
+                  :return_to_app_path,
+                  :return_to_app_label
 
     def initialize
       @authorize_with = -> { true }
@@ -22,6 +24,8 @@ module JobHarbor
       @enable_failure_stats = true
       @enable_charts = true
       @default_chart_range = "24h"
+      @return_to_app_path = nil
+      @return_to_app_label = "Back to App"
     end
 
     def authorize(controller)

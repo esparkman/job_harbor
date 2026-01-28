@@ -174,6 +174,33 @@
   border-top: 1px solid var(--sqd-border);
 }
 
+.sqd-back-to-app {
+  display: flex;
+  align-items: center;
+  gap: var(--sqd-space-2);
+  padding: var(--sqd-space-2) var(--sqd-space-3);
+  margin-bottom: var(--sqd-space-3);
+  color: var(--sqd-text-secondary);
+  text-decoration: none;
+  border-radius: var(--sqd-radius-sm);
+  transition: all 0.15s ease;
+}
+
+.sqd-back-to-app:hover {
+  background-color: var(--sqd-bg-tertiary);
+  color: var(--sqd-text-primary);
+}
+
+.sqd-back-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.sqd-back-label {
+  font-size: 13px;
+}
+
 .sqd-sidebar-footer-row {
   display: flex;
   align-items: center;
@@ -1023,7 +1050,8 @@ a.sqd-stat-value:hover {
   }
 
   .sqd-logo-text,
-  .sqd-nav-label {
+  .sqd-nav-label,
+  .sqd-back-label {
     display: none;
   }
 
@@ -1034,6 +1062,10 @@ a.sqd-stat-value:hover {
   .sqd-nav-link {
     justify-content: center;
     padding: var(--sqd-space-3);
+  }
+
+  .sqd-back-to-app {
+    justify-content: center;
   }
 
   .sqd-header {
@@ -1111,6 +1143,12 @@ a.sqd-stat-value:hover {
       </nav>
 
       <div class="sqd-sidebar-footer">
+        <a href="<%= return_to_app_path %>" class="sqd-back-to-app">
+          <svg class="sqd-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          <span class="sqd-back-label"><%= return_to_app_label %></span>
+        </a>
         <div class="sqd-sidebar-footer-row">
           <%= render JobHarbor::ThemeToggleComponent.new %>
           <span class="sqd-version">v<%= JobHarbor::VERSION %></span>

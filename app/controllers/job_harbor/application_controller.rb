@@ -8,7 +8,7 @@ module JobHarbor
 
     layout "job_harbor/application"
 
-    helper_method :sq_config, :nav_counts
+    helper_method :sq_config, :nav_counts, :return_to_app_path, :return_to_app_label
 
     private
 
@@ -39,6 +39,20 @@ module JobHarbor
       SolidQueue::RecurringTask.count
     rescue
       0
+    end
+
+    def return_to_app_path
+      configured = sq_config.return_to_app_path
+      return configured if configured.is_a?(String)
+      return instance_exec(&configured) if configured.respond_to?(:call)
+
+      main_app.root_path
+    rescue
+      "/"
+    end
+
+    def return_to_app_label
+      sq_config.return_to_app_label
     end
   end
 end
