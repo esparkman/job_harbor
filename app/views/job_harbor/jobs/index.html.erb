@@ -1,0 +1,100 @@
+<% content_for :header_actions do %>
+  <%= form_with url: search_path, method: :get, class: "sqd-search-form" do |f| %>
+    <%= f.text_field :q, placeholder: "Search jobs...", class: "sqd-input", value: params[:q] %>
+    <%= f.submit "Search", class: "sqd-btn sqd-btn-secondary" %>
+  <% end %>
+<% end %>
+
+<nav class="sqd-tabs">
+  <%= link_to jobs_path, class: "sqd-tab #{'active' unless @status}" do %>
+    All
+    <span class="sqd-tab-count"><%= @counts[:all] %></span>
+  <% end %>
+
+  <%= link_to pending_jobs_path, class: "sqd-tab #{'active' if @status == 'pending'}" do %>
+    Pending
+    <span class="sqd-tab-count"><%= @counts[:pending] %></span>
+  <% end %>
+
+  <%= link_to scheduled_jobs_path, class: "sqd-tab #{'active' if @status == 'scheduled'}" do %>
+    Scheduled
+    <span class="sqd-tab-count"><%= @counts[:scheduled] %></span>
+  <% end %>
+
+  <%= link_to in_progress_jobs_path, class: "sqd-tab #{'active' if @status == 'in_progress'}" do %>
+    In Progress
+    <span class="sqd-tab-count"><%= @counts[:in_progress] %></span>
+  <% end %>
+
+  <%= link_to failed_jobs_path, class: "sqd-tab #{'active' if @status == 'failed'}" do %>
+    Failed
+    <span class="sqd-tab-count"><%= @counts[:failed] %></span>
+  <% end %>
+
+  <%= link_to blocked_jobs_path, class: "sqd-tab #{'active' if @status == 'blocked'}" do %>
+    Blocked
+    <span class="sqd-tab-count"><%= @counts[:blocked] %></span>
+  <% end %>
+
+  <%= link_to finished_jobs_path, class: "sqd-tab #{'active' if @status == 'finished'}" do %>
+    Finished
+    <span class="sqd-tab-count"><%= @counts[:finished] %></span>
+  <% end %>
+</nav>
+
+<%= render JobHarbor::JobFiltersComponent.new(
+  class_names: @filter_data[:class_names],
+  queue_names: @filter_data[:queue_names],
+  current_class: @class_name,
+  current_queue: @queue_name,
+  current_path: request.path,
+  params: request.query_parameters
+) %>
+
+<% if @status == "failed" && @counts[:failed] > 0 %>
+  <div class="sqd-actions" style="margin-bottom: 1rem;">
+    <%= button_to "Retry All Failed", retry_all_jobs_path(status: "failed"), method: :post, class: "sqd-btn sqd-btn-secondary",
+        data: { confirm: "Are you sure you want to retry all failed jobs?" } %>
+    <%= button_to "Discard All Failed", discard_all_jobs_path(status: "failed"), method: :delete, class: "sqd-btn sqd-btn-danger",
+        data: { confirm: "Are you sure you want to discard all failed jobs? This cannot be undone." } %>
+  </div>
+<% end %>
+
+<% if @jobs.empty? %>
+  <%= render JobHarbor::EmptyStateComponent.new(
+    title: "No jobs found",
+    description: @status ? "There are no #{@status.humanize.downcase} jobs." : "There are no jobs in the queue.",
+    icon: :jobs
+  ) %>
+<% else %>
+  <div class="sqd-card">
+    <div class="sqd-table-container">
+      <table class="sqd-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Job Class</th>
+            <th>Queue</th>
+            <th>Status</th>
+            <th>Scheduled At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <%= render JobHarbor::JobRowComponent.new(job: job) %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="sqd-pagination-row">
+    <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+    <%= render JobHarbor::PerPageSelectorComponent.new(
+      current_per_page: @per_page,
+      current_path: request.path,
+      params: request.query_parameters
+    ) %>
+  </div>
+<% end %>

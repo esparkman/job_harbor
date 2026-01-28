@@ -1,3 +1,3 @@
 Rails.application.routes.draw do
-  mount SolidqueueDashboard::Engine => "/solidqueue_dashboard"
+  mount JobHarbor::Engine => "/job_harbor"
 end

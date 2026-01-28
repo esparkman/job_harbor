@@ -1,4 +1,4 @@
-SolidqueueDashboard::Engine.routes.draw do
+JobHarbor::Engine.routes.draw do
   root to: "dashboard#index"
 
   resources :jobs, only: [ :index, :show ] do

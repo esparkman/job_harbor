@@ -19,10 +19,10 @@ end
 # ViewComponent test support
 class ViewComponentTestCase < ActiveSupport::TestCase
   include ViewComponent::TestHelpers
-  include SolidqueueDashboard::Engine.routes.url_helpers
+  include JobHarbor::Engine.routes.url_helpers
 
   def render_inline(component)
-    controller = SolidqueueDashboard::ApplicationController.new
+    controller = JobHarbor::ApplicationController.new
     controller.request = ActionDispatch::TestRequest.create
     @rendered = component.render_in(controller.view_context)
   end

@@ -1,0 +1,88 @@
+<% content_for :header_actions do %>
+  <div class="sqd-actions">
+    <% if @queue.paused? %>
+      <%= button_to "Resume Queue", resume_queue_path(@queue.name), method: :delete, class: "sqd-btn sqd-btn-primary" %>
+    <% else %>
+      <%= button_to "Pause Queue", pause_queue_path(@queue.name), method: :post, class: "sqd-btn sqd-btn-secondary" %>
+    <% end %>
+    <%= link_to "← Back to Queues", queues_path, class: "sqd-btn sqd-btn-secondary" %>
+  </div>
+<% end %>
+
+<div class="sqd-stats-grid" style="margin-bottom: 1.5rem;">
+  <%= render JobHarbor::StatCardComponent.new(
+    label: "Pending",
+    value: @queue.pending_count,
+    type: :pending
+  ) %>
+
+  <%= render JobHarbor::StatCardComponent.new(
+    label: "Scheduled",
+    value: @queue.scheduled_count,
+    type: :scheduled
+  ) %>
+
+  <%= render JobHarbor::StatCardComponent.new(
+    label: "In Progress",
+    value: @queue.in_progress_count,
+    type: :in_progress
+  ) %>
+
+  <%= render JobHarbor::StatCardComponent.new(
+    label: "Failed",
+    value: @queue.failed_count,
+    type: :failed
+  ) %>
+</div>
+
+<% if @queue.paused? %>
+  <div class="sqd-flash">
+    <div class="sqd-flash-alert">
+      This queue is currently paused. Jobs will not be processed until it is resumed.
+    </div>
+  </div>
+<% end %>
+
+<% if @jobs.empty? %>
+  <%= render JobHarbor::EmptyStateComponent.new(
+    title: "No jobs in this queue",
+    description: "Jobs will appear here when they are enqueued to '#{@queue.name}'.",
+    icon: :jobs
+  ) %>
+<% else %>
+  <div class="sqd-card">
+    <div class="sqd-card-header">
+      <h2 class="sqd-card-title">Jobs in Queue</h2>
+    </div>
+    <div class="sqd-table-container">
+      <table class="sqd-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Job Class</th>
+            <th>Status</th>
+            <th>Scheduled At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @jobs.each do |job| %>
+            <tr>
+              <td><%= link_to job.id, job_path(job), class: "sqd-table-link" %></td>
+              <td><code class="sqd-code"><%= job.class_name %></code></td>
+              <td><%= render JobHarbor::BadgeComponent.new(status: job.status) %></td>
+              <td><%= job.scheduled_at&.strftime("%b %d, %H:%M:%S") || "—" %></td>
+              <td class="sqd-actions">
+                <% if job.can_retry? %>
+                  <%= button_to "Retry", retry_job_path(job), method: :post, class: "sqd-btn sqd-btn-sm sqd-btn-secondary" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+<% end %>
