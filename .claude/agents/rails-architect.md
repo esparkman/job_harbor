@@ -1,0 +1,1 @@
+/Users/evansparkman/Development/rails-agents/rails-architect.md

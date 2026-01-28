@@ -1,0 +1,43 @@
+# Built gem artifacts
+*.gem
+
+# Bundler
+/.bundle/
+vendor/bundle
+
+# Test/dummy app artifacts
+test/dummy/db/*.sqlite3
+test/dummy/db/*.sqlite3-*
+test/dummy/log/*.log
+test/dummy/storage/
+test/dummy/tmp/
+
+# General Ruby/Rails
+*.rbc
+capybara-*.html
+.rspec
+/coverage/
+/spec/tmp/
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation artifacts
+/doc/
+/rdoc/
+.yardoc/
