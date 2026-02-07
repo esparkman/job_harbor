@@ -11,7 +11,7 @@ module JobHarbor
 
     # Set up component paths
     initializer "job_harbor.components" do |app|
-      if app.config.respond_to?(:view_component)
+      if app.config.respond_to?(:view_component) && app.config.view_component.respond_to?(:preview_paths) && app.config.view_component.preview_paths
         app.config.view_component.preview_paths << root.join("app/components")
       end
     end

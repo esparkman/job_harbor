@@ -1,4 +1,4 @@
-<div class="sqd-stats-grid" style="margin-bottom: 1.5rem;">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
   <%= render JobHarbor::StatCardComponent.new(
     label: "Total Workers",
     value: @workers.count,
@@ -25,7 +25,7 @@
     icon: :workers
   ) %>
 <% else %>
-  <div class="sqd-card-grid">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <% @workers.each do |worker| %>
       <%= render JobHarbor::WorkerCardComponent.new(worker: worker) %>
     <% end %>

@@ -23,14 +23,14 @@ module JobHarbor
 
     def id_cell
       content_tag(:td) do
-        link_to @job.id, job_path(@job), class: "sqd-table-link"
+        link_to @job.id, job_path(@job), class: "link font-medium"
       end
     end
 
     def class_cell
       content_tag(:td) do
         safe_join([
-          content_tag(:code, @job.class_name, class: "sqd-code"),
+          content_tag(:code, @job.class_name, class: "text-sm font-mono"),
           retry_badge_tag
         ].compact)
       end
@@ -39,12 +39,12 @@ module JobHarbor
     def retry_badge_tag
       return nil unless @job.respond_to?(:retry_badge) && @job.retry_badge.present?
 
-      content_tag(:span, @job.retry_badge, class: "sqd-retry-badge")
+      content_tag(:span, @job.retry_badge, class: "sqd-retry-badge ml-1")
     end
 
     def queue_cell
       content_tag(:td) do
-        link_to @job.queue_name, queue_path(@job.queue_name), class: "sqd-table-link"
+        link_to @job.queue_name, queue_path(@job.queue_name), class: "link"
       end
     end
 
@@ -60,7 +60,7 @@ module JobHarbor
     def running_duration_tag
       return nil unless @job.respond_to?(:running_duration) && @job.running_duration.present?
 
-      content_tag(:span, " (#{@job.running_duration})", class: "sqd-running-duration")
+      content_tag(:span, " (#{@job.running_duration})", class: "text-xs text-sky-500")
     end
 
     def scheduled_cell
@@ -75,31 +75,33 @@ module JobHarbor
 
     def relative_time_tag
       if @job.respond_to?(:relative_created_at)
-        content_tag(:span, @job.relative_created_at, class: "sqd-text-muted sqd-relative-time")
+        content_tag(:span, @job.relative_created_at, class: "text-xs text-muted-foreground")
       else
-        content_tag(:span, "—", class: "sqd-text-muted")
+        content_tag(:span, "\u2014", class: "text-muted-foreground")
       end
     end
 
     def actions_cell
-      content_tag(:td, class: "sqd-actions") do
-        safe_join([
-          retry_button,
-          discard_button
-        ].compact)
+      content_tag(:td) do
+        content_tag(:div, class: "flex items-center gap-1") do
+          safe_join([
+            retry_button,
+            discard_button
+          ].compact)
+        end
       end
     end
 
     def retry_button
       return unless @job.can_retry?
 
-      button_to "Retry", retry_job_path(@job), method: :post, class: "sqd-btn sqd-btn-sm sqd-btn-secondary"
+      button_to "Retry", retry_job_path(@job), method: :post, class: "btn btn-secondary btn-xs"
     end
 
     def discard_button
       return unless @job.can_discard?
 
-      button_to "Discard", discard_job_path(@job), method: :delete, class: "sqd-btn sqd-btn-sm sqd-btn-danger",
+      button_to "Discard", discard_job_path(@job), method: :delete, class: "btn btn-destructive btn-xs",
         data: { confirm: "Are you sure you want to discard this job?" }
     end
   end

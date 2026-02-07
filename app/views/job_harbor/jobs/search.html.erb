@@ -1,13 +1,13 @@
 <% content_for :header_actions do %>
-  <%= form_with url: search_path, method: :get, class: "sqd-search-form" do |f| %>
-    <%= f.text_field :q, placeholder: "Search jobs...", class: "sqd-input", value: params[:q] %>
-    <%= f.submit "Search", class: "sqd-btn sqd-btn-secondary" %>
+  <%= form_with url: search_path, method: :get, class: "flex items-center gap-2" do |f| %>
+    <%= f.text_field :q, placeholder: "Search jobs...", class: "select", style: "width: 16rem;", value: params[:q] %>
+    <%= f.submit "Search", class: "btn btn-secondary btn-sm" %>
   <% end %>
 <% end %>
 
-<p style="margin-bottom: 1rem; color: var(--sqd-text-secondary);">
+<p class="text-sm text-muted-foreground mb-4">
   Found <%= @pagy.count %> results for "<%= params[:q] %>"
-  <%= link_to "Clear search", jobs_path, class: "sqd-table-link", style: "margin-left: 0.5rem;" %>
+  <%= link_to "Clear search", jobs_path, class: "link ml-2" %>
 </p>
 
 <% if @jobs.empty? %>
@@ -17,8 +17,8 @@
     icon: :search
   ) %>
 <% else %>
-  <div class="sqd-card">
-    <div class="sqd-table-container">
+  <div class="card">
+    <div class="table-wrapper">
       <table class="sqd-table">
         <thead>
           <tr>
@@ -39,5 +39,7 @@
     </div>
   </div>
 
-  <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+  <div class="mt-4">
+    <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+  </div>
 <% end %>

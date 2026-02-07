@@ -1,46 +1,39 @@
 <% content_for :header_actions do %>
-  <%= form_with url: search_path, method: :get, class: "sqd-search-form" do |f| %>
-    <%= f.text_field :q, placeholder: "Search jobs...", class: "sqd-input", value: params[:q] %>
-    <%= f.submit "Search", class: "sqd-btn sqd-btn-secondary" %>
+  <%= form_with url: search_path, method: :get, class: "flex items-center gap-2" do |f| %>
+    <%= f.text_field :q, placeholder: "Search jobs...", class: "select", style: "width: 16rem;", value: params[:q] %>
+    <%= f.submit "Search", class: "btn btn-secondary btn-sm" %>
   <% end %>
 <% end %>
 
-<nav class="sqd-tabs">
-  <%= link_to jobs_path, class: "sqd-tab #{'active' unless @status}" do %>
-    All
-    <span class="sqd-tab-count"><%= @counts[:all] %></span>
+<div class="flex gap-1 mb-4 flex-wrap">
+  <%= link_to jobs_path, class: "badge #{@status ? 'badge-secondary' : 'badge-primary'}" do %>
+    All <span class="ml-1 opacity-75"><%= @counts[:all] %></span>
   <% end %>
 
-  <%= link_to pending_jobs_path, class: "sqd-tab #{'active' if @status == 'pending'}" do %>
-    Pending
-    <span class="sqd-tab-count"><%= @counts[:pending] %></span>
+  <%= link_to pending_jobs_path, class: "badge #{@status == 'pending' ? 'badge-primary' : 'badge-secondary'}" do %>
+    <span class="circle circle-sky"></span> Pending <span class="opacity-75"><%= @counts[:pending] %></span>
   <% end %>
 
-  <%= link_to scheduled_jobs_path, class: "sqd-tab #{'active' if @status == 'scheduled'}" do %>
-    Scheduled
-    <span class="sqd-tab-count"><%= @counts[:scheduled] %></span>
+  <%= link_to scheduled_jobs_path, class: "badge #{@status == 'scheduled' ? 'badge-primary' : 'badge-secondary'}" do %>
+    <span class="circle circle-yellow"></span> Scheduled <span class="opacity-75"><%= @counts[:scheduled] %></span>
   <% end %>
 
-  <%= link_to in_progress_jobs_path, class: "sqd-tab #{'active' if @status == 'in_progress'}" do %>
-    In Progress
-    <span class="sqd-tab-count"><%= @counts[:in_progress] %></span>
+  <%= link_to in_progress_jobs_path, class: "badge #{@status == 'in_progress' ? 'badge-primary' : 'badge-secondary'}" do %>
+    <span class="circle circle-amber"></span> In Progress <span class="opacity-75"><%= @counts[:in_progress] %></span>
   <% end %>
 
-  <%= link_to failed_jobs_path, class: "sqd-tab #{'active' if @status == 'failed'}" do %>
-    Failed
-    <span class="sqd-tab-count"><%= @counts[:failed] %></span>
+  <%= link_to failed_jobs_path, class: "badge #{@status == 'failed' ? 'badge-primary' : 'badge-secondary'}" do %>
+    <span class="circle circle-red"></span> Failed <span class="opacity-75"><%= @counts[:failed] %></span>
   <% end %>
 
-  <%= link_to blocked_jobs_path, class: "sqd-tab #{'active' if @status == 'blocked'}" do %>
-    Blocked
-    <span class="sqd-tab-count"><%= @counts[:blocked] %></span>
+  <%= link_to blocked_jobs_path, class: "badge #{@status == 'blocked' ? 'badge-primary' : 'badge-secondary'}" do %>
+    <span class="circle circle-zinc"></span> Blocked <span class="opacity-75"><%= @counts[:blocked] %></span>
   <% end %>
 
-  <%= link_to finished_jobs_path, class: "sqd-tab #{'active' if @status == 'finished'}" do %>
-    Finished
-    <span class="sqd-tab-count"><%= @counts[:finished] %></span>
+  <%= link_to finished_jobs_path, class: "badge #{@status == 'finished' ? 'badge-primary' : 'badge-secondary'}" do %>
+    <span class="circle circle-green"></span> Finished <span class="opacity-75"><%= @counts[:finished] %></span>
   <% end %>
-</nav>
+</div>
 
 <%= render JobHarbor::JobFiltersComponent.new(
   class_names: @filter_data[:class_names],
@@ -52,10 +45,10 @@
 ) %>
 
 <% if @status == "failed" && @counts[:failed] > 0 %>
-  <div class="sqd-actions" style="margin-bottom: 1rem;">
-    <%= button_to "Retry All Failed", retry_all_jobs_path(status: "failed"), method: :post, class: "sqd-btn sqd-btn-secondary",
+  <div class="flex items-center gap-2 mb-4">
+    <%= button_to "Retry All Failed", retry_all_jobs_path(status: "failed"), method: :post, class: "btn btn-secondary btn-sm",
         data: { confirm: "Are you sure you want to retry all failed jobs?" } %>
-    <%= button_to "Discard All Failed", discard_all_jobs_path(status: "failed"), method: :delete, class: "sqd-btn sqd-btn-danger",
+    <%= button_to "Discard All Failed", discard_all_jobs_path(status: "failed"), method: :delete, class: "btn btn-destructive btn-sm",
         data: { confirm: "Are you sure you want to discard all failed jobs? This cannot be undone." } %>
   </div>
 <% end %>
@@ -67,8 +60,8 @@
     icon: :jobs
   ) %>
 <% else %>
-  <div class="sqd-card">
-    <div class="sqd-table-container">
+  <div class="card">
+    <div class="table-wrapper">
       <table class="sqd-table">
         <thead>
           <tr>
@@ -89,7 +82,7 @@
     </div>
   </div>
 
-  <div class="sqd-pagination-row">
+  <div class="flex items-center justify-between mt-4">
     <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
     <%= render JobHarbor::PerPageSelectorComponent.new(
       current_per_page: @per_page,

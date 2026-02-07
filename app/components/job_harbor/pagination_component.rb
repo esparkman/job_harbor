@@ -11,7 +11,7 @@ module JobHarbor
     end
 
     def call
-      content_tag(:nav, class: "sqd-pagination") do
+      content_tag(:nav, class: "pagination-nav") do
         safe_join([
           prev_link,
           page_links,
@@ -24,17 +24,17 @@ module JobHarbor
 
     def prev_link
       if @pagy.prev
-        link_to "← Prev", url_for(page: @pagy.prev), class: "sqd-pagination-link"
+        link_to "\u2190 Prev", url_for(page: @pagy.prev), class: "pagination-link"
       else
-        content_tag(:span, "← Prev", class: "sqd-pagination-link sqd-pagination-disabled")
+        content_tag(:span, "\u2190 Prev", class: "pagination-link pagination-disabled")
       end
     end
 
     def next_link
       if @pagy.next
-        link_to "Next →", url_for(page: @pagy.next), class: "sqd-pagination-link"
+        link_to "Next \u2192", url_for(page: @pagy.next), class: "pagination-link"
       else
-        content_tag(:span, "Next →", class: "sqd-pagination-link sqd-pagination-disabled")
+        content_tag(:span, "Next \u2192", class: "pagination-link pagination-disabled")
       end
     end
 
@@ -43,18 +43,17 @@ module JobHarbor
         case item
         when Integer
           if item == @pagy.page
-            content_tag(:span, item, class: "sqd-pagination-current")
+            content_tag(:span, item, class: "pagination-link pagination-active")
           else
-            link_to item, url_for(page: item), class: "sqd-pagination-link"
+            link_to item, url_for(page: item), class: "pagination-link"
           end
         when :gap
-          content_tag(:span, "…", class: "sqd-pagination-link sqd-pagination-disabled")
+          content_tag(:span, "\u2026", class: "pagination-link pagination-disabled")
         end
       end
     end
 
     def series
-      # Generate page series with ellipsis for large page counts
       pages = @pagy.pages
       current = @pagy.page
 

@@ -11,11 +11,12 @@ module JobHarbor
     end
 
     def call
-      content_tag(:div, class: "sqd-per-page-selector") do
+      content_tag(:div, class: "sqd-per-page-selector flex items-center gap-1.5") do
         safe_join([
-          content_tag(:span, "Show", class: "sqd-per-page-label"),
+          content_tag(:span, "Show", class: "text-sm text-muted-foreground"),
           content_tag(:select,
-            class: "sqd-per-page-select",
+            class: "sqd-per-page-select select",
+            style: "width: 5rem;",
             data: { action: "change->per-page#change" }
           ) do
             safe_join(PAGE_SIZES.map { |size| option_tag(size) })

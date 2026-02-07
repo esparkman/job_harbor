@@ -9,36 +9,34 @@ module JobHarbor
     end
 
     def call
-      content_tag(:div, class: "sqd-worker-card") do
+      content_tag(:div, class: "card") do
         safe_join([
-          header,
-          details,
-          queues_list
+          content_tag(:div, class: "card-header") do
+            content_tag(:div, class: "flex items-center justify-between") do
+              safe_join([
+                content_tag(:span, worker_name, class: "card-title"),
+                render(BadgeComponent.new(status: heartbeat_status))
+              ])
+            end
+          end,
+          content_tag(:div, class: "card-content") do
+            safe_join([
+              details,
+              queues_list
+            ])
+          end
         ])
       end
     end
 
     private
 
-    def header
-      content_tag(:div, class: "sqd-worker-header") do
-        safe_join([
-          content_tag(:span, worker_name, class: "sqd-worker-name"),
-          render(BadgeComponent.new(status: heartbeat_status))
-        ])
-      end
-    end
-
     def worker_name
       @worker.name.presence || "Worker ##{@worker.id}"
     end
 
     def heartbeat_status
-      if stale?
-        :blocked
-      else
-        :active
-      end
+      stale? ? :blocked : :active
     end
 
     def stale?
@@ -48,20 +46,21 @@ module JobHarbor
     end
 
     def details
-      content_tag(:div, class: "sqd-worker-stats") do
+      content_tag(:div, class: "space-y-1") do
         safe_join([
-          stat("Hostname", @worker.hostname),
-          stat("PID", @worker.pid),
-          stat("Last Heartbeat", heartbeat_time)
+          info_line("Hostname", @worker.hostname),
+          info_line("PID", @worker.pid),
+          info_line("Last Heartbeat", heartbeat_time)
         ])
       end
     end
 
-    def stat(label, value)
-      content_tag(:div, class: "sqd-worker-stat") do
+    def info_line(label, value)
+      content_tag(:div, class: "info-line") do
         safe_join([
-          content_tag(:span, value, class: "sqd-worker-stat-value"),
-          content_tag(:span, label, class: "sqd-worker-stat-label")
+          content_tag(:span, label, class: "info-line-label"),
+          content_tag(:span, "", class: "info-line-separator"),
+          content_tag(:span, value, class: "info-line-value")
         ])
       end
     end
@@ -73,12 +72,12 @@ module JobHarbor
     end
 
     def queues_list
-      return "" unless @worker.respond_to?(:queues) && @worker.queues.present?
+      return "".html_safe unless @worker.respond_to?(:queues) && @worker.queues.present?
 
-      content_tag(:div, style: "margin-top: 1rem;") do
+      content_tag(:div, class: "mt-3 flex items-center gap-1 flex-wrap") do
         safe_join([
-          content_tag(:span, "Queues: ", class: "sqd-text-muted"),
-          @worker.queues.map { |q| content_tag(:code, q, class: "sqd-code", style: "margin-right: 0.5rem;") }
+          content_tag(:span, "Queues:", class: "text-xs text-muted-foreground"),
+          @worker.queues.map { |q| content_tag(:code, q, class: "badge badge-secondary text-xs font-mono") }
         ].flatten)
       end
     end

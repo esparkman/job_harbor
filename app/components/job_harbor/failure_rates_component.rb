@@ -7,7 +7,7 @@ module JobHarbor
     end
 
     def call
-      content_tag(:div, class: "sqd-card sqd-failure-rates") do
+      content_tag(:div, class: "card sqd-failure-rates") do
         safe_join([
           header,
           body
@@ -18,13 +18,13 @@ module JobHarbor
     private
 
     def header
-      content_tag(:div, class: "sqd-card-header") do
-        content_tag(:h3, "Failure Rates (24h)", class: "sqd-card-title")
+      content_tag(:div, class: "card-header") do
+        content_tag(:h3, "Failure Rates (24h)", class: "card-title")
       end
     end
 
     def body
-      content_tag(:div, class: "sqd-card-body") do
+      content_tag(:div, class: "card-content") do
         if @stats.empty?
           empty_state
         else
@@ -34,7 +34,7 @@ module JobHarbor
     end
 
     def empty_state
-      content_tag(:p, "No jobs in the last 24 hours", class: "sqd-text-muted")
+      content_tag(:p, "No jobs in the last 24 hours", class: "text-sm text-muted-foreground")
     end
 
     def stats_table
@@ -68,7 +68,7 @@ module JobHarbor
     def stat_row(stat)
       content_tag(:tr) do
         safe_join([
-          content_tag(:td, content_tag(:code, stat[:class_name], class: "sqd-code")),
+          content_tag(:td, content_tag(:code, stat[:class_name], class: "text-sm font-mono")),
           content_tag(:td, stat[:total]),
           content_tag(:td, stat[:failed]),
           content_tag(:td, rate_badge(stat[:rate]))
@@ -78,7 +78,7 @@ module JobHarbor
 
     def rate_badge(rate)
       css_class = FailureStats.rate_badge_class(rate)
-      content_tag(:span, "#{rate}%", class: "sqd-rate-badge #{css_class}")
+      content_tag(:span, "#{rate}%", class: "badge #{css_class}")
     end
   end
 end

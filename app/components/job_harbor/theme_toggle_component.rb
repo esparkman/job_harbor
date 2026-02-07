@@ -7,7 +7,7 @@ module JobHarbor
 
     def call
       content_tag(:button,
-        class: "sqd-theme-toggle",
+        class: "sqd-theme-toggle btn btn-icon",
         type: "button",
         aria: { label: "Toggle theme" },
         data: { action: "click->theme-toggle#toggle" }
@@ -23,7 +23,7 @@ module JobHarbor
 
     def sun_icon
       content_tag(:svg, SUN_ICON.html_safe,
-        class: "sqd-theme-icon sqd-theme-icon-sun",
+        class: "sqd-theme-icon sqd-theme-icon-sun w-4 h-4",
         viewBox: "0 0 24 24",
         fill: "none",
         stroke: "currentColor",
@@ -35,7 +35,7 @@ module JobHarbor
 
     def moon_icon
       content_tag(:svg, MOON_ICON.html_safe,
-        class: "sqd-theme-icon sqd-theme-icon-moon",
+        class: "sqd-theme-icon sqd-theme-icon-moon w-4 h-4",
         viewBox: "0 0 24 24",
         fill: "none",
         stroke: "currentColor",

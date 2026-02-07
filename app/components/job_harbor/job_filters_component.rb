@@ -12,7 +12,7 @@ module JobHarbor
     end
 
     def call
-      content_tag(:div, class: "sqd-filters") do
+      content_tag(:div, class: "sqd-filters flex gap-4 mb-4 flex-wrap") do
         safe_join([
           class_filter,
           queue_filter
@@ -23,11 +23,11 @@ module JobHarbor
     private
 
     def class_filter
-      content_tag(:div, class: "sqd-filter-group") do
+      content_tag(:div, class: "flex items-center gap-1.5") do
         safe_join([
-          content_tag(:label, "Class", class: "sqd-filter-label", for: "class_filter"),
+          content_tag(:label, "Class", class: "text-sm text-muted-foreground", for: "class_filter"),
           content_tag(:select,
-            class: "sqd-filter-select",
+            class: "sqd-filter-select select",
             id: "class_filter",
             data: { filter_type: "class_name" }
           ) do
@@ -41,11 +41,11 @@ module JobHarbor
     end
 
     def queue_filter
-      content_tag(:div, class: "sqd-filter-group") do
+      content_tag(:div, class: "flex items-center gap-1.5") do
         safe_join([
-          content_tag(:label, "Queue", class: "sqd-filter-label", for: "queue_filter"),
+          content_tag(:label, "Queue", class: "text-sm text-muted-foreground", for: "queue_filter"),
           content_tag(:select,
-            class: "sqd-filter-select",
+            class: "sqd-filter-select select",
             id: "queue_filter",
             data: { filter_type: "queue_name" }
           ) do
@@ -71,11 +71,9 @@ module JobHarbor
     def build_filter_url(filter_key, value)
       query_params = @params.dup
 
-      # Preserve the other filter if set
       query_params[:class_name] = @current_class if @current_class.present? && filter_key != :class_name
       query_params[:queue_name] = @current_queue if @current_queue.present? && filter_key != :queue_name
 
-      # Set the new filter value
       if value.present?
         query_params[filter_key] = value
       else

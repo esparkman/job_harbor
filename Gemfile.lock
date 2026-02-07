@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    job_harbor (0.1.0)
+    job_harbor (0.1.1)
       rails (>= 7.1)
       solid_queue (>= 0.3)
       view_component (>= 3.0)
@@ -302,7 +302,7 @@ CHECKSUMS
   i18n (1.14.8)
   io-console (0.8.2)
   irb (1.16.0)
-  job_harbor (0.1.0)
+  job_harbor (0.1.1)
   json (2.18.0)
   language_server-protocol (3.17.0.5)
   lint_roller (1.1.0)

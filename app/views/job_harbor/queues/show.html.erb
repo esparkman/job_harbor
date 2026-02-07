@@ -1,15 +1,15 @@
 <% content_for :header_actions do %>
-  <div class="sqd-actions">
+  <div class="flex items-center gap-2">
     <% if @queue.paused? %>
-      <%= button_to "Resume Queue", resume_queue_path(@queue.name), method: :delete, class: "sqd-btn sqd-btn-primary" %>
+      <%= button_to "Resume Queue", resume_queue_path(@queue.name), method: :delete, class: "btn btn-default btn-sm" %>
     <% else %>
-      <%= button_to "Pause Queue", pause_queue_path(@queue.name), method: :post, class: "sqd-btn sqd-btn-secondary" %>
+      <%= button_to "Pause Queue", pause_queue_path(@queue.name), method: :post, class: "btn btn-secondary btn-sm" %>
     <% end %>
-    <%= link_to "← Back to Queues", queues_path, class: "sqd-btn sqd-btn-secondary" %>
+    <%= link_to "\u2190 Back to Queues", queues_path, class: "btn btn-secondary btn-sm" %>
   </div>
 <% end %>
 
-<div class="sqd-stats-grid" style="margin-bottom: 1.5rem;">
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
   <%= render JobHarbor::StatCardComponent.new(
     label: "Pending",
     value: @queue.pending_count,
@@ -36,10 +36,9 @@
 </div>
 
 <% if @queue.paused? %>
-  <div class="sqd-flash">
-    <div class="sqd-flash-alert">
-      This queue is currently paused. Jobs will not be processed until it is resumed.
-    </div>
+  <div class="alert alert-warning mb-4">
+    <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+    This queue is currently paused. Jobs will not be processed until it is resumed.
   </div>
 <% end %>
 
@@ -50,11 +49,11 @@
     icon: :jobs
   ) %>
 <% else %>
-  <div class="sqd-card">
-    <div class="sqd-card-header">
-      <h2 class="sqd-card-title">Jobs in Queue</h2>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Jobs in Queue</h2>
     </div>
-    <div class="sqd-table-container">
+    <div class="table-wrapper">
       <table class="sqd-table">
         <thead>
           <tr>
@@ -68,13 +67,13 @@
         <tbody>
           <% @jobs.each do |job| %>
             <tr>
-              <td><%= link_to job.id, job_path(job), class: "sqd-table-link" %></td>
-              <td><code class="sqd-code"><%= job.class_name %></code></td>
+              <td><%= link_to job.id, job_path(job), class: "link font-medium" %></td>
+              <td><code class="text-sm font-mono"><%= job.class_name %></code></td>
               <td><%= render JobHarbor::BadgeComponent.new(status: job.status) %></td>
-              <td><%= job.scheduled_at&.strftime("%b %d, %H:%M:%S") || "—" %></td>
-              <td class="sqd-actions">
+              <td class="text-sm"><%= job.scheduled_at&.strftime("%b %d, %H:%M:%S") || "\u2014" %></td>
+              <td>
                 <% if job.can_retry? %>
-                  <%= button_to "Retry", retry_job_path(job), method: :post, class: "sqd-btn sqd-btn-sm sqd-btn-secondary" %>
+                  <%= button_to "Retry", retry_job_path(job), method: :post, class: "btn btn-secondary btn-xs" %>
                 <% end %>
               </td>
             </tr>
@@ -84,5 +83,7 @@
     </div>
   </div>
 
-  <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+  <div class="mt-4">
+    <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+  </div>
 <% end %>

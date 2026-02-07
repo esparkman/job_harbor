@@ -5,8 +5,8 @@
     icon: :recurring
   ) %>
 <% else %>
-  <div class="sqd-card">
-    <div class="sqd-table-container">
+  <div class="card">
+    <div class="table-wrapper">
       <table class="sqd-table">
         <thead>
           <tr>
@@ -20,12 +20,12 @@
         <tbody>
           <% @tasks.each do |task| %>
             <tr>
-              <td><%= link_to task.key, recurring_task_path(task), class: "sqd-table-link" %></td>
-              <td><code class="sqd-code"><%= task.class_name %></code></td>
-              <td><%= task.schedule %></td>
-              <td><%= task.queue_name || "default" %></td>
-              <td class="sqd-actions">
-                <%= button_to "Run Now", enqueue_now_recurring_task_path(task), method: :post, class: "sqd-btn sqd-btn-sm sqd-btn-secondary" %>
+              <td><%= link_to task.key, recurring_task_path(task), class: "link font-medium" %></td>
+              <td><code class="text-sm font-mono"><%= task.class_name %></code></td>
+              <td class="text-sm"><%= task.schedule %></td>
+              <td class="text-sm"><%= task.queue_name || "default" %></td>
+              <td>
+                <%= button_to "Run Now", enqueue_now_recurring_task_path(task), method: :post, class: "btn btn-secondary btn-xs" %>
               </td>
             </tr>
           <% end %>

@@ -1,63 +1,65 @@
 <% content_for :header_actions do %>
-  <div class="sqd-actions">
-    <%= button_to "Run Now", enqueue_now_recurring_task_path(@task), method: :post, class: "sqd-btn sqd-btn-primary" %>
-    <%= link_to "← Back to Tasks", recurring_tasks_path, class: "sqd-btn sqd-btn-secondary" %>
+  <div class="flex items-center gap-2">
+    <%= button_to "Run Now", enqueue_now_recurring_task_path(@task), method: :post, class: "btn btn-default btn-sm" %>
+    <%= link_to "\u2190 Back to Tasks", recurring_tasks_path, class: "btn btn-secondary btn-sm" %>
   </div>
 <% end %>
 
-<div class="sqd-detail-grid">
-  <div class="sqd-card">
-    <div class="sqd-card-header">
-      <h2 class="sqd-card-title">Task Details</h2>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Task Details</h2>
     </div>
-    <div class="sqd-card-body">
-      <div class="sqd-detail-item">
-        <div class="sqd-detail-label">Key</div>
-        <div class="sqd-detail-value"><%= @task.key %></div>
+    <div class="card-content space-y-1">
+      <div class="info-line">
+        <span class="info-line-label">Key</span>
+        <span class="info-line-separator"></span>
+        <span class="info-line-value"><%= @task.key %></span>
       </div>
 
-      <div class="sqd-detail-item">
-        <div class="sqd-detail-label">Job Class</div>
-        <div class="sqd-detail-value">
-          <code class="sqd-code"><%= @task.class_name %></code>
-        </div>
+      <div class="info-line">
+        <span class="info-line-label">Job Class</span>
+        <span class="info-line-separator"></span>
+        <span class="info-line-value"><code class="text-sm font-mono"><%= @task.class_name %></code></span>
       </div>
 
-      <div class="sqd-detail-item">
-        <div class="sqd-detail-label">Schedule</div>
-        <div class="sqd-detail-value"><%= @task.schedule %></div>
+      <div class="info-line">
+        <span class="info-line-label">Schedule</span>
+        <span class="info-line-separator"></span>
+        <span class="info-line-value"><%= @task.schedule %></span>
       </div>
 
-      <div class="sqd-detail-item">
-        <div class="sqd-detail-label">Queue</div>
-        <div class="sqd-detail-value"><%= @task.queue_name || "default" %></div>
+      <div class="info-line">
+        <span class="info-line-label">Queue</span>
+        <span class="info-line-separator"></span>
+        <span class="info-line-value"><%= @task.queue_name || "default" %></span>
       </div>
 
       <% if @task.respond_to?(:arguments) && @task.arguments.present? %>
-        <div class="sqd-detail-item">
-          <div class="sqd-detail-label">Arguments</div>
-          <div class="sqd-detail-value">
-            <pre class="sqd-code"><%= JSON.pretty_generate(@task.arguments) rescue @task.arguments %></pre>
-          </div>
+        <div class="mt-3">
+          <div class="text-sm text-muted-foreground mb-1">Arguments</div>
+          <pre class="code-block"><%= JSON.pretty_generate(@task.arguments) rescue @task.arguments %></pre>
         </div>
       <% end %>
     </div>
   </div>
 
-  <div class="sqd-card">
-    <div class="sqd-card-header">
-      <h2 class="sqd-card-title">Statistics</h2>
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Statistics</h2>
     </div>
-    <div class="sqd-card-body">
-      <div class="sqd-detail-item">
-        <div class="sqd-detail-label">Total Executions</div>
-        <div class="sqd-detail-value"><%= @recent_executions.count %></div>
+    <div class="card-content space-y-1">
+      <div class="info-line">
+        <span class="info-line-label">Total Executions</span>
+        <span class="info-line-separator"></span>
+        <span class="info-line-value"><%= @recent_executions.count %></span>
       </div>
 
       <% if @recent_executions.any? %>
-        <div class="sqd-detail-item">
-          <div class="sqd-detail-label">Last Run</div>
-          <div class="sqd-detail-value"><%= @recent_executions.first.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></div>
+        <div class="info-line">
+          <span class="info-line-label">Last Run</span>
+          <span class="info-line-separator"></span>
+          <span class="info-line-value"><%= @recent_executions.first.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
         </div>
       <% end %>
     </div>
@@ -65,11 +67,11 @@
 </div>
 
 <% if @recent_executions.any? %>
-  <div class="sqd-card" style="margin-top: 1.5rem;">
-    <div class="sqd-card-header">
-      <h2 class="sqd-card-title">Recent Executions</h2>
+  <div class="card mt-6">
+    <div class="card-header">
+      <h2 class="card-title">Recent Executions</h2>
     </div>
-    <div class="sqd-table-container">
+    <div class="table-wrapper">
       <table class="sqd-table">
         <thead>
           <tr>
@@ -82,12 +84,12 @@
             <tr>
               <td>
                 <% if execution.job_id %>
-                  <%= link_to execution.job_id, job_path(execution.job_id), class: "sqd-table-link" %>
+                  <%= link_to execution.job_id, job_path(execution.job_id), class: "link font-medium" %>
                 <% else %>
-                  —
+                  <span class="text-muted-foreground">&mdash;</span>
                 <% end %>
               </td>
-              <td><%= execution.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+              <td class="text-sm"><%= execution.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
             </tr>
           <% end %>
         </tbody>
