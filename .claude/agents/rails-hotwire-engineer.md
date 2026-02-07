@@ -1,1 +1,0 @@
-/Users/evansparkman/Development/rails-agents/rails-hotwire-engineer.md

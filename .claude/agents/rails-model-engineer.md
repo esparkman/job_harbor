@@ -1,1 +1,0 @@
-/Users/evansparkman/Development/rails-agents/rails-model-engineer.md

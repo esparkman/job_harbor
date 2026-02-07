@@ -29,6 +29,10 @@ capybara-*.html
 *.pem
 *.key
 
+# Claude Code / AI tooling
+.claude/
+.pensieve/
+
 # IDE/Editor
 .idea/
 .vscode/
