@@ -39,15 +39,15 @@ module JobHarbor
     end
 
     def error_message
-      @failed_execution&.error&.dig("message")
+      parsed_error&.dig("message")
     end
 
     def error_class
-      @failed_execution&.error&.dig("exception_class")
+      parsed_error&.dig("exception_class")
     end
 
     def error_backtrace
-      @failed_execution&.error&.dig("backtrace")&.join("\n")
+      parsed_error&.dig("backtrace")&.join("\n")
     end
 
     def failed_at
@@ -107,6 +107,15 @@ module JobHarbor
     end
 
     private
+
+    def parsed_error
+      error = @failed_execution&.error
+      return nil unless error
+
+      error.is_a?(String) ? JSON.parse(error) : error
+    rescue JSON::ParserError
+      { "message" => error }
+    end
 
     def determine_status
       return "failed" if has_failed_execution?
