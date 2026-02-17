@@ -29,6 +29,10 @@ capybara-*.html
 *.pem
 *.key
 
+# Tailwind CLI binary (contributors only)
+vendor/tailwindcss/
+node_modules/
+
 # Claude Code / AI tooling
 .claude/
 .pensieve/
