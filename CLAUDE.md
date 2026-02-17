@@ -19,18 +19,35 @@ SolidQueue Dashboard is a Rails engine (gem) providing a web UI for monitoring a
 - **ALWAYS use ViewComponents** - All UI components must be ViewComponents, not partials.
 - **ALWAYS use the Presenter pattern** - UI logic belongs in presenters, not views or models.
 
-### Delegation to Subagents
-- **MUST use Rails subagents for all implementation work** - They are experts in this stack.
-- Available in `.claude/agents/`:
-  - `rails-architect.md` - Architecture and design decisions
-  - `rails-model-engineer.md` - Models, migrations, validations
-  - `rails-controller-engineer.md` - Controllers and routing
-  - `rails-viewcomponent-engineer.md` - ViewComponent implementation
-  - `rails-hotwire-engineer.md` - Turbo and Stimulus
-  - `rails-testing-expert.md` - Test implementation
-  - `rails-authentication.md` - Auth flows
-  - `rails-background-jobs.md` - Solid Queue jobs
-  - `rails-security-performance.md` - Security and optimization
+## ⚠️ Global Rules Active — Read ~/.claude/CLAUDE.md
+
+The global `~/.claude/CLAUDE.md` is loaded and ALL of its rules apply to this project.
+
+1. Follow the **Session Initialization** instructions from the global CLAUDE.md FIRST
+2. Emit the status block and delegation commitment BEFORE doing anything else
+3. All delegation mandates and Rails engineering standards from the global file are in effect
+
+## MANDATORY: Sub-Agent Delegation
+
+Claude Code MUST delegate ALL code generation to the [Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents#example-subagents) in `.claude/agents/`. This is **NOT optional**.
+
+**Do NOT use built-in Explore/Plan/Code agents for any code tasks.** Use rails-agents instead:
+
+| Task Domain | Delegate To |
+|---|---|
+| Investigation, architecture, system design | `@rails-architect` |
+| Models, migrations, database | `@rails-model-engineer` |
+| Controllers, routing, API endpoints | `@rails-controller-engineer` |
+| Views, Hotwire, Stimulus, frontend | `@rails-hotwire-engineer` |
+| ViewComponents, component-driven UI | `@rails-viewcomponent-engineer` |
+| Authentication, sessions, magic links | `@rails-authentication` |
+| Background jobs, queues, async | `@rails-background-jobs` |
+| Mailers, email templates | `@rails-mailer` |
+| Tests, fixtures, quality assurance | `@rails-testing-expert` |
+| Security and performance | `@rails-security-performance` |
+| Deployment, Docker, infrastructure | `@rails-deployment` |
+
+**Never write code directly. Never skip delegation. Even for "simple" changes.**
 
 ### Pre-Commit Requirements
 - **ALL tests MUST pass before committing or pushing**
