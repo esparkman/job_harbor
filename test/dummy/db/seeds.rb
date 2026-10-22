@@ -107,16 +107,16 @@ JOB_CLASSES = {
 }.freeze
 
 SAMPLE_ARGS = {
-  "UserNotificationJob" => -> { [{ "user_id" => rand(1000..9999), "type" => %w[welcome reminder digest].sample }] },
-  "OrderProcessingJob" => -> { [{ "order_id" => rand(10_000..99_999), "action" => %w[fulfill refund cancel].sample }] },
-  "ReportGenerationJob" => -> { [{ "report_type" => %w[daily weekly monthly quarterly].sample, "format" => %w[pdf csv xlsx].sample }] },
-  "DataSyncJob" => -> { [{ "source" => %w[salesforce hubspot stripe shopify].sample, "batch_size" => [100, 500, 1000].sample }] },
-  "EmailDeliveryJob" => -> { [{ "to" => "user#{rand(100..999)}@example.com", "template" => %w[welcome reset_password invoice receipt].sample }] },
-  "ImageResizeJob" => -> { [{ "image_id" => rand(1000..9999), "dimensions" => %w[thumbnail medium large hero].sample }] },
-  "InventoryCheckJob" => -> { [{ "warehouse_id" => rand(1..12), "sku_prefix" => %w[ELC FRN CLT SPT HME].sample }] },
-  "PaymentProcessingJob" => -> { [{ "payment_id" => "pay_#{SecureRandom.hex(8)}", "amount_cents" => rand(500..50_000) }] },
-  "SearchIndexJob" => -> { [{ "model" => %w[Product User Order Article].sample, "batch_start" => rand(1..10_000) }] },
-  "CleanupJob" => -> { [{ "table" => %w[sessions temp_files old_notifications expired_tokens].sample, "older_than_days" => [7, 14, 30, 90].sample }] }
+  "UserNotificationJob" => -> { [ { "user_id" => rand(1000..9999), "type" => %w[welcome reminder digest].sample } ] },
+  "OrderProcessingJob" => -> { [ { "order_id" => rand(10_000..99_999), "action" => %w[fulfill refund cancel].sample } ] },
+  "ReportGenerationJob" => -> { [ { "report_type" => %w[daily weekly monthly quarterly].sample, "format" => %w[pdf csv xlsx].sample } ] },
+  "DataSyncJob" => -> { [ { "source" => %w[salesforce hubspot stripe shopify].sample, "batch_size" => [ 100, 500, 1000 ].sample } ] },
+  "EmailDeliveryJob" => -> { [ { "to" => "user#{rand(100..999)}@example.com", "template" => %w[welcome reset_password invoice receipt].sample } ] },
+  "ImageResizeJob" => -> { [ { "image_id" => rand(1000..9999), "dimensions" => %w[thumbnail medium large hero].sample } ] },
+  "InventoryCheckJob" => -> { [ { "warehouse_id" => rand(1..12), "sku_prefix" => %w[ELC FRN CLT SPT HME].sample } ] },
+  "PaymentProcessingJob" => -> { [ { "payment_id" => "pay_#{SecureRandom.hex(8)}", "amount_cents" => rand(500..50_000) } ] },
+  "SearchIndexJob" => -> { [ { "model" => %w[Product User Order Article].sample, "batch_start" => rand(1..10_000) } ] },
+  "CleanupJob" => -> { [ { "table" => %w[sessions temp_files old_notifications expired_tokens].sample, "older_than_days" => [ 7, 14, 30, 90 ].sample } ] }
 }
 
 REALISTIC_ERRORS = [
@@ -175,7 +175,7 @@ worker_3 = SolidQueue::Process.create!(
   metadata: { queues: "*", polling_interval: 0.2, thread_count: 5 }.to_json
 )
 
-workers = [worker_1, worker_2, worker_3]
+workers = [ worker_1, worker_2, worker_3 ]
 puts "  Created 1 supervisor + 3 workers."
 puts ""
 
