@@ -14,10 +14,10 @@ class QueuesPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Queues"
     assert_equal %w[critical default low_priority mailers], css_select(".card a.card-title").map { |a| a.text.strip }
-    assert_queue_card "default", status: "Active", counts: { "Pending" => "2", "Scheduled" => "0", "In Progress" => "0" }
-    assert_queue_card "mailers", status: "Active", counts: { "Pending" => "0", "Scheduled" => "1", "In Progress" => "0" }
-    assert_queue_card "critical", status: "Active", counts: { "Pending" => "0", "Scheduled" => "0", "In Progress" => "1" }
-    assert_queue_card "low_priority", status: "Paused", counts: { "Pending" => "0", "Scheduled" => "0", "In Progress" => "0" }
+    assert_queue_card "default", status: "Active", counts: { "Pending" => "2", "Scheduled" => "0", "In Progress" => "0", "Blocked" => "0" }
+    assert_queue_card "mailers", status: "Active", counts: { "Pending" => "0", "Scheduled" => "1", "In Progress" => "0", "Blocked" => "0" }
+    assert_queue_card "critical", status: "Active", counts: { "Pending" => "0", "Scheduled" => "0", "In Progress" => "1", "Blocked" => "0" }
+    assert_queue_card "low_priority", status: "Paused", counts: { "Pending" => "0", "Scheduled" => "0", "In Progress" => "0", "Blocked" => "0" }
     assert_select "form[action=?] button", "/job_harbor/queues/low_priority/resume", text: "Resume"
     assert_select "form[action=?] button", "/job_harbor/queues/default/pause", text: "Pause"
   end
@@ -29,7 +29,6 @@ class QueuesPagesTest < ActionDispatch::IntegrationTest
     assert_select "h3", text: "No queues found"
   end
 
-  # Single-queue setup: show paginates before filtering (known bug).
   test "operator opens a queue and sees its counts and the jobs waiting in it" do
     worker = register_worker(name: "worker-1")
     enqueue_job(NewsletterJob, "welcome", queue: "mailers")
@@ -45,6 +44,7 @@ class QueuesPagesTest < ActionDispatch::IntegrationTest
     assert_stat_card "Scheduled", 1
     assert_stat_card "In Progress", 1
     assert_stat_card "Failed", 1
+    assert_stat_card "Blocked", 0
     assert_select "button", text: "Pause Queue"
     assert_select ".alert-warning", count: 0
 
@@ -52,6 +52,55 @@ class QueuesPagesTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "FlakyPaymentJob", "Failed" ], [ "NewsletterJob", "In Progress" ], [ "NewsletterJob", "Pending" ], [ "NewsletterJob", "Scheduled" ] ],
       rows.sort
     assert_select "tbody button", text: "Retry", count: 1
+  end
+
+  test "operator opens a queue with a blocked job and sees it counted on the queue page and its card" do
+    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
+    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
+    enqueue_job(ThrottledImportJob, "globex", queue: "other")
+
+    get "/job_harbor/queues/imports"
+
+    assert_stat_card "Pending", 1
+    assert_stat_card "Blocked", 1
+    assert_select "tbody .badge", text: "Blocked", count: 1
+
+    get "/job_harbor/queues"
+
+    assert_queue_card "imports", status: "Active", counts: { "Pending" => "1", "Scheduled" => "0", "In Progress" => "0", "Blocked" => "1" }
+    assert_queue_card "other", status: "Active", counts: { "Pending" => "1", "Scheduled" => "0", "In Progress" => "0", "Blocked" => "0" }
+  end
+
+  test "operator pages through a busy queue and sees only that queue's jobs on every page" do
+    27.times { |i| enqueue_job(ReportJob, "report-#{i}") }
+    3.times { |i| enqueue_job(NewsletterJob, "digest-#{i}", queue: "mailers") }
+
+    get "/job_harbor/queues/default"
+
+    assert_response :success
+    assert_equal 25, css_select("table.sqd-table tbody tr").size, "Page 1 of a 27-job queue should be full"
+    assert_equal [ "default" ], css_select("table.sqd-table tbody tr td:nth-child(3)").map { |td| td.text.strip }.uniq,
+      "Page 1 shows jobs from another queue"
+    assert_equal %w[1 2], css_select(".pagination-link").map { |a| a.text.strip }.grep(/\A\d+\z/)
+
+    get "/job_harbor/queues/default", params: { page: 2 }
+
+    assert_equal 2, css_select("table.sqd-table tbody tr").size, "Page 2 should hold the 2 remaining default jobs"
+    assert_equal [ "default" ], css_select("table.sqd-table tbody tr td:nth-child(3)").map { |td| td.text.strip }.uniq
+  end
+
+  test "operator opens a queue page and can discard a pending job after a confirmation" do
+    job = enqueue_job(ReportJob, "weekly")
+
+    get "/job_harbor/queues/default"
+
+    assert_select "form[action=?][data-confirm]", "/job_harbor/jobs/#{job.id}/discard" do
+      assert_select "button", text: "Discard"
+    end
+
+    assert_difference -> { SolidQueue::Job.count } => -1 do
+      delete "/job_harbor/jobs/#{job.id}/discard"
+    end
   end
 
   test "operator opens a paused queue and is warned that its jobs will not run" do

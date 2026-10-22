@@ -36,6 +36,8 @@ Earlier releases are documented in git history and GitHub releases.
 - "Retry All" and "Discard All" on a filtered list acted on every failed job, ignoring the class and queue filters. They now act only on the jobs the list shows, and the buttons and confirmations say how many ("Retry 3 failed jobs").
 - Retry All ran about nine queries per job. It now uses Solid Queue's own bulk retry in batches of 500. Like Solid Queue's `retry_all`, it no longer resets each job's execution counters the way retrying a single job does, so a bulk-retried job keeps its attempt count toward `retry_on` limits.
 - The Blocked tab had no Discard All button even though the endpoint existed. It now shows "Discard N blocked jobs".
+- Queue pages paginated before filtering by queue, so pages came up short or empty and totals counted every queue. They now paginate within the queue. Their job rows are the same as on the Jobs page, so Discard and the running duration show there too, and queues show a Blocked count.
+- Pausing a queue twice (a double-submit or a stale page) raised a database error. Pause and resume now go through Solid Queue's own queue API.
 - Notices said "1 jobs discarded." and "1 jobs queued for retry."; they now pluralize correctly.
 
 ### Internal
