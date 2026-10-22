@@ -44,12 +44,16 @@
   params: request.query_parameters
 ) %>
 
-<% if @status == "failed" && @counts[:failed] > 0 %>
+<% if @bulk_count.to_i > 0 %>
+  <% jobs_label = pluralize(@bulk_count, "#{@status} job") %>
+  <% bulk_params = { status: @status, class_name: @class_name.presence, queue_name: @queue_name.presence } %>
   <div class="flex items-center gap-2 mb-4">
-    <%= button_to "Retry All Failed", retry_all_jobs_path(status: "failed"), method: :post, class: "btn btn-secondary btn-sm",
-        data: { confirm: "Are you sure you want to retry all failed jobs?" } %>
-    <%= button_to "Discard All Failed", discard_all_jobs_path(status: "failed"), method: :delete, class: "btn btn-destructive btn-sm",
-        data: { confirm: "Are you sure you want to discard all failed jobs? This cannot be undone." } %>
+    <% if @status == "failed" %>
+      <%= button_to "Retry #{jobs_label}", retry_all_jobs_path(bulk_params), method: :post, class: "btn btn-secondary btn-sm",
+          form: { data: { confirm: "Retry #{jobs_label}? Automatic retry counts are not reset." } } %>
+    <% end %>
+    <%= button_to "Discard #{jobs_label}", discard_all_jobs_path(bulk_params), method: :delete, class: "btn btn-destructive btn-sm",
+        form: { data: { confirm: "Discard #{jobs_label}? This cannot be undone." } } %>
   </div>
 <% end %>
 

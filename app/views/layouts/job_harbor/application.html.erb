@@ -242,6 +242,16 @@
     })();
   </script>
 
+  <%# === Confirm Dialog Script === %>
+  <%= javascript_tag nonce: true do %>
+    (function() {
+      document.addEventListener('submit', function(e) {
+        var message = e.target.dataset.confirm;
+        if (message && !window.confirm(message)) e.preventDefault();
+      });
+    })();
+  <% end %>
+
   <%# === Chart Rendering Script === %>
   <script>
     (function() {

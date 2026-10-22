@@ -5,7 +5,7 @@
     <% end %>
     <% if @job.can_discard? %>
       <%= button_to "Discard Job", discard_job_path(@job), method: :delete, class: "btn btn-destructive btn-sm",
-          data: { confirm: "Are you sure you want to discard this job?" } %>
+          form: { data: { confirm: "Are you sure you want to discard this job?" } } %>
     <% end %>
     <%= link_to "\u2190 Back to Jobs", jobs_path, class: "btn btn-secondary btn-sm" %>
   </div>

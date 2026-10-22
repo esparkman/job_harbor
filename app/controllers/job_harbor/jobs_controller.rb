@@ -2,13 +2,16 @@
 
 module JobHarbor
   class JobsController < ApplicationController
+    BULK_BATCH_SIZE = 500
+
     before_action :set_job, only: [ :show, :retry, :discard ]
+    before_action :reject_malformed_filters, only: [ :retry_all, :discard_all ]
 
     def index
       @status = params[:status]
       @per_page = per_page_param
-      @class_name = params[:class_name]
-      @queue_name = params[:queue_name]
+      @class_name = filter_param(:class_name)
+      @queue_name = filter_param(:queue_name)
 
       @pagy, @jobs = JobPresenter.all_with_status(
         @status,
@@ -18,6 +21,7 @@ module JobHarbor
         queue_name: @queue_name
       )
       @counts = job_counts
+      @bulk_count = bulk_scope(@status)&.count
       @filter_data = filter_data
       set_page_title @status ? "#{@status.titleize} Jobs" : "All Jobs"
     end
@@ -56,15 +60,13 @@ module JobHarbor
     end
 
     def retry_all
-      status = params[:status]
-      count = retry_all_jobs(status)
-      redirect_to jobs_path(status: status), notice: "#{count} jobs queued for retry."
+      count = retry_all_jobs(params[:status])
+      redirect_to bulk_redirect_path, notice: "#{helpers.pluralize(count, "job")} queued for retry."
     end
 
     def discard_all
-      status = params[:status]
-      count = discard_all_jobs(status)
-      redirect_to jobs_path(status: status), notice: "#{count} jobs discarded."
+      count = discard_all_jobs(params[:status])
+      redirect_to bulk_redirect_path, notice: "#{helpers.pluralize(count, "job")} discarded."
     end
 
     private
@@ -118,34 +120,48 @@ module JobHarbor
       SolidQueue::Job.where(id: job.id).update_all(finished_at: Time.current)
     end
 
+    # Nil for tabs without bulk actions.
+    def bulk_scope(status)
+      executions = case status
+      when "failed" then SolidQueue::FailedExecution
+      when "blocked" then SolidQueue::BlockedExecution
+      end
+      return unless executions
+
+      JobPresenter.apply_filters(
+        SolidQueue::Job.where(id: executions.select(:job_id)),
+        class_name: filter_param(:class_name),
+        queue_name: filter_param(:queue_name)
+      )
+    end
+
+    def reject_malformed_filters
+      head :bad_request unless %i[ class_name queue_name ].all? { |key| params[key].nil? || params[key].is_a?(String) }
+    end
+
+    def filter_param(key)
+      params[key] if params[key].is_a?(String)
+    end
+
+    def bulk_redirect_path
+      jobs_path(status: params[:status], class_name: filter_param(:class_name).presence, queue_name: filter_param(:queue_name).presence)
+    end
+
     def retry_all_jobs(status)
       return 0 unless status == "failed"
 
-      count = 0
-      SolidQueue::FailedExecution.find_each do |fe|
-        fe.retry
-        count += 1
-      end
-      count
+      bulk_scope(status).in_batches(of: BULK_BATCH_SIZE).sum { |jobs| SolidQueue::FailedExecution.retry_all(jobs) }
     end
 
     def discard_all_jobs(status)
-      case status
-      when "failed"
-        count = SolidQueue::FailedExecution.count
-        job_ids = SolidQueue::FailedExecution.pluck(:job_id)
-        SolidQueue::FailedExecution.delete_all
-        SolidQueue::Job.where(id: job_ids).update_all(finished_at: Time.current)
-        count
-      when "blocked"
-        count = SolidQueue::BlockedExecution.count
-        job_ids = SolidQueue::BlockedExecution.pluck(:job_id)
-        SolidQueue::BlockedExecution.delete_all
-        SolidQueue::Job.where(id: job_ids).update_all(finished_at: Time.current)
-        count
-      else
-        0
-      end
+      scope = bulk_scope(status)
+      return 0 unless scope
+
+      executions = status == "failed" ? SolidQueue::FailedExecution : SolidQueue::BlockedExecution
+      job_ids = scope.pluck(:id)
+      executions.where(job_id: job_ids).delete_all
+      SolidQueue::Job.where(id: job_ids).update_all(finished_at: Time.current)
+      job_ids.size
     end
   end
 end

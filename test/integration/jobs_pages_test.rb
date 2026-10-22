@@ -63,8 +63,8 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "FlakyPaymentJob", "critical", "Failed" ] ], job_rows
     assert_select "tbody form[action=?] button", "/job_harbor/jobs/#{@failed.id}/retry", text: "Retry"
     assert_select "tbody form[action=?] button", "/job_harbor/jobs/#{@failed.id}/discard", text: "Discard"
-    assert_select "button", text: "Retry All Failed"
-    assert_select "button", text: "Discard All Failed"
+    assert_select "button", text: "Retry 1 failed job"
+    assert_select "button", text: "Discard 1 failed job"
   end
 
   test "operator opens blocked jobs and sees the job held back by its concurrency limit" do
