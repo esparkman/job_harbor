@@ -10,7 +10,6 @@ Gem::Specification.new do |spec|
   spec.description = "A mountable Rails engine providing a beautiful, self-contained dashboard for Solid Queue. Monitor jobs, queues, workers, and recurring tasks with a modern UI built on ViewComponents."
   spec.license     = "MIT"
 
-  spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = "https://github.com/esparkman/job_harbor"
   spec.metadata["changelog_uri"] = "https://github.com/esparkman/job_harbor/blob/main/CHANGELOG.md"
   spec.metadata["rubygems_mfa_required"] = "true"
@@ -19,9 +18,9 @@ Gem::Specification.new do |spec|
     Dir["{app,config,db,lib}/**/*", "MIT-LICENSE", "Rakefile", "README.md"]
   end
 
-  spec.required_ruby_version = ">= 3.2"
+  spec.required_ruby_version = ">= 3.3"
 
-  spec.add_dependency "rails", ">= 7.1"
-  spec.add_dependency "solid_queue", ">= 0.3"
-  spec.add_dependency "view_component", ">= 3.0"
+  spec.add_dependency "rails", ">= 8.1"
+  spec.add_dependency "solid_queue", ">= 1.0", "< 2"
+  spec.add_dependency "view_component", ">= 4.1"
 end

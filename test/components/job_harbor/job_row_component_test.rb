@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "ostruct"
 
 module JobHarbor
   class JobRowComponentTest < ViewComponentTestCase
@@ -35,6 +34,10 @@ module JobHarbor
       assert_includes @rendered, "5 minutes ago"
     end
 
+    MockJobPresenter = Struct.new(:id, :class_name, :queue_name, :status, :scheduled_at, :created_at,
+                                  :can_retry?, :can_discard?, :execution_count, :retry_badge,
+                                  :running_duration, :relative_created_at)
+
     private
 
     def mock_job_presenter(overrides = {})
@@ -52,7 +55,7 @@ module JobHarbor
         running_duration: nil,
         relative_created_at: "5 minutes ago"
       }
-      OpenStruct.new(defaults.merge(overrides))
+      MockJobPresenter.new(**defaults.merge(overrides))
     end
   end
 end

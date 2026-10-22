@@ -61,3 +61,6 @@ node_modules/
 .claude/.current-story
 .claude/.small-fix
 .claude/.pipeline-block
+
+# Appraisal-style gemfile lockfiles
+gemfiles/*.lock
