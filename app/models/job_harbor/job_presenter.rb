@@ -5,7 +5,7 @@ module JobHarbor
     include ActionView::Helpers::DateHelper
 
     delegate :id, :created_at, :updated_at, :queue_name, :priority,
-             :active_job_id, :arguments, :scheduled_at, :finished_at,
+             :active_job_id, :arguments, :scheduled_at, :finished_at, :discard,
              to: :@job
 
     def initialize(job, failed_execution: nil, claimed_execution: nil)

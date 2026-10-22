@@ -16,7 +16,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
 
     @pending = enqueue_job(ReportJob, "weekly")
     @scheduled = enqueue_job(NewsletterJob, "digest", queue: "mailers", at: 2.hours.from_now)
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
+    @throttled = enqueue_job(ThrottledImportJob, "acme", queue: "imports")
     @blocked = enqueue_job(ThrottledImportJob, "acme", queue: "imports")
     @running = enqueue_job(ReportJob, "quarterly", queue: "critical")
     claim_job(@running, worker: @worker)
@@ -54,7 +54,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     assert_select ".alert-error", text: "This job cannot be retried."
   end
 
-  test "operator discards a failed job from the Failed list and it moves to Finished" do
+  test "operator discards a failed job from the Failed list and it is gone, not Finished" do
     get "/job_harbor/jobs/status/failed"
     assert_discard_form "/job_harbor/jobs/#{@failed.id}/discard", confirm: DISCARD_JOB_CONFIRM
 
@@ -62,7 +62,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
 
     assert_lands_on_all_jobs_with "Job has been discarded."
     assert_status_tab_count "failed", 0
-    assert_status_tab_count "finished", 1
+    assert_status_tab_count "finished", 0
   end
 
   test "operator discards a pending job from the Pending list and it will never run" do
@@ -73,7 +73,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
 
     assert_lands_on_all_jobs_with "Job has been discarded."
     assert_status_tab_count "pending", 1
-    assert_status_tab_count "finished", 1
+    assert_status_tab_count "finished", 0
   end
 
   test "operator discards a scheduled job from its page and it is taken off the schedule" do
@@ -84,10 +84,9 @@ class JobActionsTest < ActionDispatch::IntegrationTest
 
     assert_lands_on_all_jobs_with "Job has been discarded."
     assert_status_tab_count "scheduled", 0
-    assert_status_tab_count "finished", 1
+    assert_status_tab_count "finished", 0
   end
 
-  # Concurrency slot is not released (backlog #18).
   test "operator discards a blocked job from the Blocked list and it leaves the Blocked list" do
     get "/job_harbor/jobs/status/blocked"
     assert_discard_form "/job_harbor/jobs/#{@blocked.id}/discard", confirm: DISCARD_JOB_CONFIRM
@@ -96,11 +95,42 @@ class JobActionsTest < ActionDispatch::IntegrationTest
 
     assert_lands_on_all_jobs_with "Job has been discarded."
     assert_status_tab_count "blocked", 0
-    assert_status_tab_count "finished", 1
+    assert_status_tab_count "finished", 0
+  end
+
+  test "operator discards the pending job of a concurrency-limited class and the next blocked job is released to Pending" do
+    get "/job_harbor/jobs/status/pending"
+    assert_discard_form "/job_harbor/jobs/#{@throttled.id}/discard", confirm: DISCARD_JOB_CONFIRM
+    assert SolidQueue::BlockedExecution.exists?(job_id: @blocked.id), "Setup: the second acme import should be blocked"
+
+    delete "/job_harbor/jobs/#{@throttled.id}/discard"
+
+    assert_not SolidQueue::BlockedExecution.exists?(job_id: @blocked.id), "The blocked import stayed stuck: discarding its predecessor did not release the semaphore"
+    get "/job_harbor/jobs/#{@blocked.id}"
+    assert_info_line "Status", "Pending"
+    assert_not SolidQueue::Job.exists?(id: @throttled.id), "The discarded job should be deleted"
   end
 
   test "operator tries to discard a running job and is told it cannot be discarded" do
-    assert_no_changes -> { @running.reload.finished_at } do
+    assert_no_difference [ -> { SolidQueue::Job.count }, -> { SolidQueue::ClaimedExecution.count } ] do
+      assert_no_changes -> { @running.reload.attributes } do
+        delete "/job_harbor/jobs/#{@running.id}/discard"
+      end
+    end
+
+    assert_redirected_to "/job_harbor/jobs/#{@running.id}"
+    follow_redirect!
+    assert_select ".alert-error", text: "This job cannot be discarded."
+    assert_info_line "Status", "In Progress"
+  end
+
+  test "operator discards a job that started running after the page loaded and it is refused, untouched" do
+    stale_find = JobHarbor::JobPresenter.method(:find)
+    JobHarbor::JobPresenter.define_singleton_method(:find) do |id|
+      stale_find.call(id).tap { |presenter| presenter.define_singleton_method(:can_discard?) { true } }
+    end
+
+    assert_no_difference [ -> { SolidQueue::Job.count }, -> { SolidQueue::ClaimedExecution.count } ] do
       delete "/job_harbor/jobs/#{@running.id}/discard"
     end
 
@@ -108,6 +138,9 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select ".alert-error", text: "This job cannot be discarded."
     assert_info_line "Status", "In Progress"
+  ensure
+    JobHarbor::JobPresenter.singleton_class.send(:remove_method, :find)
+    JobHarbor::JobPresenter.define_singleton_method(:find, stale_find)
   end
 
   test "operator retries all failed jobs and the Failed list empties" do
@@ -136,7 +169,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     assert_select ".alert-success", text: "1 job queued for retry."
   end
 
-  test "operator discards all failed jobs and they move to Finished" do
+  test "operator discards all failed jobs and they are gone, not Finished" do
     second = fail_job(enqueue_job(FlakyPaymentJob, 43), worker: @worker)
 
     get "/job_harbor/jobs/status/failed"
@@ -149,7 +182,23 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_select ".alert-success", text: "2 jobs discarded."
     assert_select "p", text: "There are no failed jobs."
-    assert_status_tab_count "finished", 2
+    assert_status_tab_count "finished", 0
+  end
+
+  test "discarded jobs do not appear in the Finished tab or the dashboard's Finished (24h)" do
+    done = finish_job(enqueue_job(ReportJob, "daily"), worker: @worker)
+    delete "/job_harbor/jobs/#{@failed.id}/discard"
+    delete "/job_harbor/jobs/#{@pending.id}/discard"
+    delete "/job_harbor/jobs/discard_all?status=blocked"
+
+    get "/job_harbor/jobs/status/finished"
+    assert_select "a[href=?]", "/job_harbor/jobs/#{done.id}"
+    assert_status_tab_count "finished", 1
+    assert_select "a[href=?]", "/job_harbor/jobs/#{@failed.id}", count: 0
+    assert_select "a[href=?]", "/job_harbor/jobs/#{@pending.id}", count: 0
+
+    get "/job_harbor"
+    assert_stat_card "Finished (24h)", 1
   end
 
   test "operator discards all blocked jobs from the Blocked tab and the Blocked list empties" do
@@ -177,8 +226,9 @@ class JobActionsTest < ActionDispatch::IntegrationTest
 
     assert_difference -> { SolidQueue::FailedExecution.where(job_id: [ flaky_a.id, flaky_b.id ]).count } => -2,
       -> { SolidQueue::FailedExecution.where(job_id: [ @failed.id, export.id ]).count } => 0,
-      -> { SolidQueue::Job.where(id: [ @failed.id, export.id ]).where.not(finished_at: nil).count } => 0,
-      -> { SolidQueue::Job.where(id: [ flaky_a.id, flaky_b.id ]).where.not(finished_at: nil).count } => 2 do
+      -> { SolidQueue::Job.where(id: [ @failed.id, export.id ]).count } => 0,
+      -> { SolidQueue::Job.where(id: [ flaky_a.id, flaky_b.id ]).count } => -2,
+      -> { SolidQueue::Job.where.not(finished_at: nil).count } => 0 do
       delete "/job_harbor/jobs/discard_all?class_name=FlakyPaymentJob&queue_name=default&status=failed"
     end
 
@@ -259,7 +309,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
       delete "/job_harbor/jobs/discard_all?status=blocked&class_name[x]=1"
       assert_response :bad_request
     end
-    assert_nil @failed.reload.finished_at
+    assert SolidQueue::FailedExecution.exists?(job_id: @failed.id), "Rejected discard_all must leave the failed job failed"
   end
 
   private
@@ -275,15 +325,16 @@ class JobActionsTest < ActionDispatch::IntegrationTest
       env_config.merge!(originals)
     end
 
-    # backlog #1: discard deletes the execution and marks the job finished instead of SQ's own discard, which destroys the job row.
+    # Discard goes through Solid Queue, which deletes the job row (and frees its concurrency slot) rather than marking it finished.
     def assert_discarded(execution_class, *jobs, &block)
       ids = jobs.map(&:id)
-      finished_at = -> { SolidQueue::Job.where(id: ids).order(:id).pluck(:finished_at) }
 
       assert_difference -> { execution_class.where(job_id: ids).count }, -jobs.size, "Discard should remove the #{execution_class.name.demodulize}" do
-        assert_changes finished_at, "Discarded jobs should be marked finished", from: [ nil ] * jobs.size, to: [ Time.current ] * jobs.size, &block
+        assert_difference -> { SolidQueue::Job.where(id: ids).count }, -jobs.size, "Discard should delete the job rows, like Solid Queue" do
+          assert_no_difference -> { SolidQueue::Job.where.not(finished_at: nil).count }, "Discarded jobs must not count as finished", &block
+        end
       end
-      assert_equal ids.size, SolidQueue::Job.where(id: ids).count, "Discard keeps the job rows"
+      assert_not SolidQueue::Job.exists?(id: ids), "Discarded jobs must no longer exist"
     end
 
     def assert_discard_form(action, confirm:, text: "Discard")
