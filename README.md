@@ -150,10 +150,10 @@ config.authorize_with = -> { authorize(:job_harbor, :manage?) }
 
 ## Requirements
 
-- Ruby >= 3.2
-- Rails >= 7.1
-- Solid Queue >= 0.3
-- ViewComponent >= 3.0
+- Ruby >= 3.3
+- Rails >= 8.1
+- Solid Queue >= 1.0, < 2
+- ViewComponent >= 4.1
 
 ## License
 
