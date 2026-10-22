@@ -14,7 +14,6 @@ module JobHarbor
                   :return_to_app_label
 
     def initialize
-      @authorize_with = -> { true }
       @theme = :dark
       @primary_color = "amber"
       @jobs_per_page = 25
@@ -28,8 +27,15 @@ module JobHarbor
       @return_to_app_label = "Back to App"
     end
 
+    def authorize_with_configured?
+      !authorize_with.nil?
+    end
+
+    # Unconfigured means open in development and test only.
     def authorize(controller)
-      controller.instance_exec(&authorize_with)
+      return controller.instance_exec(&authorize_with) if authorize_with_configured?
+
+      Rails.env.local?
     end
   end
 end
