@@ -75,6 +75,14 @@ bin/rubocop -a                 # Auto-fix safe violations
 bundle exec rubycritic app lib # Code quality analysis
 ```
 
+### Rebuilding CSS
+The committed `app/assets/stylesheets/job_harbor/application.css` is compiled from `application.tailwind.css`. The tasks live in `rakelib/tailwind.rake` (maintainer-only, not packaged in the gem) and run from the repo root:
+```bash
+bundle exec rake job_harbor:tailwind:install   # one-time: download the standalone CLI to vendor/tailwindcss/
+bundle exec rake job_harbor:tailwind:build     # compile, minified
+bundle exec rake job_harbor:tailwind:watch     # recompile on change
+```
+
 ### Rails Commands (via test/dummy app)
 ```bash
 bin/rails console

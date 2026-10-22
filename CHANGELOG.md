@@ -28,6 +28,7 @@ Earlier releases are documented in git history and GitHub releases.
 ### Fixed
 
 - A denied request on a host app with no root route raised `NoMethodError` and returned 500. It now returns 403, as do denied non-HTML requests.
+- The engine's maintainer-only Tailwind rake tasks no longer load into host apps (they defined helper methods on Object).
 - A rule that redirects or renders itself and then returns false no longer raises `DoubleRenderError`.
 - The engine failed to load on Ruby 4.0 because `ostruct` is no longer a default gem. Pagination now uses a `PageInfo` value object instead of `OpenStruct`.
 
