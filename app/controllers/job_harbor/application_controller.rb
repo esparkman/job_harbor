@@ -13,9 +13,13 @@ module JobHarbor
     private
 
     def authorize_access
-      return if JobHarbor.configuration.authorize(self)
+      return if JobHarbor.configuration.authorize(self) || performed?
 
-      redirect_to main_app.root_path, alert: "Admin access required."
+      if request.format.html? && main_app.respond_to?(:root_path)
+        redirect_to main_app.root_path, alert: "Admin access required."
+      else
+        head :forbidden
+      end
     end
 
     def sq_config

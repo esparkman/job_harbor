@@ -100,7 +100,8 @@ Create an initializer at `config/initializers/job_harbor.rb`:
 
 ```ruby
 JobHarbor.configure do |config|
-  # Authorization - must return true to allow access (default: open)
+  # Authorization - must return true to allow access.
+  # Default: open in development and test, denied in every other environment until you set this.
   config.authorize_with = -> { current_user&.admin? }
 
   # Theme: :dark or :light (default: :dark)
@@ -132,21 +133,104 @@ end
 
 ## Authorization
 
-The dashboard uses a configurable authorization callback. Return `true` to allow access:
+**Production installs must configure `authorize_with`.** Until you do, the dashboard
+denies every request in every environment except development and test (production,
+staging, and so on) and logs a warning at boot. In development and test it stays open
+so you can try it out without setup.
+
+`authorize_with` is a lambda evaluated in the context of the dashboard controller
+(`instance_exec`), so it can call your host app's helpers such as `current_user`. Return
+a truthy value to allow the request. A rule you set explicitly is used as-is in every
+environment, including `-> { true }` if you really want the dashboard open.
 
 ```ruby
-# Allow all (default - not recommended for production)
-config.authorize_with = -> { true }
+# config/initializers/job_harbor.rb
+JobHarbor.configure do |config|
+  # Require an admin
+  config.authorize_with = -> { current_user&.admin? }
+end
+```
 
-# Require authentication
-config.authorize_with = -> { current_user.present? }
+### HTTP basic auth
 
-# Require admin role
-config.authorize_with = -> { current_user&.admin? }
+```ruby
+config.authorize_with = -> {
+  authenticate_or_request_with_http_basic("Job Harbor") do |user, password|
+    ActiveSupport::SecurityUtils.secure_compare(user, Rails.application.credentials.job_harbor_user!) &
+      ActiveSupport::SecurityUtils.secure_compare(password, Rails.application.credentials.job_harbor_password!)
+  end
+}
+```
 
-# Use Pundit or similar
+The bang readers raise `KeyError` when a credential is missing, so an unset credential
+can never be matched by empty basic-auth credentials.
+
+### Devise
+
+```ruby
+config.authorize_with = -> {
+  authenticate_user!
+  current_user.admin?
+}
+```
+
+### Rails 8 authentication generator
+
+The dashboard inherits your `ApplicationController`, so the generated `Authentication`
+concern already requires a session before this rule runs:
+
+```ruby
+config.authorize_with = -> { Current.user&.admin? }
+```
+
+The dashboard is an isolated engine, so the generated concern's bare
+`redirect_to new_session_path` resolves against the engine's routes and raises
+`ActionController::UrlGenerationError` for visitors without a session. Point it at the
+host's routes instead, in your `Authentication` concern:
+
+```ruby
+def request_authentication
+  session[:return_to_after_authenticating] = request.url
+  redirect_to main_app.new_session_path
+end
+```
+
+Or leave the concern alone and override it for the dashboard only:
+
+```ruby
+# config/initializers/job_harbor.rb
+Rails.application.config.to_prepare do
+  JobHarbor::ApplicationController.class_eval do
+    private
+
+    def request_authentication
+      session[:return_to_after_authenticating] = request.url
+      redirect_to main_app.new_session_path
+    end
+  end
+end
+```
+
+`main_app.new_session_path` from inside the engine is covered by the gem's tests; the
+generated concern and the `to_prepare` override themselves are not exercised against a
+real Rails 8 generated app.
+
+### Pundit or similar
+
+```ruby
 config.authorize_with = -> { authorize(:job_harbor, :manage?) }
 ```
+
+### When access is denied
+
+If the rule redirects or halts on its own (Devise's `authenticate_user!` throws to
+Warden, whose failure app redirects), that response is used as-is. Pundit's `authorize` raises `Pundit::NotAuthorizedError` instead
+of returning false, so handle it with a `rescue_from` in your `ApplicationController`.
+Without one it surfaces as a 500.
+
+When the rule returns false, browser requests are redirected to your app's root path with an "Admin access required."
+alert. If your app has no root route, or the request is not HTML, the response is
+`403 Forbidden`.
 
 ## Requirements
 
