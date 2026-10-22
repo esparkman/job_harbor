@@ -51,12 +51,7 @@ module JobHarbor
     end
 
     def finished_jobs_count
-      # Count jobs finished in the last 24 hours
-      if SolidQueue::Job.column_names.include?("finished_at")
-        SolidQueue::Job.where("finished_at > ?", 24.hours.ago).count
-      else
-        0
-      end
+      SolidQueue::Job.where("finished_at > ?", 24.hours.ago).count
     end
 
     def active_workers_count
@@ -64,19 +59,11 @@ module JobHarbor
     end
 
     def queues_count_calc
-      SolidQueue::Queue.count
-    rescue
-      # Fallback: count unique queue names from jobs
       SolidQueue::Job.distinct.count(:queue_name)
     end
 
     def calculate_throughput
-      # Jobs finished in the last hour
-      if SolidQueue::Job.column_names.include?("finished_at")
-        SolidQueue::Job.where("finished_at > ?", 1.hour.ago).count
-      else
-        0
-      end
+      SolidQueue::Job.where("finished_at > ?", 1.hour.ago).count
     end
 
     def fetch_recent_failures
