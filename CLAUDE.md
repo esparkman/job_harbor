@@ -67,6 +67,7 @@ bin/rails db:test:prepare test              # Run all tests
 bin/rails test test/models/foo_test.rb      # Single test file
 bin/rails test test/models/foo_test.rb:42   # Single test by line number
 ```
+Concurrent local runs share `test/dummy/storage/test.sqlite3`, so `test/test_helper.rb` takes a lock (`test/dummy/tmp/test-suite.lock`) and a second run prints "Waiting for another test run to finish…" and waits its turn.
 
 ### Linting
 ```bash

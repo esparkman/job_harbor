@@ -1,3 +1,12 @@
+# Serialize runs: they share one SQLite file and reload the SQ schema on boot.
+require "fileutils"
+FileUtils.mkdir_p(File.expand_path("dummy/tmp", __dir__))
+TEST_SUITE_LOCK = File.open(File.expand_path("dummy/tmp/test-suite.lock", __dir__), File::RDWR | File::CREAT)
+unless TEST_SUITE_LOCK.flock(File::LOCK_EX | File::LOCK_NB)
+  $stderr.puts "Waiting for another test run to finish (lock: #{TEST_SUITE_LOCK.path})…"
+  TEST_SUITE_LOCK.flock(File::LOCK_EX)
+end
+
 # Configure Rails Environment
 ENV["RAILS_ENV"] = "test"
 
