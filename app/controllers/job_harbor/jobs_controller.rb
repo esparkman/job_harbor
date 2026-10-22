@@ -51,12 +51,13 @@ module JobHarbor
     end
 
     def discard
-      if @job.can_discard?
-        perform_discard(@job)
+      if @job.can_discard? && @job.discard
         redirect_to jobs_path(status: params[:return_status]), notice: "Job has been discarded."
       else
         redirect_to job_path(@job), alert: "This job cannot be discarded."
       end
+    rescue SolidQueue::Execution::UndiscardableError
+      redirect_to job_path(@job), alert: "This job cannot be discarded."
     end
 
     def retry_all
@@ -109,17 +110,6 @@ module JobHarbor
       failed_execution.retry
     end
 
-    def perform_discard(job)
-      # Remove from any execution tables
-      SolidQueue::FailedExecution.where(job_id: job.id).delete_all
-      SolidQueue::BlockedExecution.where(job_id: job.id).delete_all
-      SolidQueue::ScheduledExecution.where(job_id: job.id).delete_all
-      SolidQueue::ReadyExecution.where(job_id: job.id).delete_all
-
-      # Mark job as finished (discarded)
-      SolidQueue::Job.where(id: job.id).update_all(finished_at: Time.current)
-    end
-
     # Nil for tabs without bulk actions.
     def bulk_scope(status)
       executions = case status
@@ -158,10 +148,11 @@ module JobHarbor
       return 0 unless scope
 
       executions = status == "failed" ? SolidQueue::FailedExecution : SolidQueue::BlockedExecution
-      job_ids = scope.pluck(:id)
-      executions.where(job_id: job_ids).delete_all
-      SolidQueue::Job.where(id: job_ids).update_all(finished_at: Time.current)
-      job_ids.size
+      scope.in_batches(of: BULK_BATCH_SIZE).sum do |jobs|
+        ids = jobs.ids
+        executions.discard_all_from_jobs(jobs)
+        ids.size - SolidQueue::Job.where(id: ids).count
+      end
     end
   end
 end
