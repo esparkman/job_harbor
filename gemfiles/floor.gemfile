@@ -1,0 +1,12 @@
+source "https://rubygems.org"
+
+gemspec path: ".."
+
+# Oldest supported minor of each dependency; CI tests the newest patch of each.
+gem "rails", "~> 8.1.0"
+gem "solid_queue", "~> 1.0.0"
+gem "view_component", "~> 4.1.0"
+
+gem "puma"
+gem "sqlite3"
+gem "propshaft"

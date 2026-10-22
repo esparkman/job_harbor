@@ -1,0 +1,8 @@
+source "https://rubygems.org"
+
+gemspec path: ".."
+
+# No pins and no lockfile: this lane picks up new releases on every run.
+gem "puma"
+gem "sqlite3"
+gem "propshaft"
