@@ -31,6 +31,11 @@ Earlier releases are documented in git history and GitHub releases.
 - The engine's maintainer-only Tailwind rake tasks no longer load into host apps (they defined helper methods on Object).
 - A rule that redirects or renders itself and then returns false no longer raises `DoubleRenderError`.
 - The engine failed to load on Ruby 4.0 because `ostruct` is no longer a default gem. Pagination now uses a `PageInfo` value object instead of `OpenStruct`.
+- Confirmation dialogs on Discard, Discard All, and Retry All never appeared, so the buttons acted immediately. The message now sits on the form and the layout shows a browser confirm before it submits.
+- "Retry All" and "Discard All" on a filtered list acted on every failed job, ignoring the class and queue filters. They now act only on the jobs the list shows, and the buttons and confirmations say how many ("Retry 3 failed jobs").
+- Retry All ran about nine queries per job. It now uses Solid Queue's own bulk retry in batches of 500. Like Solid Queue's `retry_all`, it no longer resets each job's execution counters the way retrying a single job does, so a bulk-retried job keeps its attempt count toward `retry_on` limits.
+- The Blocked tab had no Discard All button even though the endpoint existed. It now shows "Discard N blocked jobs".
+- Notices said "1 jobs discarded." and "1 jobs queued for retry."; they now pluralize correctly.
 
 ### Internal
 

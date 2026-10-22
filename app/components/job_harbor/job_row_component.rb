@@ -102,7 +102,7 @@ module JobHarbor
       return unless @job.can_discard?
 
       button_to "Discard", discard_job_path(@job), method: :delete, class: "btn btn-destructive btn-xs",
-        data: { confirm: "Are you sure you want to discard this job?" }
+        form: { data: { confirm: "Are you sure you want to discard this job?" } }
     end
   end
 end
