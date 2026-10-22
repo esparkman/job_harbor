@@ -1,5 +1,13 @@
 require "test_helper"
 
+class RefusedReportJob < ReportJob
+  before_enqueue { throw :abort }
+end
+
+class RefusedNewsletterJob < NewsletterJob
+  before_enqueue { throw :abort }
+end
+
 class RecurringTaskActionsTest < ActionDispatch::IntegrationTest
   setup do
     freeze_time
@@ -43,17 +51,50 @@ class RecurringTaskActionsTest < ActionDispatch::IntegrationTest
     assert_select "tbody a[href=?]", "/job_harbor/jobs/#{job.id}", text: job.id.to_s
   end
 
-  # Flash claims success though nothing was enqueued (backlog #15).
-  test "operator clicks Run Now twice in the same second and only one job is enqueued (flash still claims success)" do
+  test "operator clicks Run Now twice in the same second, is told the second click enqueued nothing, and only one job exists" do
     post "/job_harbor/recurring_tasks/#{@nightly.id}/enqueue_now"
 
-    assert_no_difference -> { SolidQueue::Job.count } do
+    assert_no_difference [ -> { SolidQueue::Job.count }, -> { SolidQueue::RecurringExecution.count } ] do
       post "/job_harbor/recurring_tasks/#{@nightly.id}/enqueue_now"
     end
 
+    assert_redirected_to "/job_harbor/recurring_tasks/#{@nightly.id}"
     follow_redirect!
-    assert_select ".alert-success", text: "Task 'nightly_report' has been enqueued."
+    assert_select ".alert-success", count: 0
+    assert_select ".alert-error", text: "Task 'nightly_report' was not enqueued. It may have just run, or the job refused to enqueue; check the logs."
     assert_select ".info-line", text: /Total Executions\s*1\b/
+  end
+
+  test "operator clicks Run Now on a task whose job refuses to enqueue and is told nothing was enqueued" do
+    task = SolidQueue::RecurringTask.create!(key: "refused_report", schedule: "every day at 3am", class_name: "RefusedReportJob")
+
+    post_refused = -> do
+      assert_no_difference [ -> { SolidQueue::Job.count }, -> { SolidQueue::RecurringExecution.count } ] do
+        post "/job_harbor/recurring_tasks/#{task.id}/enqueue_now"
+      end
+    end
+    # Solid Queue 1.0.x raises on a halted job and the dashboard reports it; 1.7 returns the job unraised.
+    if Gem::Version.new(SolidQueue::VERSION) < Gem::Version.new("1.1")
+      assert_error_reported(ActiveRecord::NotNullViolation, &post_refused)
+    else
+      post_refused.call
+    end
+
+    assert_redirected_to "/job_harbor/recurring_tasks/#{task.id}"
+    follow_redirect!
+    assert_select ".alert-success", count: 0
+    assert_select ".alert-error", text: "Task 'refused_report' was not enqueued. It may have just run, or the job refused to enqueue; check the logs."
+  end
+
+  test "operator clicks Run Now on a task whose job is not on Solid Queue and refuses to enqueue and is told nothing was enqueued" do
+    task = SolidQueue::RecurringTask.create!(key: "refused_newsletter", schedule: "every day at 3am", class_name: "RefusedNewsletterJob")
+
+    post "/job_harbor/recurring_tasks/#{task.id}/enqueue_now"
+
+    assert_redirected_to "/job_harbor/recurring_tasks/#{task.id}"
+    follow_redirect!
+    assert_select ".alert-success", count: 0
+    assert_select ".alert-error", text: /was not enqueued/
   end
 
   test "operator clicks Run Now for a task that was removed and lands on Recurring Tasks with a notice" do

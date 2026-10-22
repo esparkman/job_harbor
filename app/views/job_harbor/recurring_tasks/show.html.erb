@@ -52,14 +52,14 @@
       <div class="info-line">
         <span class="info-line-label">Total Executions</span>
         <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @recent_executions.count %></span>
+        <span class="info-line-value"><%= @executions_count %></span>
       </div>
 
-      <% if @recent_executions.any? %>
+      <% if @last_run_at %>
         <div class="info-line">
           <span class="info-line-label">Last Run</span>
           <span class="info-line-separator"></span>
-          <span class="info-line-value"><%= @recent_executions.first.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
+          <span class="info-line-value"><%= @last_run_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
         </div>
       <% end %>
     </div>
@@ -89,7 +89,7 @@
                   <span class="text-muted-foreground">&mdash;</span>
                 <% end %>
               </td>
-              <td class="text-sm"><%= execution.created_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+              <td class="text-sm"><%= execution.run_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
             </tr>
           <% end %>
         </tbody>

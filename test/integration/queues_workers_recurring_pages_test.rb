@@ -220,6 +220,34 @@ class RecurringTasksPagesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "operator opens a task with 25 executions, sees the total of 25, and the list shows the 20 most recent" do
+    25.times { |i| @nightly.enqueue(at: Time.utc(2026, 1, 1) + i.days) }
+
+    get "/job_harbor/recurring_tasks/#{@nightly.id}"
+
+    assert_select ".info-line", text: /Total Executions\s*25\b/
+    assert_select "tbody tr", count: 20
+    assert_select "tbody td", text: "2026-01-25 00:00:00"
+    assert_select "tbody td", text: "2026-01-06 00:00:00"
+    assert_select "tbody td", text: "2026-01-05 00:00:00", count: 0
+  end
+
+  test "operator opens a task and sees when each run was scheduled for, not when the record was written" do
+    travel_to Time.utc(2026, 3, 10, 12, 0, 0) do
+      @nightly.enqueue(at: Time.utc(2026, 3, 1, 3, 0, 0))
+      @nightly.enqueue(at: Time.utc(2026, 3, 5, 3, 0, 0))
+    end
+
+    travel_to Time.utc(2026, 3, 20, 12, 0, 0) do
+      get "/job_harbor/recurring_tasks/#{@nightly.id}"
+    end
+
+    assert_select ".info-line", text: /Last Run\s*2026-03-05 03:00:00 UTC/
+    assert_select "tbody td", text: "2026-03-05 03:00:00"
+    assert_select "tbody td", text: "2026-03-01 03:00:00"
+    assert_select "tbody td", text: /2026-03-10/, count: 0
+  end
+
   test "operator opens a recurring task that has never run and sees zero executions" do
     get "/job_harbor/recurring_tasks/#{@cleanup.id}"
 

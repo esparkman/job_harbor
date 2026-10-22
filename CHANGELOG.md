@@ -39,6 +39,9 @@ Earlier releases are documented in git history and GitHub releases.
 - Queue pages paginated before filtering by queue, so pages came up short or empty and totals counted every queue. They now paginate within the queue. Their job rows are the same as on the Jobs page, so Discard and the running duration show there too, and queues show a Blocked count.
 - Pausing a queue twice (a double-submit or a stale page) raised a database error. Pause and resume now go through Solid Queue's own queue API.
 - Notices said "1 jobs discarded." and "1 jobs queued for retry."; they now pluralize correctly.
+- Run Now always said "Task '...' has been enqueued." even when nothing was enqueued: a second click in the same second, or a job that refuses to enqueue. It now shows an alert saying the task was not enqueued, and no longer shows Solid Queue's exception text in the flash.
+- A recurring task's "Total Executions" stopped counting at 20, the size of the Recent Executions list. It now counts every execution.
+- "Last Run" and "Run At" on a recurring task showed when the record was written. They now show the time the execution was scheduled for, and the list is ordered by it.
 
 ### Internal
 
