@@ -30,11 +30,12 @@ module JobHarbor
     private
 
     def stats
-      content_tag(:div, class: "grid grid-cols-3 gap-4 mb-4") do
+      content_tag(:div, class: "grid grid-cols-4 gap-4 mb-4") do
         safe_join([
           stat("Pending", @queue.pending_count),
           stat("Scheduled", @queue.scheduled_count),
-          stat("In Progress", @queue.in_progress_count)
+          stat("In Progress", @queue.in_progress_count),
+          stat("Blocked", @queue.blocked_count)
         ])
       end
     end

@@ -13,20 +13,19 @@ module JobHarbor
       @pagy, @jobs = JobPresenter.all_with_status(
         nil,
         page: params[:page],
-        per_page: sq_config.jobs_per_page
+        per_page: sq_config.jobs_per_page,
+        queue_name: @queue.name
       )
-      # Filter to only jobs in this queue
-      @jobs = @jobs.select { |j| j.queue_name == @queue.name }
       set_page_title "Queue: #{@queue.name}"
     end
 
     def pause
-      @queue.pause!
+      @queue.pause
       redirect_to queues_path, notice: "Queue '#{@queue.name}' has been paused."
     end
 
     def resume
-      @queue.resume!
+      @queue.resume
       redirect_to queues_path, notice: "Queue '#{@queue.name}' has been resumed."
     end
 

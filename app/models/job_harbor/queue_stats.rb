@@ -33,24 +33,28 @@ module JobHarbor
         .count
     end
 
-    def total_count
-      pending_count + scheduled_count + in_progress_count + failed_count
+    def blocked_count
+      SolidQueue::BlockedExecution.where(queue_name: @name).count
     end
 
-    def paused?
-      SolidQueue::Pause.exists?(queue_name: @name)
+    delegate :paused?, to: :solid_queue
+
+    def pause
+      solid_queue.pause
     end
 
-    def pause!
-      SolidQueue::Pause.create!(queue_name: @name) unless paused?
-    end
-
-    def resume!
-      SolidQueue::Pause.where(queue_name: @name).delete_all
+    def resume
+      solid_queue.resume
     end
 
     def to_param
       @name
+    end
+
+    private
+
+    def solid_queue
+      @solid_queue ||= SolidQueue::Queue.find_by_name(@name)
     end
 
     class << self
@@ -65,12 +69,11 @@ module JobHarbor
       private
 
       def queue_names
-        # Get all unique queue names from jobs and ready executions
+        # Every queue that has a job, plus queues that are paused before any job arrives
         job_queues = SolidQueue::Job.distinct.pluck(:queue_name)
-        ready_queues = SolidQueue::ReadyExecution.distinct.pluck(:queue_name)
         paused_queues = SolidQueue::Pause.distinct.pluck(:queue_name)
 
-        (job_queues + ready_queues + paused_queues).uniq.compact.sort
+        (job_queues + paused_queues).uniq.compact.sort
       end
     end
   end

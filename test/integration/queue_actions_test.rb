@@ -38,6 +38,19 @@ class QueueActionsTest < ActionDispatch::IntegrationTest
     assert_queue_card_state "default", "Paused"
   end
 
+  test "two pause submits racing past the paused check leave one Pause row and no error" do
+    SolidQueue::Pause.create!(queue_name: "default")
+
+    with_racing_pause_check do
+      assert_no_difference -> { SolidQueue::Pause.where(queue_name: "default").count } do
+        post "/job_harbor/queues/default/pause"
+      end
+    end
+
+    assert_redirected_to "/job_harbor/queues"
+    assert_equal 1, SolidQueue::Pause.where(queue_name: "default").count
+  end
+
   test "operator resumes a paused queue from its page and it goes back to active" do
     SolidQueue::Pause.create!(queue_name: "default")
 
@@ -70,6 +83,14 @@ class QueueActionsTest < ActionDispatch::IntegrationTest
   end
 
   private
+    # Simulates a racing check-then-create: the existence check misses a pause that's already there.
+    def with_racing_pause_check
+      SolidQueue::Pause.define_singleton_method(:exists?) { |*| false }
+      yield
+    ensure
+      SolidQueue::Pause.singleton_class.remove_method(:exists?)
+    end
+
     def assert_queue_card_state(name, state)
       card = css_select(".card").find { |c| c.at_css("a.card-title")&.text&.strip == name }
       assert card, "Operator expected a card for the '#{name}' queue"
