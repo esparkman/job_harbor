@@ -5,10 +5,6 @@ echo "==> Running RuboCop..."
 bin/rubocop
 
 echo ""
-echo "==> Preparing test database..."
-bin/rails db:test:prepare
-
-echo ""
 echo "==> Running tests..."
 bin/rails test
 
