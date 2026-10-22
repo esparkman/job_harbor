@@ -16,6 +16,85 @@ if ActiveSupport::TestCase.respond_to?(:fixture_paths=)
   ActiveSupport::TestCase.fixtures :all
 end
 
+# Load after rails/test_help so maintain_test_schema! can't wipe these tables.
+module SolidQueueTestSchema
+  PATH = File.join(Gem.loaded_specs["solid_queue"].full_gem_path,
+    "lib/generators/solid_queue/install/templates/db/queue_schema.rb")
+
+  def self.load!
+    unless SolidQueue::Record.connection_pool.equal?(ActiveRecord::Base.connection_pool)
+      raise "SolidQueue::Record has its own connects_to database; load #{PATH} into that database instead"
+    end
+
+    ActiveRecord::Migration.suppress_messages { load PATH }
+  end
+end
+
+SolidQueueTestSchema.load!
+
+class PaymentGatewayError < StandardError; end
+
+class ReportJob < ActiveJob::Base
+  # Recurring tasks only record a RecurringExecution when the job runs on Solid Queue.
+  self.queue_adapter = :solid_queue
+
+  def perform(*) = nil
+end
+
+class NewsletterJob < ActiveJob::Base
+  def perform(*) = nil
+end
+
+class FlakyPaymentJob < ActiveJob::Base
+  def perform(order_id)
+    raise PaymentGatewayError, "Card declined for order #{order_id}"
+  end
+end
+
+class ThrottledImportJob < ActiveJob::Base
+  limits_concurrency key: ->(account) { account }
+
+  def perform(*) = nil
+end
+
+module SolidQueueTestHelper
+  def enqueue_job(job_class, *arguments, queue: "default", at: Time.current)
+    active_job = job_class.new(*arguments)
+    active_job.queue_name = queue
+    SolidQueue::Job.enqueue(active_job, scheduled_at: at)
+  end
+
+  def register_worker(name:, hostname: "harbor-1", pid: 4242, heartbeat_at: Time.current)
+    SolidQueue::Process.create!(kind: "Worker", name: name, hostname: hostname, pid: pid, last_heartbeat_at: heartbeat_at)
+  end
+
+  def claim_job(job, worker:)
+    SolidQueue::ClaimedExecution.claiming([ job.id ], worker.id) do
+      SolidQueue::ReadyExecution.where(job_id: job.id).delete_all
+    end.first
+  end
+
+  def finish_job(job, worker:)
+    claim_job(job, worker: worker).perform
+    job.reload
+  end
+
+  def fail_job(job, worker:)
+    assert_raises(PaymentGatewayError) { claim_job(job, worker: worker).perform }
+    job.reload
+  end
+
+  def assert_stat_card(label, value)
+    card = css_select(".stat-card").find { |c| c.at_css(".stat-card-label").text.strip == label }
+    assert card, "Operator expected a '#{label}' stat card but the page has none"
+    assert_equal value.to_s, card.at_css(".stat-card-value").text.strip, "'#{label}' stat card shows the wrong number"
+  end
+end
+
+class ActionDispatch::IntegrationTest
+  include SolidQueueTestHelper
+end
+
 # ViewComponent test support
 class ViewComponentTestCase < ActiveSupport::TestCase
   include ViewComponent::TestHelpers
