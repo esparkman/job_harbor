@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "ostruct"
-
 module JobHarbor
   class JobPresenter
     include ActionView::Helpers::DateHelper
@@ -240,15 +238,7 @@ module JobHarbor
         total = scope.count
 
         jobs = scope.limit(per_page).offset(offset).map { |job| new(job) }
-        pagy = OpenStruct.new(
-          page: page,
-          pages: (total.to_f / per_page).ceil,
-          count: total,
-          prev: page > 1 ? page - 1 : nil,
-          next: page < (total.to_f / per_page).ceil ? page + 1 : nil
-        )
-
-        [ pagy, jobs ]
+        [ PageInfo.new(page: page, per_page: per_page, count: total), jobs ]
       end
     end
   end

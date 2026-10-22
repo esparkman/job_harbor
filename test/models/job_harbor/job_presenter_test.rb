@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require "ostruct"
 
 module JobHarbor
   class JobPresenterTest < ActiveSupport::TestCase
@@ -53,6 +52,24 @@ module JobHarbor
       assert_equal "(x3)", presenter.retry_badge
     end
 
+    test "all_with_status page info reports page, pages, count, prev and next across first, middle and last page" do
+      5.times { |i| SolidQueue::Job.create!(queue_name: "default", class_name: "PageJob#{i}", arguments: "{}") }
+
+      first, first_jobs = JobPresenter.all_with_status(nil, page: 1, per_page: 2)
+      assert_equal [ 1, 3, 5, nil, 2 ], [ first.page, first.pages, first.count, first.prev, first.next ]
+      assert_equal 2, first_jobs.size
+
+      middle, = JobPresenter.all_with_status(nil, page: 2, per_page: 2)
+      assert_equal [ 2, 3, 5, 1, 3 ], [ middle.page, middle.pages, middle.count, middle.prev, middle.next ]
+
+      last, last_jobs = JobPresenter.all_with_status(nil, page: 3, per_page: 2)
+      assert_equal [ 3, 3, 5, 2, nil ], [ last.page, last.pages, last.count, last.prev, last.next ]
+      assert_equal 1, last_jobs.size
+    end
+
+    MockJob = Struct.new(:id, :class_name, :queue_name, :arguments, :created_at, :updated_at,
+                         :scheduled_at, :finished_at, :priority, :active_job_id)
+
     private
 
     def mock_job(attributes = {})
@@ -68,7 +85,7 @@ module JobHarbor
         priority: 0,
         active_job_id: SecureRandom.uuid
       }
-      OpenStruct.new(defaults.merge(attributes))
+      MockJob.new(**defaults.merge(attributes))
     end
   end
 end
