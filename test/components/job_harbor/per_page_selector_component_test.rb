@@ -11,6 +11,14 @@ module JobHarbor
       assert_includes @rendered, "Show"
     end
 
+    test "select carries the class the inline script binds to, with no leftover Stimulus action or inline style" do
+      render_inline(PerPageSelectorComponent.new(current_per_page: 25, current_path: "/jobs"))
+
+      assert_includes @rendered, "sqd-per-page-select"
+      refute_includes @rendered, "data-action"
+      refute_includes @rendered, "style="
+    end
+
     test "includes all page size options" do
       render_inline(PerPageSelectorComponent.new(current_per_page: 25, current_path: "/jobs"))
 

@@ -21,11 +21,11 @@ module JobHarbor
       assert_includes @rendered, "5m"
     end
 
-    test "has data-action attribute for change handler" do
+    test "select carries the class the inline refresh script binds to, with no leftover Stimulus action" do
       render_inline(RefreshSelectorComponent.new)
 
-      assert_includes @rendered, "data-action="
-      assert_includes @rendered, "change"
+      assert_includes @rendered, "sqd-refresh-select"
+      refute_includes @rendered, "data-action"
     end
 
     test "accepts default_interval parameter" do

@@ -110,12 +110,13 @@ JobHarbor.configure do |config|
   # Jobs per page (default: 25)
   config.jobs_per_page = 25
 
-  # Auto-refresh polling interval in seconds (default: 5)
-  config.poll_interval = 5
+  # Auto-refresh polling interval in seconds (default: 30)
+  # The selector offers Off, 15, 30, 60 and 300; any other value is added as its own option
+  config.poll_interval = 30
 
   # Toggle features on/off
   config.enable_recurring_tasks = true   # default: true
-  config.enable_real_time_updates = true # default: true
+  config.enable_real_time_updates = true # default: true (false removes auto-refresh entirely)
   config.enable_failure_stats = true     # default: true
   config.enable_charts = true            # default: true
 

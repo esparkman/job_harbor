@@ -8,12 +8,13 @@
   <%= csp_meta_tag %>
   <%= stylesheet_link_tag "job_harbor/application", media: "all" %>
 </head>
+<% auto_refresh = sq_config.enable_real_time_updates && !content_for?(:no_refresh) %>
 <body class="min-h-screen">
   <%# === Top Navbar === %>
   <nav class="navbar">
     <%# Logo %>
-    <a href="<%= root_path %>" class="flex items-center gap-2 pl-1 text-xl font-bold tracking-tight no-underline" style="color: hsl(var(--foreground));">
-      <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: hsl(var(--primary));">
+    <a href="<%= root_path %>" class="flex items-center gap-2 pl-1 text-xl font-bold tracking-tight no-underline text-foreground">
+      <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="5" r="2.5"/>
         <line x1="12" y1="7.5" x2="12" y2="19"/>
         <path d="M5 12c0-3 3.5-4 7-4s7 1 7 4"/>
@@ -62,7 +63,9 @@
 
     <%# Right side: refresh + theme + back to app %>
     <div class="ml-auto flex items-center gap-2">
-      <%= render JobHarbor::RefreshSelectorComponent.new %>
+      <% if auto_refresh %>
+        <%= render JobHarbor::RefreshSelectorComponent.new %>
+      <% end %>
       <%= render JobHarbor::ThemeToggleComponent.new %>
       <a href="<%= return_to_app_path %>" class="btn btn-outline btn-sm" title="<%= return_to_app_label %>">
         <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -97,11 +100,13 @@
     <% end %>
 
     <%# === Main Content === %>
-    <%= yield %>
+    <div data-refresh-target="content">
+      <%= yield %>
+    </div>
   </div>
 
   <%# === Theme Toggle Script === %>
-  <script>
+  <%= javascript_tag nonce: true do %>
     (function() {
       var STORAGE_KEY = 'jh-theme';
 
@@ -145,41 +150,54 @@
         }
       });
     })();
-  </script>
+  <% end %>
 
   <%# === Auto-Refresh Script === %>
-  <script>
+  <% if auto_refresh %>
+  <%= javascript_tag nonce: true do %>
     (function() {
       var STORAGE_KEY = 'jh-refresh-interval';
       var refreshTimer = null;
       var currentInterval = 0;
+      var inFlight = false;
 
       function getStoredInterval() {
         var stored = localStorage.getItem(STORAGE_KEY);
         if (stored !== null) return parseInt(stored, 10);
-        return <%= sq_config.enable_real_time_updates ? sq_config.poll_interval : 0 %>;
+        return <%= sq_config.poll_interval %>;
       }
 
       function setStoredInterval(interval) {
         localStorage.setItem(STORAGE_KEY, interval);
       }
 
+      // Leave the page alone while the operator is using it: focus inside the content, or selected text
+      function operatorBusy(content) {
+        var active = document.activeElement;
+        if (active && active !== document.body && content.contains(active)) return true;
+        var selection = window.getSelection();
+        return !!selection && selection.toString() !== '';
+      }
+
       function refreshContent() {
-        var url = window.location.href;
-        fetch(url, {
+        var currentContent = document.querySelector('[data-refresh-target="content"]');
+        if (inFlight || !currentContent || operatorBusy(currentContent)) return;
+        inFlight = true;
+        fetch(window.location.href, {
           headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(function(r) { return r.text(); })
+        .then(function(r) { return r.ok && !r.redirected ? r.text() : null; })
         .then(function(html) {
-          var parser = new DOMParser();
-          var doc = parser.parseFromString(html, 'text/html');
+          if (html === null) return;
+          var doc = new DOMParser().parseFromString(html, 'text/html');
           var newContent = doc.querySelector('[data-refresh-target="content"]');
-          var currentContent = document.querySelector('[data-refresh-target="content"]');
-          if (newContent && currentContent) {
-            currentContent.innerHTML = newContent.innerHTML;
-          }
+          // The operator may have started interacting while the request was out
+          if (!newContent || operatorBusy(currentContent)) return;
+          currentContent.innerHTML = newContent.innerHTML;
+          document.dispatchEvent(new CustomEvent('jh:content-refreshed'));
         })
-        .catch(function(e) { console.error('JH refresh error:', e); });
+        .catch(function(e) { console.error('JH refresh error:', e); })
+        .then(function() { inFlight = false; });
       }
 
       function startPolling(s) {
@@ -221,10 +239,11 @@
         init();
       }
     })();
-  </script>
+  <% end %>
+  <% end %>
 
   <%# === Per-Page & Filter Selector Script === %>
-  <script>
+  <%= javascript_tag nonce: true do %>
     (function() {
       document.addEventListener('change', function(e) {
         var perPage = e.target.closest('.sqd-per-page-select');
@@ -240,7 +259,7 @@
         }
       });
     })();
-  </script>
+  <% end %>
 
   <%# === Confirm Dialog Script === %>
   <%= javascript_tag nonce: true do %>
@@ -253,7 +272,7 @@
   <% end %>
 
   <%# === Chart Rendering Script === %>
-  <script>
+  <%= javascript_tag nonce: true do %>
     (function() {
       function initChart() {
         var container = document.querySelector('.sqd-chart');
@@ -333,7 +352,9 @@
       document.addEventListener('click', function(e) {
         if (e.target.closest('.sqd-theme-toggle')) setTimeout(initChart, 100);
       });
+
+      document.addEventListener('jh:content-refreshed', initChart);
     })();
-  </script>
+  <% end %>
 </body>
 </html>
