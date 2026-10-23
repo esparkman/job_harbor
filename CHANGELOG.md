@@ -28,6 +28,8 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Fixed
 
+- Clicking "Run Now" on a recurring task twice in quick succession enqueued the job twice (for jobs on the Solid Queue adapter). Run Now now records the run at whole-second precision, so clicks within the same second collapse into one and the second click is told nothing was enqueued.
+- "Run Now" on a recurring task whose job class isn't defined in the app returned a 500 (`NoMethodError`). It now shows "Task 'x' can't run: X isn't a job class defined in this app." and enqueues nothing.
 - The Workers page now shows the queues each worker polls (they never rendered), labels every process by kind (Worker, Dispatcher, Scheduler, Supervisor), and marks a process whose heartbeat has gone quiet "Stale" instead of "Blocked". The "Workers" count in the navigation and the dashboard's "Active Workers" card now agree: both count live processes of kind Worker. "Live" now follows Solid Queue's `process_alive_threshold` (5 minutes by default) everywhere instead of a hard-coded five minutes.
 - A denied request on a host app with no root route raised `NoMethodError` and returned 500. It now returns 403, as do denied non-HTML requests.
 - The engine's maintainer-only Tailwind rake tasks no longer load into host apps (they defined helper methods on Object).
