@@ -55,7 +55,7 @@ module JobHarbor
     end
 
     def active_workers_count
-      SolidQueue::Process.where("last_heartbeat_at > ?", 5.minutes.ago).count
+      Processes.live_workers.count
     end
 
     def queues_count_calc

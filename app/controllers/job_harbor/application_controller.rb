@@ -32,7 +32,7 @@ module JobHarbor
 
     def nav_counts
       @nav_counts ||= {
-        workers: SolidQueue::Process.where(kind: "Worker").count,
+        workers: Processes.live_workers.count,
         recurring_tasks: recurring_task_count
       }
     end
