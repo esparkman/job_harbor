@@ -41,13 +41,18 @@ module JobHarbor
 
     def interval_select
       content_tag(:select,
-        class: "sqd-refresh-select select",
-        style: "width: 5rem;",
-        data: { action: "change->refresh-selector#change" },
+        class: "sqd-refresh-select select w-20",
         "aria-label": "Auto-refresh interval"
       ) do
-        safe_join(INTERVALS.map { |interval| option_tag(interval) })
+        safe_join(intervals.map { |interval| option_tag(interval) })
       end
+    end
+
+    # A configured poll_interval outside the standard choices gets its own option, so the select never shows a blank.
+    def intervals
+      return INTERVALS if INTERVALS.any? { |interval| interval[:value] == @default_interval }
+
+      (INTERVALS + [ { label: "#{@default_interval}s", value: @default_interval } ]).sort_by { |interval| interval[:value] }
     end
 
     def option_tag(interval)

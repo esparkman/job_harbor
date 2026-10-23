@@ -18,12 +18,12 @@ module JobHarbor
       assert_includes @rendered, 'aria-label="Toggle theme"'
     end
 
-    test "has data-action attribute for JS toggle" do
+    test "is a button the inline theme script can find, with no leftover Stimulus action" do
       render_inline(ThemeToggleComponent.new)
 
-      # HTML entity encodes > as &gt;
-      assert_includes @rendered, "data-action="
-      assert_includes @rendered, "theme-toggle#toggle"
+      assert_includes @rendered, '<button class="sqd-theme-toggle'
+      assert_includes @rendered, 'type="button"'
+      refute_includes @rendered, "data-action"
     end
   end
 end

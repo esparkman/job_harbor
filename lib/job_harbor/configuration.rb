@@ -19,7 +19,7 @@ module JobHarbor
       @jobs_per_page = 25
       @enable_recurring_tasks = true
       @enable_real_time_updates = true
-      @poll_interval = 5
+      @poll_interval = 30
       @enable_failure_stats = true
       @enable_charts = true
       @default_chart_range = "24h"

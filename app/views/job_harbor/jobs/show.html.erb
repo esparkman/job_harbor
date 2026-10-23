@@ -1,3 +1,5 @@
+<%# Reading a backtrace: a poll would reset its scroll position %>
+<% content_for :no_refresh, true %>
 <% content_for :header_actions do %>
   <div class="flex items-center gap-2">
     <% if @job.can_retry? %>
@@ -105,9 +107,9 @@
 </div>
 
 <% if @job.status == "failed" %>
-  <div class="card mt-6" style="border-top: 4px solid rgb(239 68 68);">
+  <div class="card mt-6 border-t-4 border-t-red-500">
     <div class="card-header">
-      <h2 class="card-title" style="color: rgb(239 68 68);">Error Details</h2>
+      <h2 class="card-title text-red-500">Error Details</h2>
     </div>
     <div class="card-content space-y-3">
       <div class="info-line">
@@ -124,7 +126,7 @@
       <% if @job.error_backtrace.present? %>
         <div>
           <div class="text-sm text-muted-foreground mb-1">Backtrace</div>
-          <pre class="code-block" style="max-height: 400px; overflow-y: auto;"><%= @job.error_backtrace %></pre>
+          <pre class="code-block max-h-100 overflow-y-auto"><%= @job.error_backtrace %></pre>
         </div>
       <% end %>
     </div>

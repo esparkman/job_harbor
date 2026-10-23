@@ -15,9 +15,7 @@ module JobHarbor
         safe_join([
           content_tag(:span, "Show", class: "text-sm text-muted-foreground"),
           content_tag(:select,
-            class: "sqd-per-page-select select",
-            style: "width: 5rem;",
-            data: { action: "change->per-page#change" }
+            class: "sqd-per-page-select select w-20"
           ) do
             safe_join(PAGE_SIZES.map { |size| option_tag(size) })
           end

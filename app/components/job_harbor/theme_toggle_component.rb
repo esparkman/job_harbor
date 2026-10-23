@@ -9,8 +9,7 @@ module JobHarbor
       content_tag(:button,
         class: "sqd-theme-toggle btn btn-icon",
         type: "button",
-        aria: { label: "Toggle theme" },
-        data: { action: "click->theme-toggle#toggle" }
+        aria: { label: "Toggle theme" }
       ) do
         safe_join([
           sun_icon,
