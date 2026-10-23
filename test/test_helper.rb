@@ -71,8 +71,12 @@ module SolidQueueTestHelper
     SolidQueue::Job.enqueue(active_job, scheduled_at: at)
   end
 
-  def register_worker(name:, hostname: "harbor-1", pid: 4242, heartbeat_at: Time.current)
-    SolidQueue::Process.create!(kind: "Worker", name: name, hostname: hostname, pid: pid, last_heartbeat_at: heartbeat_at)
+  # Registers a process the way Solid Queue does: a worker records the queues it polls
+  # in metadata as a comma-joined string.
+  def register_worker(name:, hostname: "harbor-1", pid: 4242, heartbeat_at: Time.current, kind: "Worker", queues: nil)
+    metadata = queues ? { queues: queues } : {}
+    SolidQueue::Process.create!(kind: kind, name: name, hostname: hostname, pid: pid,
+      last_heartbeat_at: heartbeat_at, metadata: metadata)
   end
 
   def claim_job(job, worker:)

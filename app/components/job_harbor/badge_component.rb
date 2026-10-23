@@ -2,7 +2,7 @@
 
 module JobHarbor
   class BadgeComponent < ApplicationComponent
-    VALID_STATUSES = %w[pending scheduled in_progress failed finished blocked active paused].freeze
+    VALID_STATUSES = %w[pending scheduled in_progress failed finished blocked active paused stale].freeze
 
     STATUS_COLORS = {
       "pending" => "badge-sky",
@@ -12,7 +12,8 @@ module JobHarbor
       "finished" => "badge-green",
       "blocked" => "badge-zinc",
       "active" => "badge-green",
-      "paused" => "badge-amber"
+      "paused" => "badge-amber",
+      "stale" => "badge-zinc"
     }.freeze
 
     STATUS_CIRCLES = {
@@ -23,7 +24,8 @@ module JobHarbor
       "finished" => "circle-green",
       "blocked" => "circle-zinc",
       "active" => "circle-green",
-      "paused" => "circle-amber"
+      "paused" => "circle-amber",
+      "stale" => "circle-zinc"
     }.freeze
 
     def initialize(status:)

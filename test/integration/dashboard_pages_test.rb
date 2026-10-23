@@ -77,10 +77,10 @@ class DashboardPagesTest < ActionDispatch::IntegrationTest
     assert_includes rows, [ "NewsletterJob", "1", "0", "0.0%" ]
   end
 
-  test "operator sees the registered worker count beside Workers in the navbar" do
+  test "operator sees the live worker count beside Workers in the navbar" do
     get "/job_harbor"
 
-    assert_select "a[href=?] .sqd-nav-badge", "/job_harbor/workers", text: "2"
+    assert_select "a[href=?] .sqd-nav-badge", "/job_harbor/workers", text: "1"
   end
 end
 
