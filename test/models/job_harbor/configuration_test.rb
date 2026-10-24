@@ -31,6 +31,27 @@ module JobHarbor
       end
     end
 
+    test "filter_parameters rejects an array holding something that is not a pattern" do
+      [ [ true ], [ 1 ], [ Object.new ], [ [ :password ] ], [ {} ], [ :password, nil ] ].each do |value|
+        assert_raises(ArgumentError, "#{value.inspect} should be rejected") { @configuration.filter_parameters = value }
+      end
+    end
+
+    test "a rejected array leaves the previous setting in place" do
+      @configuration.filter_parameters = [ :token ]
+      assert_raises(ArgumentError) { @configuration.filter_parameters = [ :password, true ] }
+
+      assert_equal [ :token ], @configuration.filter_parameters
+    end
+
+    test "filter_parameters accepts strings, symbols, regexps and procs together" do
+      list = [ :password, "secret", /token/, ->(key, value) {} ]
+
+      @configuration.filter_parameters = list
+
+      assert_equal list, @configuration.filter_parameters
+    end
+
     test "a rejected value leaves the previous setting in place" do
       @configuration.filter_parameters = [ :token ]
       assert_raises(ArgumentError) { @configuration.filter_parameters = true }

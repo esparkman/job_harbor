@@ -46,7 +46,7 @@ module JobHarbor
         case [ filtered, original ]
         in [ Hash, Hash ]
           filtered.each_key.to_a.each do |key|
-            filtered[key] = restorable_marker?(key, original) ? original[key] : restore_markers(filtered[key], original[key])
+            filtered[key] = restorable_marker?(key, filtered, original) ? original[key] : restore_markers(filtered[key], original[key])
           end
         in [ Array, Array ]
           filtered.each_index { |index| filtered[index] = restore_markers(filtered[index], original[index]) }
@@ -56,9 +56,9 @@ module JobHarbor
         filtered
       end
 
-      # Only the shapes Active Job writes under a marker; anything else is user data that happens to use the key.
-      def restorable_marker?(key, original)
-        return false unless MARKER_KEYS.include?(key) && original.key?(key)
+      # Undo only a whole-value mask on a value shaped as Active Job writes it; a Proc's partial scrub must survive.
+      def restorable_marker?(key, filtered, original)
+        return false unless MARKER_KEYS.include?(key) && original.key?(key) && filtered[key] == MASK
 
         value = original[key]
         value.is_a?(String) || value == true || (value.is_a?(Array) && value.all?(String))

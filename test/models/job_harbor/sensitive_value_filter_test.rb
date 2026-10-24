@@ -28,6 +28,14 @@ module JobHarbor
       assert_equal payload["arguments"][0].except("api_key"), filtered.except("api_key")
     end
 
+    test "a marker value that a host Proc partly scrubbed keeps the scrubbed text" do
+      JobHarbor.configuration.filter_parameters = [ ->(_key, value) { value.gsub!("sk_live_x", "[SCRUBBED]") if value.is_a?(String) } ]
+
+      filtered = SensitiveValueFilter.filter({ "arguments" => [ { "_aj_globalid" => "gid://app/ApiKey/sk_live_x" } ] })
+
+      assert_equal "gid://app/ApiKey/[SCRUBBED]", filtered.dig("arguments", 0, "_aj_globalid")
+    end
+
     test "a user key that merely starts with _aj_ is still masked" do
       JobHarbor.configuration.filter_parameters = [ :secret ]
 

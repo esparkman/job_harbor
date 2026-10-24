@@ -30,11 +30,14 @@ module JobHarbor
       @filter_parameters = nil
     end
 
-    # nil follows the host app's list, an Array replaces it, false shows raw values.
-    # Anything else raises: a stray `true` would otherwise mask nothing while looking protected.
+    FILTER_PATTERN_TYPES = [ String, Symbol, Regexp, Proc ].freeze
+
+    # nil follows the host app's list, an Array of strings, symbols, regexps and procs replaces it, false shows raw values.
+    # Anything else raises: a stray `true` or `[true]` would otherwise mask nothing while looking protected.
     def filter_parameters=(value)
-      unless value.nil? || value == false || value.is_a?(Array)
-        raise ArgumentError, "config.filter_parameters must be nil, false or an Array, got #{value.inspect}"
+      unless value.nil? || value == false || (value.is_a?(Array) && value.all? { |pattern| FILTER_PATTERN_TYPES.any? { |type| type === pattern } })
+        raise ArgumentError,
+          "config.filter_parameters must be nil, false or an Array of Strings, Symbols, Regexps and Procs, got #{value.inspect}"
       end
 
       @filter_parameters = value
