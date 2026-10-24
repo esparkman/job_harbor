@@ -47,23 +47,30 @@ module JobHarbor
       assert_equal "ReportJob", JSON.parse(presenter.formatted_payload)["job_class"]
     end
 
-    test "execution_count is 1 for a job that has not run yet" do
-      assert_equal 1, JobPresenter.new(enqueue_job(ReportJob)).execution_count
+    test "a fresh job is attempt 1 and shows no retry badge" do
+      presenter = JobPresenter.new(enqueue_job(ReportJob))
+
+      assert_equal 0, presenter.serialized_payload["executions"]
+      assert_equal 1, presenter.execution_count
+      assert_nil presenter.retry_badge
     end
 
-    test "execution_count reads the executions the payload records" do
+    test "a job whose payload records one earlier run is attempt 2 and shows (x2)" do
       job = enqueue_job(ReportJob)
-      job.update!(arguments: job.arguments.merge("executions" => 3))
+      job.update!(arguments: job.arguments.merge("executions" => 1))
 
-      assert_equal 3, JobPresenter.new(job).execution_count
+      presenter = JobPresenter.new(job)
+      assert_equal 2, presenter.execution_count
+      assert_equal "(x2)", presenter.retry_badge
     end
 
-    test "retry_badge is nil for a first run and shows the count after retries" do
+    test "a job whose payload records two earlier runs is attempt 3 and shows (x3)" do
       job = enqueue_job(ReportJob)
-      assert_nil JobPresenter.new(job).retry_badge
+      job.update!(arguments: job.arguments.merge("executions" => 2))
 
-      job.update!(arguments: job.arguments.merge("executions" => 3))
-      assert_equal "(x3)", JobPresenter.new(job).retry_badge
+      presenter = JobPresenter.new(job)
+      assert_equal 3, presenter.execution_count
+      assert_equal "(x3)", presenter.retry_badge
     end
 
     test "status names where each job is in its lifecycle" do

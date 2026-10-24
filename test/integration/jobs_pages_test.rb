@@ -158,6 +158,12 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "FlakyPaymentJob", "critical", "Failed" ] ], job_rows
   end
 
+  test "operator searches in lowercase and still finds the job class" do
+    get "/job_harbor/search", params: { q: "flakypayment" }
+
+    assert_equal [ [ "FlakyPaymentJob", "critical", "Failed" ] ], job_rows
+  end
+
   test "operator searches by a job argument and sees every job enqueued with it" do
     get "/job_harbor/search", params: { q: "acme" }
 

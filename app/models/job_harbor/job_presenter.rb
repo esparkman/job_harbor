@@ -72,10 +72,11 @@ module JobHarbor
       @job.claimed_execution&.process&.name
     end
 
+    # Active Job serializes the number of earlier runs, so the attempt is one more.
     def execution_count
       payload = serialized_payload
       executions = payload["executions"] if payload.is_a?(Hash)
-      [ executions.to_i, 1 ].max
+      executions.to_i + 1
     end
 
     def running_duration
@@ -167,7 +168,7 @@ module JobHarbor
       def search_scope(query)
         jobs = SolidQueue::Job
         pattern = "%#{jobs.sanitize_sql_like(query, LIKE_ESCAPE)}%"
-        scope = jobs.where("class_name LIKE :pattern ESCAPE :escape OR arguments LIKE :pattern ESCAPE :escape",
+        scope = jobs.where("LOWER(class_name) LIKE LOWER(:pattern) ESCAPE :escape OR LOWER(arguments) LIKE LOWER(:pattern) ESCAPE :escape",
           pattern: pattern, escape: LIKE_ESCAPE)
         scope = scope.or(jobs.where(id: query)) if query.match?(/\A\d+\z/)
         scope = scope.or(jobs.where(active_job_id: query)) if query.match?(UUID_FORMAT)

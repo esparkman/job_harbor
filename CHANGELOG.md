@@ -23,6 +23,7 @@ Earlier releases are documented in git history and GitHub releases.
 - The default `poll_interval` is now 30 seconds (was 5), one of the choices in the refresh selector, and cuts database load: a dashboard load runs about 90 queries. Set `config.poll_interval = 5` to keep the old rate. A configured interval that isn't one of the standard choices (Off, 15s, 30s, 1m, 5m) now gets its own option instead of leaving the selector blank. With `enable_real_time_updates = false` the dashboard renders no refresh selector and no refresh script, whatever the browser has stored.
 - Job lists order by id (newest first) instead of `created_at`, which Solid Queue's schema doesn't index, so every list no longer sorts in a temporary table.
 - The job page shows the arguments the job was enqueued with, and tucks the full serialized Active Job payload into a "Full payload" block. It used to show the whole payload as the arguments.
+- The retry badge shows the attempt number: a job's stored `executions` counts earlier runs, so a retried job's first retry shows (x2) and a fresh job shows no badge.
 - Search matches a job's ID exactly when the query is all digits, and its Active Job ID exactly when the query is a UUID. It no longer casts the ID to text, which MySQL rejects.
 
 ### Added
@@ -53,7 +54,7 @@ Earlier releases are documented in git history and GitHub releases.
 - Every inline script now carries the host's CSP nonce, and the dashboard no longer uses inline `style` attributes, so it works under a strict `script-src` and `style-src`.
 - Removed dead Stimulus `data-action` attributes from the theme toggle, refresh selector and per-page selector (the dashboard loads no Stimulus).
 - Job lists ran one to five status queries per row (a 100-job page took about 360 queries). They now preload each job's executions and read the status from them: a 100-job page takes 17 queries, and the count no longer grows with the page size.
-- Searching for `%` matched every job, and `_` matched any character. Both are now literal. "Found 1 results" now reads "Found 1 result".
+- Searching for `%` matched every job, and `_` matched any character. Both are now literal. "Found 1 results" now reads "Found 1 result". Search is now case-insensitive on every database (Postgres's `LIKE` was case-sensitive).
 
 ### Internal
 
