@@ -4,14 +4,25 @@ module JobHarbor
   class JobPresenter
     include ActionView::Helpers::DateHelper
 
-    delegate :id, :created_at, :updated_at, :queue_name, :priority,
-             :active_job_id, :arguments, :scheduled_at, :finished_at, :discard,
+    # In precedence order: the first execution a job holds decides its status.
+    EXECUTION_STATUSES = {
+      failed_execution: "failed",
+      claimed_execution: "in_progress",
+      blocked_execution: "blocked",
+      scheduled_execution: "scheduled",
+      ready_execution: "pending"
+    }.freeze
+
+    LIKE_ESCAPE = "!"
+    UUID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
+
+    delegate :id, :created_at, :queue_name, :priority,
+             :active_job_id, :scheduled_at, :finished_at, :discard,
              to: :@job
 
-    def initialize(job, failed_execution: nil, claimed_execution: nil)
+    def initialize(job, failed_execution: nil)
       @job = job
-      @failed_execution = failed_execution
-      @claimed_execution = claimed_execution
+      @failed_execution = failed_execution || job.failed_execution
     end
 
     def class_name
@@ -22,18 +33,23 @@ module JobHarbor
       @status ||= determine_status
     end
 
-    def arguments_preview
-      args = parsed_arguments
-      return "No arguments" if args.empty?
-
-      preview = args.to_json
-      preview.length > 100 ? "#{preview[0..100]}..." : preview
+    # Solid Queue stores the whole serialized Active Job payload, not just the arguments.
+    def serialized_payload
+      @job.arguments
     end
 
-    def parsed_arguments
-      JSON.parse(@job.arguments.to_s)
-    rescue JSON::ParserError
-      @job.arguments
+    def job_arguments
+      payload = serialized_payload
+      arguments = payload["arguments"] if payload.is_a?(Hash)
+      arguments.is_a?(Array) ? arguments : []
+    end
+
+    def formatted_arguments
+      JSON.pretty_generate(job_arguments)
+    end
+
+    def formatted_payload
+      JSON.pretty_generate(serialized_payload)
     end
 
     def error_message
@@ -53,21 +69,19 @@ module JobHarbor
     end
 
     def worker_name
-      @claimed_execution&.process&.name
+      @job.claimed_execution&.process&.name
     end
 
+    # Active Job serializes the number of earlier runs, so the attempt is one more.
     def execution_count
-      args = parsed_arguments
-      return 1 unless args.is_a?(Hash)
-
-      (args["executions"] || args[:executions] || 1).to_i
+      payload = serialized_payload
+      executions = payload["executions"] if payload.is_a?(Hash)
+      executions.to_i + 1
     end
 
     def running_duration
-      return nil unless status == "in_progress"
-
-      claimed = @claimed_execution || SolidQueue::ClaimedExecution.find_by(job_id: @job.id)
-      return nil unless claimed
+      claimed = @job.claimed_execution
+      return nil unless claimed && status == "in_progress"
 
       distance_of_time_in_words(claimed.created_at, Time.current)
     end
@@ -95,15 +109,6 @@ module JobHarbor
       id.to_s
     end
 
-    # ActiveModel compatibility
-    def model_name
-      ActiveModel::Name.new(self.class, nil, "Job")
-    end
-
-    def persisted?
-      true
-    end
-
     private
 
     def parsed_error
@@ -116,64 +121,25 @@ module JobHarbor
     end
 
     def determine_status
-      return "failed" if has_failed_execution?
-      return "in_progress" if has_claimed_execution?
-      return "blocked" if has_blocked_execution?
-      return "scheduled" if has_scheduled_execution?
-      return "pending" if has_ready_execution?
-      return "finished" if @job.finished_at.present?
+      EXECUTION_STATUSES.each do |association, status|
+        return status if execution_for(association)
+      end
 
-      "unknown"
+      @job.finished_at.present? ? "finished" : "unknown"
     end
 
-    def has_failed_execution?
-      @failed_execution.present? || SolidQueue::FailedExecution.exists?(job_id: @job.id)
-    end
-
-    def has_claimed_execution?
-      @claimed_execution.present? || SolidQueue::ClaimedExecution.exists?(job_id: @job.id)
-    end
-
-    def has_blocked_execution?
-      SolidQueue::BlockedExecution.exists?(job_id: @job.id)
-    end
-
-    def has_scheduled_execution?
-      SolidQueue::ScheduledExecution.exists?(job_id: @job.id)
-    end
-
-    def has_ready_execution?
-      SolidQueue::ReadyExecution.exists?(job_id: @job.id)
+    def execution_for(association)
+      association == :failed_execution ? @failed_execution : @job.public_send(association)
     end
 
     class << self
       def find(id)
-        job = SolidQueue::Job.find(id)
-        failed = SolidQueue::FailedExecution.find_by(job_id: id)
-        claimed = SolidQueue::ClaimedExecution.find_by(job_id: id)
-        new(job, failed_execution: failed, claimed_execution: claimed)
+        new(SolidQueue::Job.preload(*EXECUTION_STATUSES.keys).find(id))
       end
 
       def all_with_status(status = nil, page: 1, per_page: 25, class_name: nil, queue_name: nil)
-        jobs = case status&.to_s
-        when "pending"
-          pending_jobs
-        when "scheduled"
-          scheduled_jobs
-        when "in_progress"
-          in_progress_jobs
-        when "failed"
-          failed_jobs
-        when "blocked"
-          blocked_jobs
-        when "finished"
-          finished_jobs
-        else
-          all_jobs
-        end
-
+        jobs = scope_for(status)
         jobs = apply_filters(jobs, class_name: class_name, queue_name: queue_name)
-        jobs = jobs.order(created_at: :desc)
         paginate(jobs, page: page, per_page: per_page)
       end
 
@@ -184,52 +150,29 @@ module JobHarbor
       end
 
       def search(query, page: 1, per_page: 25)
-        jobs = SolidQueue::Job
-          .where("class_name LIKE ? OR arguments LIKE ? OR CAST(id AS TEXT) LIKE ?",
-                 "%#{query}%", "%#{query}%", "%#{query}%")
-          .order(created_at: :desc)
-
-        paginate(jobs, page: page, per_page: per_page)
+        paginate(search_scope(query), page: page, per_page: per_page)
       end
 
       private
 
-      def pending_jobs
-        SolidQueue::Job.joins(
-          "INNER JOIN solid_queue_ready_executions ON solid_queue_ready_executions.job_id = solid_queue_jobs.id"
-        )
+      def scope_for(status)
+        if status.to_s == "finished"
+          SolidQueue::Job.where.not(finished_at: nil)
+        elsif (association = EXECUTION_STATUSES.key(status.to_s))
+          SolidQueue::Job.joins(association)
+        else
+          SolidQueue::Job.all
+        end
       end
 
-      def scheduled_jobs
-        SolidQueue::Job.joins(
-          "INNER JOIN solid_queue_scheduled_executions ON solid_queue_scheduled_executions.job_id = solid_queue_jobs.id"
-        )
-      end
-
-      def in_progress_jobs
-        SolidQueue::Job.joins(
-          "INNER JOIN solid_queue_claimed_executions ON solid_queue_claimed_executions.job_id = solid_queue_jobs.id"
-        )
-      end
-
-      def failed_jobs
-        SolidQueue::Job.joins(
-          "INNER JOIN solid_queue_failed_executions ON solid_queue_failed_executions.job_id = solid_queue_jobs.id"
-        )
-      end
-
-      def blocked_jobs
-        SolidQueue::Job.joins(
-          "INNER JOIN solid_queue_blocked_executions ON solid_queue_blocked_executions.job_id = solid_queue_jobs.id"
-        )
-      end
-
-      def finished_jobs
-        SolidQueue::Job.where.not(finished_at: nil)
-      end
-
-      def all_jobs
-        SolidQueue::Job.all
+      def search_scope(query)
+        jobs = SolidQueue::Job
+        pattern = "%#{jobs.sanitize_sql_like(query, LIKE_ESCAPE)}%"
+        scope = jobs.where("LOWER(class_name) LIKE LOWER(:pattern) ESCAPE :escape OR LOWER(arguments) LIKE LOWER(:pattern) ESCAPE :escape",
+          pattern: pattern, escape: LIKE_ESCAPE)
+        scope = scope.or(jobs.where(id: query)) if query.match?(/\A\d+\z/)
+        scope = scope.or(jobs.where(active_job_id: query)) if query.match?(UUID_FORMAT)
+        scope
       end
 
       def paginate(scope, page:, per_page:)
@@ -237,7 +180,7 @@ module JobHarbor
         offset = (page - 1) * per_page
         total = scope.count
 
-        jobs = scope.limit(per_page).offset(offset).map { |job| new(job) }
+        jobs = scope.preload(*EXECUTION_STATUSES.keys).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
         [ PageInfo.new(page: page, per_page: per_page, count: total), jobs ]
       end
     end

@@ -102,7 +102,15 @@
     <h2 class="card-title">Arguments</h2>
   </div>
   <div class="card-content">
-    <pre class="code-block"><%= JSON.pretty_generate(@job.parsed_arguments) rescue @job.arguments %></pre>
+    <% if @job.job_arguments.empty? %>
+      <p class="text-sm text-muted-foreground">No arguments</p>
+    <% else %>
+      <pre class="code-block"><%= @job.formatted_arguments %></pre>
+    <% end %>
+    <details class="mt-4">
+      <summary class="text-sm text-muted-foreground cursor-pointer">Full payload</summary>
+      <pre class="code-block mt-2"><%= @job.formatted_payload %></pre>
+    </details>
   </div>
 </div>
 
