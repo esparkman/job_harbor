@@ -5,6 +5,7 @@ module JobHarbor
     def index
       @workers = SolidQueue::Process.order(last_heartbeat_at: :desc)
       @active_count = Processes.alive.count
+      @live_workers_count = Processes.live_workers.count
       @stale_count = @workers.count - @active_count
       set_page_title "Workers"
     end

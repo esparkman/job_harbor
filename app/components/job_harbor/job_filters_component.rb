@@ -3,8 +3,8 @@
 module JobHarbor
   class JobFiltersComponent < ApplicationComponent
     def initialize(class_names:, queue_names:, current_class:, current_queue:, current_path:, params: {})
-      @class_names = class_names
-      @queue_names = queue_names
+      @class_names = with_selected(class_names, current_class)
+      @queue_names = with_selected(queue_names, current_queue)
       @current_class = current_class
       @current_queue = current_queue
       @current_path = current_path
@@ -21,6 +21,11 @@ module JobHarbor
     end
 
     private
+
+    # The active filter stays selectable even after its last job is gone.
+    def with_selected(names, current)
+      current.present? ? (names | [ current ]).sort : names
+    end
 
     def class_filter
       content_tag(:div, class: "flex items-center gap-1.5") do

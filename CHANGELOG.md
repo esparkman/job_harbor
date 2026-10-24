@@ -9,6 +9,14 @@ Earlier releases are documented in git history and GitHub releases.
 
 ## 0.7.1 - Unreleased
 
+### Fixed
+
+- Discarding or retrying a job from a list row now returns you to the page you were on (a filtered Failed tab, a queue page, search results) instead of All Jobs. The return path is accepted only when it lies inside the dashboard's mount path.
+- A return path with an encoded `..`, `//` or backslash (`%2e%2e`, `%2f`) is now rejected, and discarding the last job of a queue page lands on Queues with the "Job has been discarded." notice instead of "Queue not found."
+- A page number past the last page (a stale link, or discarding the last row of a later page) now shows the last real page instead of an empty one.
+- The Workers page stats are now labeled "Processes", "Live" and "Stale" and show a "Live workers" figure, so they no longer read as disagreeing with the nav badge and the dashboard's Active Workers, which count live Worker processes only.
+- The Class and Queue filter dropdowns keep the active filter selected after its last job is gone, instead of falling back to "All Classes" / "All Queues" while the list is still filtered.
+
 ### Internal
 
 - CI now runs the suite on PostgreSQL and MySQL

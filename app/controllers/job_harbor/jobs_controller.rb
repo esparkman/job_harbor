@@ -44,7 +44,7 @@ module JobHarbor
     def retry
       if @job.can_retry?
         perform_retry(@job)
-        redirect_to job_path(@job), notice: "Job has been queued for retry."
+        redirect_to return_path || job_path(@job), allow_other_host: false, notice: "Job has been queued for retry."
       else
         redirect_to job_path(@job), alert: "This job cannot be retried."
       end
@@ -52,7 +52,7 @@ module JobHarbor
 
     def discard
       if @job.can_discard? && @job.discard
-        redirect_to jobs_path(status: params[:return_status]), notice: "Job has been discarded."
+        redirect_to return_path || jobs_path(status: params[:return_status]), allow_other_host: false, notice: "Job has been discarded."
       else
         redirect_to job_path(@job), alert: "This job cannot be discarded."
       end
@@ -76,6 +76,31 @@ module JobHarbor
       @job = JobPresenter.find(params[:id])
     rescue ActiveRecord::RecordNotFound
       redirect_to jobs_path, alert: "Job not found."
+    end
+
+    # Only a path inside this engine's mount, so a crafted param can't send the operator elsewhere.
+    def return_path
+      path = url_from(params[:return_to]) if params[:return_to].is_a?(String)
+      return unless path && within_mount?(path)
+
+      queue_page_gone?(path) ? queues_path : path
+    end
+
+    def within_mount?(path)
+      mount = request.script_name
+      return false unless path == mount || path.start_with?("#{mount}/", "#{mount}?")
+
+      raw = path.split("?", 2).first
+      # %2e%2e and %2f are resolved by the browser, so judge the decoded path too.
+      [ raw, URI.decode_www_form_component(raw) ].none? { |candidate| candidate.match?(%r{//|\\|\s}) || candidate.split("/").include?("..") }
+    rescue ArgumentError
+      false
+    end
+
+    # A queue with no jobs left stops existing, so its page would answer "Queue not found" and drop the notice.
+    def queue_page_gone?(path)
+      name = path.split("?", 2).first[%r{\A#{Regexp.escape(request.script_name)}/queues/([^/]+)\z}, 1]
+      name.present? && QueueStats.find(Rack::Utils.unescape_path(name)).nil?
     end
 
     def per_page_param

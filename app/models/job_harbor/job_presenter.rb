@@ -192,9 +192,10 @@ module JobHarbor
       end
 
       def paginate(scope, page:, per_page:)
-        page = [ page.to_i, 1 ].max
-        offset = (page - 1) * per_page
         total = scope.count
+        pages = (total.to_f / per_page).ceil
+        page = [ [ page.to_i, 1 ].max, [ pages, 1 ].max ].min
+        offset = (page - 1) * per_page
 
         jobs = scope.preload(*EXECUTION_STATUSES.keys).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
         [ PageInfo.new(page: page, per_page: per_page, count: total), jobs ]

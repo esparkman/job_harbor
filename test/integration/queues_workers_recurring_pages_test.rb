@@ -147,8 +147,8 @@ class WorkersPagesTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Workers"
-    assert_stat_card "Total Workers", 3
-    assert_stat_card "Active", 2
+    assert_stat_card "Processes", 3
+    assert_stat_card "Live", 2
     assert_stat_card "Stale", 1
   end
 
@@ -169,9 +169,10 @@ class WorkersPagesTest < ActionDispatch::IntegrationTest
 
     get "/job_harbor/workers"
 
-    assert_stat_card "Total Workers", 3
-    assert_stat_card "Active", 2
+    assert_stat_card "Processes", 3
+    assert_stat_card "Live", 2
     assert_stat_card "Stale", 1
+    assert_select "[data-live-workers]", text: "Live workers: 1"
     assert_equal 3, css_select(".card .card-title").size, "Workers should list a card for every process"
     assert_worker_kind "worker-1", "Worker"
     assert_worker_kind "worker-old", "Worker"
@@ -222,7 +223,8 @@ class WorkersPagesTest < ActionDispatch::IntegrationTest
     get "/job_harbor/workers"
 
     assert_response :success
-    assert_stat_card "Total Workers", 0
+    assert_stat_card "Processes", 0
+    assert_select "[data-live-workers]", text: "Live workers: 0"
     assert_select "h3", text: "No workers found"
   end
 
