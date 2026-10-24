@@ -2,30 +2,11 @@
 
 module JobHarbor
   class BadgeComponent < ApplicationComponent
-    VALID_STATUSES = %w[pending scheduled in_progress failed finished blocked active paused stale].freeze
-
-    STATUS_COLORS = {
-      "pending" => "badge-sky",
-      "scheduled" => "badge-yellow",
-      "in_progress" => "badge-amber",
-      "failed" => "badge-red",
-      "finished" => "badge-green",
-      "blocked" => "badge-zinc",
-      "active" => "badge-green",
-      "paused" => "badge-amber",
-      "stale" => "badge-zinc"
-    }.freeze
-
-    STATUS_CIRCLES = {
-      "pending" => "circle-sky",
-      "scheduled" => "circle-yellow",
-      "in_progress" => "circle-amber",
-      "failed" => "circle-red",
-      "finished" => "circle-green",
-      "blocked" => "circle-zinc",
-      "active" => "circle-green",
-      "paused" => "circle-amber",
-      "stale" => "circle-zinc"
+    # Statuses that belong to workers and queues rather than jobs.
+    OTHER_COLORS = {
+      "active" => "green",
+      "paused" => "amber",
+      "stale" => "zinc"
     }.freeze
 
     def initialize(status:)
@@ -44,13 +25,16 @@ module JobHarbor
     private
 
     def css_classes
-      status_key = VALID_STATUSES.include?(@status) ? @status : "pending"
-      "badge #{STATUS_COLORS[status_key]}"
+      "badge badge-#{color}"
     end
 
     def circle_class
-      status_key = VALID_STATUSES.include?(@status) ? @status : "pending"
-      STATUS_CIRCLES[status_key]
+      "circle-#{color}"
+    end
+
+    # Anything unrecognised renders as the first job status.
+    def color
+      JobStatus.find(@status)&.color || OTHER_COLORS.fetch(@status) { JobStatus.all.first.color }
     end
 
     def display_text

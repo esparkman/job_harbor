@@ -2,9 +2,7 @@
 
 module JobHarbor
   class DashboardStats
-    attr_reader :pending_count, :scheduled_count, :in_progress_count,
-                :failed_count, :blocked_count, :finished_count,
-                :workers_count, :queues_count, :throughput_per_hour,
+    attr_reader :status_counts, :finished_last_24h, :workers_count, :queues_count, :throughput_per_hour,
                 :recent_failures
 
     def initialize
@@ -14,39 +12,15 @@ module JobHarbor
     private
 
     def calculate_stats
-      @pending_count = ready_executions_count
-      @scheduled_count = scheduled_executions_count
-      @in_progress_count = claimed_executions_count
-      @failed_count = failed_executions_count
-      @blocked_count = blocked_executions_count
-      @finished_count = finished_jobs_count
+      @status_counts = JobStatus.all.reject(&:finished?).to_h { |status| [ status.key, status.count ] }
+      @finished_last_24h = finished_last_24h_count
       @workers_count = active_workers_count
       @queues_count = queues_count_calc
       @throughput_per_hour = calculate_throughput
       @recent_failures = fetch_recent_failures
     end
 
-    def ready_executions_count
-      SolidQueue::ReadyExecution.count
-    end
-
-    def scheduled_executions_count
-      SolidQueue::ScheduledExecution.count
-    end
-
-    def claimed_executions_count
-      SolidQueue::ClaimedExecution.count
-    end
-
-    def failed_executions_count
-      SolidQueue::FailedExecution.count
-    end
-
-    def blocked_executions_count
-      SolidQueue::BlockedExecution.count
-    end
-
-    def finished_jobs_count
+    def finished_last_24h_count
       SolidQueue::Job.where("finished_at > ?", 24.hours.ago).count
     end
 

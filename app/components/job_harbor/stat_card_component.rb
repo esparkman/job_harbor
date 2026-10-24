@@ -2,16 +2,13 @@
 
 module JobHarbor
   class StatCardComponent < ApplicationComponent
-    CIRCLE_COLORS = {
-      pending: "circle-sky",
-      scheduled: "circle-yellow",
-      in_progress: "circle-amber",
-      failed: "circle-red",
-      finished: "circle-green",
-      blocked: "circle-zinc",
-      workers: "circle-green",
-      queues: "circle-sky",
-      throughput: "circle-green"
+    # Cards that are not about a job status.
+    OTHER_COLORS = {
+      workers: "green",
+      queues: "sky",
+      throughput: "green",
+      live: "green",
+      stale: "zinc"
     }.freeze
 
     def initialize(label:, value:, type: nil, link: nil)
@@ -48,10 +45,10 @@ module JobHarbor
     def circle_indicator
       return nil unless @type
 
-      circle_class = CIRCLE_COLORS[@type]
-      return nil unless circle_class
+      color = JobStatus.find(@type)&.color || OTHER_COLORS[@type]
+      return nil unless color
 
-      content_tag(:span, "", class: "circle #{circle_class}")
+      content_tag(:span, "", class: "circle circle-#{color}")
     end
 
     def value_display
