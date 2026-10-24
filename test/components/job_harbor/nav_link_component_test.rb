@@ -7,8 +7,7 @@ module JobHarbor
     test "renders nav link with label" do
       render_inline(NavLinkComponent.new(
         path: "/dashboard",
-        label: "Dashboard",
-        icon: "dashboard"
+        label: "Dashboard"
       ))
 
       assert_includes @rendered, "sqd-nav-link"
@@ -20,7 +19,6 @@ module JobHarbor
       render_inline(NavLinkComponent.new(
         path: "/jobs",
         label: "Jobs",
-        icon: "jobs",
         active: true
       ))
 
@@ -31,7 +29,6 @@ module JobHarbor
       render_inline(NavLinkComponent.new(
         path: "/workers",
         label: "Workers",
-        icon: "workers",
         badge: 5
       ))
 
@@ -42,8 +39,7 @@ module JobHarbor
     test "does not render badge when nil" do
       render_inline(NavLinkComponent.new(
         path: "/workers",
-        label: "Workers",
-        icon: "workers"
+        label: "Workers"
       ))
 
       refute_includes @rendered, "sqd-nav-badge"
@@ -53,7 +49,6 @@ module JobHarbor
       render_inline(NavLinkComponent.new(
         path: "/workers",
         label: "Workers",
-        icon: "workers",
         badge: 0
       ))
 
