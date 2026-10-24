@@ -24,7 +24,7 @@
     </a>
 
     <%# Nav Links %>
-    <div class="navbar-section ml-4">
+    <div class="navbar-section sm:ml-4">
       <%= render JobHarbor::NavLinkComponent.new(
         path: root_path,
         label: "Dashboard",
@@ -75,10 +75,10 @@
   </nav>
 
   <%# === Page Header === %>
-  <div class="max-w-screen-2xl mx-auto px-6 py-6">
-    <div class="flex items-center justify-between mb-6">
+  <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <h1 class="text-2xl font-bold tracking-tight"><%= @page_title || "Dashboard" %></h1>
-      <div class="flex items-center gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         <% if content_for?(:header_actions) %>
           <%= yield :header_actions %>
         <% end %>

@@ -41,11 +41,13 @@ module JobHarbor
     end
 
     def stats_table
-      content_tag(:table, class: "sqd-table sqd-failure-table") do
-        safe_join([
-          table_header,
-          table_body
-        ])
+      content_tag(:div, class: "table-wrapper") do
+        content_tag(:table, class: "sqd-table sqd-failure-table") do
+          safe_join([
+            table_header,
+            table_body
+          ])
+        end
       end
     end
 

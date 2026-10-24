@@ -86,6 +86,33 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_includes script, "getSelection", "Selected text must block the swap"
   end
 
+  test "every table sits in a scrolling wrapper so a wide table scrolls inside its card, not the whole page on a phone" do
+    failed = enqueue_job(FlakyPaymentJob, 42)
+    fail_job(failed, worker: register_worker(name: "worker-1"))
+    enqueue_job(FlakyPaymentJob, 43)
+    SolidQueue::RecurringTask.create!(key: "nightly_report", schedule: "every day at 3am", class_name: "ReportJob", queue_name: "reports")
+    task = SolidQueue::RecurringTask.first
+    tables = 0
+
+    [ "/job_harbor", "/job_harbor/jobs", "/job_harbor/jobs/status/failed", "/job_harbor/search?q=a",
+      "/job_harbor/queues/default", "/job_harbor/recurring_tasks", "/job_harbor/recurring_tasks/#{task.id}" ].each do |path|
+      get path
+      assert_response :success
+      tables += css_select("table").size
+      unwrapped = css_select("table").reject { |table| table.ancestors(".table-wrapper").any? }
+      assert_empty unwrapped, "#{path} has a table outside .table-wrapper (overflow-x: auto), which widens the page on a phone"
+    end
+    assert_operator tables, :>=, 6, "The pages should render their tables, otherwise this guard checks nothing"
+  end
+
+  test "the navbar wraps on small screens so every section stays reachable" do
+    get "/job_harbor"
+
+    assert_select "nav.navbar .navbar-section a", minimum: 4
+    css = File.read(JobHarbor::Engine.root.join("app/assets/stylesheets/job_harbor/application.css"))
+    assert_match(/@media not all and \(min-width:40rem\)\{\.navbar\{[^}]*flex-wrap:wrap/, css, "Compiled CSS is missing the small-screen navbar rule (below sm), rebuild Tailwind")
+  end
+
   private
     def with_csp_nonce(nonce)
       env_config = Rails.application.env_config

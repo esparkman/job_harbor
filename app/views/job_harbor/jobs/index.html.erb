@@ -1,6 +1,6 @@
 <% content_for :header_actions do %>
-  <%= form_with url: search_path, method: :get, class: "flex items-center gap-2" do |f| %>
-    <%= f.text_field :q, placeholder: "Search jobs...", class: "select w-64", value: params[:q] %>
+  <%= form_with url: search_path, method: :get, class: "flex flex-wrap items-center gap-2" do |f| %>
+    <%= f.text_field :q, placeholder: "Search jobs...", class: "select w-full sm:w-64", value: params[:q] %>
     <%= f.submit "Search", class: "btn btn-secondary btn-sm" %>
   <% end %>
 <% end %>
@@ -86,7 +86,7 @@
     </div>
   </div>
 
-  <div class="flex items-center justify-between mt-4">
+  <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
     <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
     <%= render JobHarbor::PerPageSelectorComponent.new(
       current_per_page: @per_page,
