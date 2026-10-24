@@ -109,7 +109,8 @@ class LayoutTest < ActionDispatch::IntegrationTest
     get "/job_harbor"
 
     assert_select "nav.navbar .navbar-section a", minimum: 4
-    assert_includes File.read(JobHarbor::Engine.root.join("app/assets/stylesheets/job_harbor/application.css")), "flex-wrap:wrap", "Compiled CSS is missing the small-screen navbar rule, rebuild Tailwind"
+    css = File.read(JobHarbor::Engine.root.join("app/assets/stylesheets/job_harbor/application.css"))
+    assert_match(/@media not all and \(min-width:40rem\)\{\.navbar\{[^}]*flex-wrap:wrap/, css, "Compiled CSS is missing the small-screen navbar rule (below sm), rebuild Tailwind")
   end
 
   private
