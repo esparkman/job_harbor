@@ -38,7 +38,7 @@ module JobHarbor
     end
 
     def retry_badge_tag
-      return nil unless @job.respond_to?(:retry_badge) && @job.retry_badge.present?
+      return nil unless @job.retry_badge.present?
 
       content_tag(:span, @job.retry_badge, class: "sqd-retry-badge ml-1")
     end
@@ -59,7 +59,7 @@ module JobHarbor
     end
 
     def running_duration_tag
-      return nil unless @job.respond_to?(:running_duration) && @job.running_duration.present?
+      return nil unless @job.running_duration.present?
 
       content_tag(:span, " (#{@job.running_duration})", class: "text-xs text-sky-500")
     end
@@ -75,11 +75,7 @@ module JobHarbor
     end
 
     def relative_time_tag
-      if @job.respond_to?(:relative_created_at)
-        content_tag(:span, @job.relative_created_at, class: "text-xs text-muted-foreground")
-      else
-        content_tag(:span, "\u2014", class: "text-muted-foreground")
-      end
+      content_tag(:span, @job.relative_created_at, class: "text-xs text-muted-foreground")
     end
 
     def actions_cell

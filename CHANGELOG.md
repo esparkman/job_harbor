@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## Unreleased
+
+### Deprecated
+
+- `config.primary_color` has never had any effect. Assigning it now logs a deprecation warning, and it will be removed in 1.0. Delete the line from your initializer.
+
+### Internal
+
+- Removed dead code: the unused `icon` argument of `NavLinkComponent` (now `NavLinkComponent.new(path:, label:, active:, badge:)`), unused CSS rules and test setup, and the empty `JobHarbor::ApplicationHelper`.
+
 ## 0.7.1 - 2026-10-23
 
 ### Fixed

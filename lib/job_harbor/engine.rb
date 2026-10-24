@@ -9,7 +9,11 @@ module JobHarbor
       end
     end
 
-    # Add assets to pipeline
+    initializer "job_harbor.deprecator" do |app|
+      app.deprecators[:job_harbor] = JobHarbor.deprecator
+    end
+
+    # Sprockets hosts only; Propshaft ignores precompile.
     initializer "job_harbor.assets" do |app|
       if app.config.respond_to?(:assets)
         app.config.assets.precompile += %w[

@@ -71,5 +71,17 @@ module JobHarbor
       @configuration.filter_parameters = []
       assert_not_predicate @configuration, :filtering_parameters?
     end
+
+    test "assigning primary_color warns that it has no effect and still stores the value" do
+      assert_deprecated(/primary_color has no effect.*removed/, JobHarbor.deprecator) do
+        @configuration.primary_color = "indigo"
+      end
+
+      assert_equal "indigo", @configuration.primary_color
+    end
+
+    test "leaving primary_color alone does not warn" do
+      assert_not_deprecated(JobHarbor.deprecator) { Configuration.new }
+    end
   end
 end

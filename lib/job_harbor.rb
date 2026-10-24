@@ -8,6 +8,10 @@ module JobHarbor
       @configuration ||= Configuration.new
     end
 
+    def deprecator
+      @deprecator ||= ActiveSupport::Deprecation.new("1.0", "JobHarbor")
+    end
+
     def configure
       yield(configuration)
     end

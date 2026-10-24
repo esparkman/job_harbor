@@ -2,10 +2,9 @@
 
 module JobHarbor
   class NavLinkComponent < ApplicationComponent
-    def initialize(path:, label:, icon:, active: false, badge: nil)
+    def initialize(path:, label:, active: false, badge: nil)
       @path = path
       @label = label
-      @icon = icon.to_sym
       @active = active
       @badge = badge
     end

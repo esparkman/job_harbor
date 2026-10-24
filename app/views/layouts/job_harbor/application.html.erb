@@ -10,9 +10,7 @@
 </head>
 <% auto_refresh = sq_config.enable_real_time_updates && !content_for?(:no_refresh) %>
 <body class="min-h-screen">
-  <%# === Top Navbar === %>
   <nav class="navbar">
-    <%# Logo %>
     <a href="<%= root_path %>" class="flex items-center gap-2 pl-1 text-xl font-bold tracking-tight no-underline text-foreground">
       <svg class="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="5" r="2.5"/>
@@ -23,30 +21,25 @@
       Job Harbor
     </a>
 
-    <%# Nav Links %>
     <div class="navbar-section sm:ml-4">
       <%= render JobHarbor::NavLinkComponent.new(
         path: root_path,
         label: "Dashboard",
-        icon: "dashboard",
         active: controller_name == "dashboard"
       ) %>
       <%= render JobHarbor::NavLinkComponent.new(
         path: jobs_path,
         label: "Jobs",
-        icon: "jobs",
         active: controller_name == "jobs"
       ) %>
       <%= render JobHarbor::NavLinkComponent.new(
         path: queues_path,
         label: "Queues",
-        icon: "queues",
         active: controller_name == "queues"
       ) %>
       <%= render JobHarbor::NavLinkComponent.new(
         path: workers_path,
         label: "Workers",
-        icon: "workers",
         active: controller_name == "workers",
         badge: nav_counts[:workers]
       ) %>
@@ -54,14 +47,12 @@
         <%= render JobHarbor::NavLinkComponent.new(
           path: recurring_tasks_path,
           label: "Recurring",
-          icon: "recurring",
           active: controller_name == "recurring_tasks",
           badge: nav_counts[:recurring_tasks]
         ) %>
       <% end %>
     </div>
 
-    <%# Right side: refresh + theme + back to app %>
     <div class="ml-auto flex items-center gap-2">
       <% if auto_refresh %>
         <%= render JobHarbor::RefreshSelectorComponent.new %>
@@ -74,7 +65,6 @@
     </div>
   </nav>
 
-  <%# === Page Header === %>
   <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-6">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
       <h1 class="text-2xl font-bold tracking-tight"><%= @page_title || "Dashboard" %></h1>
@@ -85,7 +75,6 @@
       </div>
     </div>
 
-    <%# === Flash Messages === %>
     <% if flash[:notice] %>
       <div class="alert alert-success mb-4">
         <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -99,13 +88,11 @@
       </div>
     <% end %>
 
-    <%# === Main Content === %>
     <div data-refresh-target="content">
       <%= yield %>
     </div>
   </div>
 
-  <%# === Theme Toggle Script === %>
   <%= javascript_tag nonce: true do %>
     (function() {
       var STORAGE_KEY = 'jh-theme';
@@ -136,13 +123,11 @@
         setStoredTheme(newTheme);
       }
 
-      // Apply stored theme on page load
       var storedTheme = getStoredTheme();
       if (storedTheme) {
         applyTheme(storedTheme);
       }
 
-      // Theme toggle click handler
       document.addEventListener('click', function(e) {
         var toggle = e.target.closest('.sqd-theme-toggle');
         if (toggle) {
@@ -152,7 +137,6 @@
     })();
   <% end %>
 
-  <%# === Auto-Refresh Script === %>
   <% if auto_refresh %>
   <%= javascript_tag nonce: true do %>
     (function() {
@@ -242,7 +226,6 @@
   <% end %>
   <% end %>
 
-  <%# === Per-Page & Filter Selector Script === %>
   <%= javascript_tag nonce: true do %>
     (function() {
       document.addEventListener('change', function(e) {
@@ -261,7 +244,6 @@
     })();
   <% end %>
 
-  <%# === Confirm Dialog Script === %>
   <%= javascript_tag nonce: true do %>
     (function() {
       document.addEventListener('submit', function(e) {
@@ -271,7 +253,6 @@
     })();
   <% end %>
 
-  <%# === Chart Rendering Script === %>
   <%= javascript_tag nonce: true do %>
     (function() {
       function initChart() {
