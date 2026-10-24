@@ -112,7 +112,7 @@ module JobHarbor
     private
 
     def filtered_payload
-      @filtered_payload ||= ArgumentFilter.filter(serialized_payload)
+      @filtered_payload ||= SensitiveValueFilter.filter(serialized_payload)
     end
 
     # Messages and backtraces go through the same filter so a host Proc can scrub them.
@@ -120,7 +120,7 @@ module JobHarbor
       error = parsed_error
       return nil unless error
 
-      @filtered_error ||= ArgumentFilter.filter("message" => error["message"], "backtrace" => error["backtrace"])
+      @filtered_error ||= SensitiveValueFilter.filter("message" => error["message"], "backtrace" => error["backtrace"])
       @filtered_error.is_a?(Hash) ? @filtered_error[key] : @filtered_error
     end
 

@@ -159,6 +159,14 @@ Rails.application.config.filter_parameters << ->(_key, value) {
 
 If a filter raises, the whole value shows as `[FILTERED]`.
 
+`config.filter_parameters` accepts only `nil` (use the app's list), `false` (raw values) or an
+Array (replaces the list). Anything else, including `true`, raises `ArgumentError` at boot so a
+misconfiguration can't quietly show everything. An empty Array `[]` means "mask nothing": values
+show raw and argument search comes back, the same as `false`.
+
+Search queries you type appear in your request logs as the `q` parameter. Add `:q` to your app's
+`filter_parameters` if searches may contain sensitive values.
+
 ## Authorization
 
 **Production installs must configure `authorize_with`.** Until you do, the dashboard

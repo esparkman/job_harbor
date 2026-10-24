@@ -50,6 +50,14 @@ class SensitiveValuesTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /Found 1 result for/
   end
 
+  test "with an empty filter list nothing is masked, so argument search is back" do
+    JobHarbor.configuration.filter_parameters = []
+
+    get "/job_harbor/search", params: { q: "hunter2" }
+
+    assert_select "p", text: /Found 1 result for/
+  end
+
   test "searching still finds a job by class, job ID and Active Job ID while filtering" do
     get "/job_harbor/search", params: { q: "ReportJob" }
     assert_select "p", text: /Found 1 result/

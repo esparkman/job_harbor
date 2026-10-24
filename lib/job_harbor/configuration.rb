@@ -11,8 +11,9 @@ module JobHarbor
                   :enable_charts,
                   :default_chart_range,
                   :return_to_app_path,
-                  :return_to_app_label,
-                  :filter_parameters
+                  :return_to_app_label
+
+    attr_reader :filter_parameters
 
     def initialize
       @theme = :dark
@@ -29,15 +30,19 @@ module JobHarbor
       @filter_parameters = nil
     end
 
-    def filtering_parameters?
-      filter_parameters != false
+    # nil follows the host app's list, an Array replaces it, false shows raw values.
+    # Anything else raises: a stray `true` would otherwise mask nothing while looking protected.
+    def filter_parameters=(value)
+      unless value.nil? || value == false || value.is_a?(Array)
+        raise ArgumentError, "config.filter_parameters must be nil, false or an Array, got #{value.inspect}"
+      end
+
+      @filter_parameters = value
     end
 
-    # nil follows the host app's list, read each time because the host can change it after boot.
-    def parameter_filter
-      return unless filtering_parameters?
-
-      ActiveSupport::ParameterFilter.new(Array(filter_parameters || Rails.application.config.filter_parameters))
+    # An empty list masks nothing, so it counts as off.
+    def filtering_parameters?
+      filter_parameters != false && filter_parameters != []
     end
 
     def authorize_with_configured?

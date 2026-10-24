@@ -1,0 +1,54 @@
+# frozen_string_literal: true
+
+require "test_helper"
+
+module JobHarbor
+  class ConfigurationTest < ActiveSupport::TestCase
+    setup { @configuration = Configuration.new }
+
+    test "filter_parameters accepts nil, false and an array" do
+      assert_nil @configuration.filter_parameters
+
+      [ false, [], [ :password ] ].each do |value|
+        @configuration.filter_parameters = value
+        assert_equal value, @configuration.filter_parameters
+      end
+
+      @configuration.filter_parameters = nil
+      assert_nil @configuration.filter_parameters
+    end
+
+    test "filter_parameters = true raises instead of quietly masking nothing" do
+      error = assert_raises(ArgumentError) { @configuration.filter_parameters = true }
+
+      assert_match(/filter_parameters/, error.message)
+      assert_match(/nil, false or an Array/, error.message)
+    end
+
+    test "filter_parameters rejects a string, a symbol and a hash" do
+      [ "password", :password, { password: true } ].each do |value|
+        assert_raises(ArgumentError, "#{value.inspect} should be rejected") { @configuration.filter_parameters = value }
+      end
+    end
+
+    test "a rejected value leaves the previous setting in place" do
+      @configuration.filter_parameters = [ :token ]
+      assert_raises(ArgumentError) { @configuration.filter_parameters = true }
+
+      assert_equal [ :token ], @configuration.filter_parameters
+    end
+
+    test "filtering is on by default and for a list, off for false and for an empty list" do
+      assert_predicate @configuration, :filtering_parameters?
+
+      @configuration.filter_parameters = [ :token ]
+      assert_predicate @configuration, :filtering_parameters?
+
+      @configuration.filter_parameters = false
+      assert_not_predicate @configuration, :filtering_parameters?
+
+      @configuration.filter_parameters = []
+      assert_not_predicate @configuration, :filtering_parameters?
+    end
+  end
+end
