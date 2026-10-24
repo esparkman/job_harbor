@@ -39,7 +39,7 @@ module JobHarbor
     end
 
     def job_arguments
-      payload = serialized_payload
+      payload = filtered_payload
       arguments = payload["arguments"] if payload.is_a?(Hash)
       arguments.is_a?(Array) ? arguments : []
     end
@@ -49,11 +49,11 @@ module JobHarbor
     end
 
     def formatted_payload
-      JSON.pretty_generate(serialized_payload)
+      JSON.pretty_generate(filtered_payload)
     end
 
     def error_message
-      parsed_error&.dig("message")
+      filtered_error_part("message")
     end
 
     def error_class
@@ -61,7 +61,7 @@ module JobHarbor
     end
 
     def error_backtrace
-      parsed_error&.dig("backtrace")&.join("\n")
+      Array(filtered_error_part("backtrace")).join("\n")
     end
 
     def failed_at
@@ -110,6 +110,19 @@ module JobHarbor
     end
 
     private
+
+    def filtered_payload
+      @filtered_payload ||= SensitiveValueFilter.filter(serialized_payload)
+    end
+
+    # Messages and backtraces go through the same filter so a host Proc can scrub them.
+    def filtered_error_part(key)
+      error = parsed_error
+      return nil unless error
+
+      @filtered_error ||= SensitiveValueFilter.filter("message" => error["message"], "backtrace" => error["backtrace"])
+      @filtered_error.is_a?(Hash) ? @filtered_error[key] : @filtered_error
+    end
 
     def parsed_error
       error = @failed_execution&.error
@@ -168,8 +181,11 @@ module JobHarbor
       def search_scope(query)
         jobs = SolidQueue::Job
         pattern = "%#{jobs.sanitize_sql_like(query, LIKE_ESCAPE)}%"
-        scope = jobs.where("LOWER(class_name) LIKE LOWER(:pattern) ESCAPE :escape OR LOWER(arguments) LIKE LOWER(:pattern) ESCAPE :escape",
-          pattern: pattern, escape: LIKE_ESCAPE)
+        scope = jobs.where("LOWER(class_name) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE)
+        # Matching argument text would let a search reveal values the page masks.
+        unless JobHarbor.configuration.filtering_parameters?
+          scope = scope.or(jobs.where("LOWER(arguments) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE))
+        end
         scope = scope.or(jobs.where(id: query)) if query.match?(/\A\d+\z/)
         scope = scope.or(jobs.where(active_job_id: query)) if query.match?(UUID_FORMAT)
         scope

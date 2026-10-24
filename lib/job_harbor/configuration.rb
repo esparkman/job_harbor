@@ -13,6 +13,8 @@ module JobHarbor
                   :return_to_app_path,
                   :return_to_app_label
 
+    attr_reader :filter_parameters
+
     def initialize
       @theme = :dark
       @primary_color = "amber"
@@ -25,6 +27,25 @@ module JobHarbor
       @default_chart_range = "24h"
       @return_to_app_path = nil
       @return_to_app_label = "Back to App"
+      @filter_parameters = nil
+    end
+
+    FILTER_PATTERN_TYPES = [ String, Symbol, Regexp, Proc ].freeze
+
+    # nil follows the host app's list, an Array of strings, symbols, regexps and procs replaces it, false shows raw values.
+    # Anything else raises: a stray `true` or `[true]` would otherwise mask nothing while looking protected.
+    def filter_parameters=(value)
+      unless value.nil? || value == false || (value.is_a?(Array) && value.all? { |pattern| FILTER_PATTERN_TYPES.any? { |type| type === pattern } })
+        raise ArgumentError,
+          "config.filter_parameters must be nil, false or an Array of Strings, Symbols, Regexps and Procs, got #{value.inspect}"
+      end
+
+      @filter_parameters = value
+    end
+
+    # An empty list masks nothing, so it counts as off.
+    def filtering_parameters?
+      filter_parameters != false && filter_parameters != []
     end
 
     def authorize_with_configured?

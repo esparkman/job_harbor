@@ -35,10 +35,10 @@
         <span class="info-line-value"><%= @task.queue_name || "default" %></span>
       </div>
 
-      <% if @task.arguments.present? %>
+      <% if @task_arguments.present? %>
         <div class="mt-3">
           <div class="text-sm text-muted-foreground mb-1">Arguments</div>
-          <pre class="code-block"><%= JSON.pretty_generate(@task.arguments) rescue @task.arguments %></pre>
+          <pre class="code-block"><%= @task_arguments.formatted %></pre>
         </div>
       <% end %>
     </div>
