@@ -1,6 +1,6 @@
 <% content_for :header_actions do %>
-  <%= form_with url: search_path, method: :get, class: "flex items-center gap-2" do |f| %>
-    <%= f.text_field :q, placeholder: "Search jobs...", class: "select w-64", value: params[:q] %>
+  <%= form_with url: search_path, method: :get, class: "flex flex-wrap items-center gap-2" do |f| %>
+    <%= f.text_field :q, placeholder: "Search jobs...", class: "select w-full sm:w-64", value: params[:q] %>
     <%= f.submit "Search", class: "btn btn-secondary btn-sm" %>
   <% end %>
 <% end %>

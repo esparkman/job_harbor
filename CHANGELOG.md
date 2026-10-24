@@ -60,6 +60,7 @@ Earlier releases are documented in git history and GitHub releases.
 - The dashboard chart fell back to one COUNT query per bucket (75 for the 24 hour range) because it called a grouping method that doesn't exist. Each series now runs one query that counts every bucket with a portable `SUM(CASE ...)`, on any database. A dashboard load drops from 91 queries to 18 on the 24 hour range and from 103 to 18 on 7 days.
 - The Failure Rates card loaded every failed job id into Ruby and ran an `IN` query. It now runs two grouped counts, with the failures counted through a join.
 - A `chart_range` in the URL that isn't one of the ranges highlighted no button while the chart showed 24 hours. An invalid range now falls back to the configured default, and the highlighted button matches the chart.
+- Every page scrolled sideways on a phone (about 830px of content in a 390px viewport) because the navbar never wrapped. On small screens the nav links now drop to their own row, the header actions, search form, chart range buttons and pagination row wrap, job detail values break instead of stretching the page, and the dashboard's Failure Rates table scrolls inside its card like the other tables.
 
 ### Internal
 
