@@ -2,6 +2,9 @@
 
 module JobHarbor
   class FailureRatesComponent < ApplicationComponent
+    LOW_THRESHOLD = 5
+    MEDIUM_THRESHOLD = 20
+
     def initialize(stats:)
       @stats = stats
     end
@@ -77,8 +80,15 @@ module JobHarbor
     end
 
     def rate_badge(rate)
-      css_class = FailureStats.rate_badge_class(rate)
-      content_tag(:span, "#{rate}%", class: "badge #{css_class}")
+      content_tag(:span, "#{rate}%", class: "badge #{rate_badge_class(rate)}")
+    end
+
+    def rate_badge_class(rate)
+      case rate
+      when 0...LOW_THRESHOLD then "sqd-rate-low"
+      when LOW_THRESHOLD...MEDIUM_THRESHOLD then "sqd-rate-medium"
+      else "sqd-rate-high"
+      end
     end
   end
 end

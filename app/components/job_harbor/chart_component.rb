@@ -39,9 +39,7 @@ module JobHarbor
       active = range[:value] == @current_range
       css_class = active ? "btn btn-default btn-xs" : "btn btn-secondary btn-xs"
 
-      link_to range[:label],
-        "#{root_path}?chart_range=#{range[:value]}",
-        class: css_class
+      link_to range[:label], root_path(chart_range: range[:value]), class: css_class
     end
 
     def body

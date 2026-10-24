@@ -7,7 +7,7 @@ module JobHarbor
       @failure_stats = FailureStats.new.stats if sq_config.enable_failure_stats
 
       if sq_config.enable_charts
-        @chart_range = params[:chart_range] || sq_config.default_chart_range
+        @chart_range = [ params[:chart_range], sq_config.default_chart_range ].find { |range| ChartData::RANGES.key?(range) } || "24h"
         @chart_data = ChartData.new(range: @chart_range).series
       end
 

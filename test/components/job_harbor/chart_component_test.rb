@@ -33,6 +33,16 @@ module JobHarbor
       assert_includes @rendered, "24 hours"
     end
 
+    test "range buttons link to the dashboard with their range and highlight the current one" do
+      series = { labels: [ "10:00" ], completed: [ 10 ], failed: [ 1 ], enqueued: [ 15 ] }
+
+      render_inline(ChartComponent.new(series: series, current_range: "6h"))
+
+      assert_match(%r{href="[^"]*\?chart_range=7d"}, @rendered)
+      assert_match(%r{class="btn btn-default btn-xs" href="[^"]*chart_range=6h">6 hours}, @rendered)
+      assert_match(%r{class="btn btn-secondary btn-xs" href="[^"]*chart_range=24h">24 hours}, @rendered)
+    end
+
     test "includes chart data as JSON" do
       series = {
         labels: [ "10:00" ],
