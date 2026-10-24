@@ -10,12 +10,7 @@ module JobHarbor
     end
 
     def show
-      @pagy, @jobs = JobPresenter.all_with_status(
-        nil,
-        page: params[:page],
-        per_page: sq_config.jobs_per_page,
-        queue_name: @queue.name
-      )
+      @page_info, @jobs = JobQuery.new(queue_name: @queue.name).page(params[:page], per_page: sq_config.jobs_per_page)
       set_page_title "Queue: #{@queue.name}"
     end
 

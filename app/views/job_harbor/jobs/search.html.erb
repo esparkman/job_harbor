@@ -6,7 +6,7 @@
 <% end %>
 
 <p class="text-sm text-muted-foreground mb-4">
-  Found <%= pluralize(@pagy.count, "result") %> for "<%= params[:q] %>"
+  Found <%= pluralize(@page_info.count, "result") %> for "<%= params[:q] %>"
   <%= link_to "Clear search", jobs_path, class: "link ml-2" %>
 </p>
 
@@ -40,6 +40,6 @@
   </div>
 
   <div class="mt-4">
-    <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+    <%= render JobHarbor::PaginationComponent.new(page_info: @page_info) %>
   </div>
 <% end %>

@@ -4,9 +4,6 @@ module JobHarbor
   class JobPresenter
     include ActionView::Helpers::DateHelper
 
-    LIKE_ESCAPE = "!"
-    UUID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
-
     delegate :id, :created_at, :queue_name, :priority,
              :active_job_id, :scheduled_at, :finished_at, :discard,
              to: :@job
@@ -139,51 +136,6 @@ module JobHarbor
     class << self
       def find(id)
         new(SolidQueue::Job.preload(*JobStatus.execution_associations).find(id))
-      end
-
-      def all_with_status(status = nil, page: 1, per_page: 25, class_name: nil, queue_name: nil)
-        jobs = scope_for(status)
-        jobs = apply_filters(jobs, class_name: class_name, queue_name: queue_name)
-        paginate(jobs, page: page, per_page: per_page)
-      end
-
-      def apply_filters(scope, class_name: nil, queue_name: nil)
-        scope = scope.where(class_name: class_name) if class_name.present?
-        scope = scope.where(queue_name: queue_name) if queue_name.present?
-        scope
-      end
-
-      def search(query, page: 1, per_page: 25)
-        paginate(search_scope(query), page: page, per_page: per_page)
-      end
-
-      private
-
-      def scope_for(status)
-        JobStatus.find(status)&.jobs || SolidQueue::Job.all
-      end
-
-      def search_scope(query)
-        jobs = SolidQueue::Job
-        pattern = "%#{jobs.sanitize_sql_like(query, LIKE_ESCAPE)}%"
-        scope = jobs.where("LOWER(class_name) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE)
-        # Matching argument text would let a search reveal values the page masks.
-        unless JobHarbor.configuration.filtering_parameters?
-          scope = scope.or(jobs.where("LOWER(arguments) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE))
-        end
-        scope = scope.or(jobs.where(id: query)) if query.match?(/\A\d+\z/)
-        scope = scope.or(jobs.where(active_job_id: query)) if query.match?(UUID_FORMAT)
-        scope
-      end
-
-      def paginate(scope, page:, per_page:)
-        total = scope.count
-        pages = (total.to_f / per_page).ceil
-        page = [ [ page.to_i, 1 ].max, [ pages, 1 ].max ].min
-        offset = (page - 1) * per_page
-
-        jobs = scope.preload(*JobStatus.execution_associations).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
-        [ PageInfo.new(page: page, per_page: per_page, count: total), jobs ]
       end
     end
   end
