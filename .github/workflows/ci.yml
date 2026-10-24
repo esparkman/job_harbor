@@ -58,3 +58,69 @@ jobs:
           bundler-cache: true
       - run: bin/rails db:test:prepare
       - run: bin/rails test
+
+  # The search, chart and grouped-count SQL is written to be portable; these two
+  # jobs run the whole suite against real PostgreSQL and MySQL servers to prove it.
+  test-postgresql:
+    name: test (postgresql)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/postgresql.gemfile
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/job_harbor_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@b1da4809b005e0178fe08a1d57317bffc00b7b4c # v1.332.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - run: bin/rails db:create
+        env:
+          RAILS_ENV: test
+      - run: bin/rails test
+
+  test-mysql:
+    name: test (mysql)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/gemfiles/mysql.gemfile
+      DATABASE_URL: mysql2://root:root@127.0.0.1:3306/job_harbor_test
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@b1da4809b005e0178fe08a1d57317bffc00b7b4c # v1.332.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: true
+      - run: bin/rails db:create
+        env:
+          RAILS_ENV: test
+      - run: bin/rails test
