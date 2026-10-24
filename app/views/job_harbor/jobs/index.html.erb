@@ -59,7 +59,7 @@
   </div>
 
   <div class="flex flex-wrap items-center justify-between gap-3 mt-4">
-    <%= render JobHarbor::PaginationComponent.new(pagy: @pagy) %>
+    <%= render JobHarbor::PaginationComponent.new(page_info: @page_info) %>
     <%= render JobHarbor::PerPageSelectorComponent.new(
       current_per_page: @per_page,
       current_path: request.path,

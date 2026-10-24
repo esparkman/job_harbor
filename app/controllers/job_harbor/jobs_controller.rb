@@ -13,16 +13,10 @@ module JobHarbor
       @class_name = filter_param(:class_name)
       @queue_name = filter_param(:queue_name)
 
-      @pagy, @jobs = JobPresenter.all_with_status(
-        @status,
-        page: params[:page],
-        per_page: @per_page,
-        class_name: @class_name,
-        queue_name: @queue_name
-      )
-      @counts = job_counts
-      @bulk_count = bulk_scope(@status)&.count
-      @filter_data = filter_data
+      @page_info, @jobs = job_query.page(params[:page], per_page: @per_page)
+      @counts = JobQuery.counts
+      @bulk_count = job_query.bulk_jobs&.count
+      @filter_data = JobQuery.filter_options
       set_page_title @status ? "#{@status.titleize} Jobs" : "All Jobs"
     end
 
@@ -31,10 +25,10 @@ module JobHarbor
     end
 
     def search
-      query = params[:q].to_s.strip
-      if query.present?
+      text = params[:q].to_s.strip
+      if text.present?
         @per_page = per_page_param
-        @pagy, @jobs = JobPresenter.search(query, page: params[:page], per_page: @per_page)
+        @page_info, @jobs = JobQuery.search(text).page(params[:page], per_page: @per_page)
         set_page_title "Search Results"
       else
         redirect_to jobs_path
@@ -61,12 +55,12 @@ module JobHarbor
     end
 
     def retry_all
-      count = retry_all_jobs(params[:status])
+      count = retry_all_jobs
       redirect_to bulk_redirect_path, notice: "#{helpers.pluralize(count, "job")} queued for retry."
     end
 
     def discard_all
-      count = discard_all_jobs(params[:status])
+      count = discard_all_jobs
       redirect_to bulk_redirect_path, notice: "#{helpers.pluralize(count, "job")} discarded."
     end
 
@@ -109,17 +103,6 @@ module JobHarbor
       valid_sizes.include?(per_page) ? per_page : sq_config.jobs_per_page
     end
 
-    def filter_data
-      {
-        class_names: SolidQueue::Job.distinct.pluck(:class_name).sort,
-        queue_names: SolidQueue::Job.distinct.pluck(:queue_name).sort
-      }
-    end
-
-    def job_counts
-      { "all" => SolidQueue::Job.count }.merge(JobStatus.all.to_h { |job_status| [ job_status.key, job_status.count ] })
-    end
-
     def perform_retry(job)
       failed_execution = SolidQueue::FailedExecution.find_by(job_id: job.id)
       return unless failed_execution
@@ -127,16 +110,8 @@ module JobHarbor
       failed_execution.retry
     end
 
-    # Nil for tabs without bulk actions.
-    def bulk_scope(status)
-      job_status = JobStatus.find(status)
-      return unless job_status&.bulk_actions
-
-      JobPresenter.apply_filters(
-        SolidQueue::Job.where(id: job_status.execution_class.select(:job_id)),
-        class_name: filter_param(:class_name),
-        queue_name: filter_param(:queue_name)
-      )
+    def job_query
+      @job_query ||= JobQuery.new(status: params[:status], class_name: filter_param(:class_name), queue_name: filter_param(:queue_name))
     end
 
     def reject_malformed_filters
@@ -151,18 +126,18 @@ module JobHarbor
       jobs_path(status: params[:status], class_name: filter_param(:class_name).presence, queue_name: filter_param(:queue_name).presence)
     end
 
-    def retry_all_jobs(status)
-      job_status = JobStatus.find(status)
+    def retry_all_jobs
+      job_status = JobStatus.find(params[:status])
       return 0 unless job_status&.bulk_retry?
 
-      bulk_scope(status).in_batches(of: BULK_BATCH_SIZE).sum { |jobs| job_status.execution_class.retry_all(jobs) }
+      job_query.bulk_jobs.in_batches(of: BULK_BATCH_SIZE).sum { |jobs| job_status.execution_class.retry_all(jobs) }
     end
 
-    def discard_all_jobs(status)
-      scope = bulk_scope(status)
+    def discard_all_jobs
+      scope = job_query.bulk_jobs
       return 0 unless scope
 
-      executions = JobStatus.find(status).execution_class
+      executions = JobStatus.find(params[:status]).execution_class
       scope.in_batches(of: BULK_BATCH_SIZE).sum do |jobs|
         ids = jobs.ids
         executions.discard_all_from_jobs(jobs)

@@ -2,12 +2,12 @@
 
 module JobHarbor
   class PaginationComponent < ApplicationComponent
-    def initialize(pagy:)
-      @pagy = pagy
+    def initialize(page_info:)
+      @page_info = page_info
     end
 
     def render?
-      @pagy.pages > 1
+      @page_info.pages > 1
     end
 
     def call
@@ -23,16 +23,16 @@ module JobHarbor
     private
 
     def prev_link
-      if @pagy.prev
-        link_to "\u2190 Prev", url_for(page: @pagy.prev), class: "pagination-link"
+      if @page_info.prev
+        link_to "\u2190 Prev", url_for(page: @page_info.prev), class: "pagination-link"
       else
         content_tag(:span, "\u2190 Prev", class: "pagination-link pagination-disabled")
       end
     end
 
     def next_link
-      if @pagy.next
-        link_to "Next \u2192", url_for(page: @pagy.next), class: "pagination-link"
+      if @page_info.next
+        link_to "Next \u2192", url_for(page: @page_info.next), class: "pagination-link"
       else
         content_tag(:span, "Next \u2192", class: "pagination-link pagination-disabled")
       end
@@ -42,7 +42,7 @@ module JobHarbor
       series.map do |item|
         case item
         when Integer
-          if item == @pagy.page
+          if item == @page_info.page
             content_tag(:span, item, class: "pagination-link pagination-active")
           else
             link_to item, url_for(page: item), class: "pagination-link"
@@ -54,8 +54,8 @@ module JobHarbor
     end
 
     def series
-      pages = @pagy.pages
-      current = @pagy.page
+      pages = @page_info.pages
+      current = @page_info.page
 
       if pages <= 7
         (1..pages).to_a

@@ -110,7 +110,7 @@ module JobHarbor
       enqueue_job(ReportJob)
       enqueue_job(NewsletterJob, at: 1.hour.from_now)
 
-      _, presenters = JobPresenter.all_with_status(nil, per_page: 10)
+      _, presenters = JobQuery.new.page(1, per_page: 10)
       queries = []
       counter = ->(*, payload) { queries << payload[:sql] unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
       ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
@@ -122,49 +122,6 @@ module JobHarbor
 
     test "relative_created_at returns human-readable time" do
       assert_includes JobPresenter.new(enqueue_job(ReportJob)).relative_created_at, "ago"
-    end
-
-    test "all_with_status lists the newest job first" do
-      older = enqueue_job(ReportJob)
-      newer = enqueue_job(ReportJob)
-      newer.update_columns(created_at: 1.day.ago)
-
-      _, jobs = JobPresenter.all_with_status(nil)
-
-      assert_equal [ newer.id, older.id ], jobs.map(&:id), "Order follows the primary key, which rises with insert order"
-    end
-
-    test "all_with_status page info reports page, pages, count, prev and next across first, middle and last page" do
-      5.times { |i| SolidQueue::Job.create!(queue_name: "default", class_name: "PageJob#{i}", arguments: "{}") }
-
-      first, first_jobs = JobPresenter.all_with_status(nil, page: 1, per_page: 2)
-      assert_equal [ 1, 3, 5, nil, 2 ], [ first.page, first.pages, first.count, first.prev, first.next ]
-      assert_equal 2, first_jobs.size
-
-      middle, = JobPresenter.all_with_status(nil, page: 2, per_page: 2)
-      assert_equal [ 2, 3, 5, 1, 3 ], [ middle.page, middle.pages, middle.count, middle.prev, middle.next ]
-
-      last, last_jobs = JobPresenter.all_with_status(nil, page: 3, per_page: 2)
-      assert_equal [ 3, 3, 5, 2, nil ], [ last.page, last.pages, last.count, last.prev, last.next ]
-      assert_equal 1, last_jobs.size
-    end
-
-    test "all_with_status narrows to each status through the job's execution record" do
-      pending = enqueue_job(ReportJob)
-      scheduled = enqueue_job(NewsletterJob, at: 1.hour.from_now)
-      running = claim_job(enqueue_job(ReportJob), worker: @worker).job
-      failed = fail_job(enqueue_job(FlakyPaymentJob, 1), worker: @worker)
-      finished = finish_job(enqueue_job(ReportJob), worker: @worker)
-      enqueue_job(ThrottledImportJob, "acme")
-      blocked = enqueue_job(ThrottledImportJob, "acme")
-
-      expected = { "pending" => [ pending ], "scheduled" => [ scheduled ], "in_progress" => [ running ],
-                   "failed" => [ failed ], "blocked" => [ blocked ], "finished" => [ finished ] }
-      expected.each do |status, jobs|
-        _, found = JobPresenter.all_with_status(status)
-        assert_includes found.map(&:id), jobs.first.id, "#{status} tab is missing its job"
-        assert_equal [ status ], found.map(&:status).uniq, "#{status} tab lists jobs in another status"
-      end
     end
   end
 end
