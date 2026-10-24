@@ -1,0 +1,26 @@
+<div class="card">
+  <% if @title %>
+    <div class="card-header">
+      <h2 class="card-title"><%= @title %></h2>
+    </div>
+  <% end %>
+  <div class="table-wrapper">
+    <table class="sqd-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Job Class</th>
+          <th>Queue</th>
+          <th>Status</th>
+          <th>Scheduled At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @jobs.each do |job| %>
+          <%= render JobHarbor::JobRowComponent.new(job: job) %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
