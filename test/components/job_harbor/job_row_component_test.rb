@@ -34,6 +34,17 @@ module JobHarbor
       assert_includes @rendered, "5 minutes ago"
     end
 
+    test "discard and retry forms carry the page the operator is on as their return path" do
+      job = mock_job_presenter(can_retry?: true)
+      render_inline(JobRowComponent.new(job: job, return_to: "/job_harbor/jobs/status/failed?class_name=TestJob"))
+
+      forms = Nokogiri::HTML.fragment(@rendered).css("form")
+      assert_equal 2, forms.size
+      forms.each do |form|
+        assert_equal "/job_harbor/jobs/status/failed?class_name=TestJob", form.at_css("input[name=return_to]")["value"]
+      end
+    end
+
     MockJobPresenter = Struct.new(:id, :class_name, :queue_name, :status, :scheduled_at, :created_at,
                                   :can_retry?, :can_discard?, :execution_count, :retry_badge,
                                   :running_duration, :relative_created_at)

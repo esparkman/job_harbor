@@ -1,12 +1,12 @@
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
   <%= render JobHarbor::StatCardComponent.new(
-    label: "Total Workers",
+    label: "Processes",
     value: @workers.count,
     type: :workers
   ) %>
 
   <%= render JobHarbor::StatCardComponent.new(
-    label: "Active",
+    label: "Live",
     value: @active_count,
     type: :finished
   ) %>
@@ -17,6 +17,8 @@
     type: :blocked
   ) %>
 </div>
+
+<p class="text-sm text-muted-foreground mb-6" data-live-workers>Live workers: <%= @live_workers_count %></p>
 
 <% if @workers.empty? %>
   <%= render JobHarbor::EmptyStateComponent.new(

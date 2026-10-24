@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## 0.7.1 - Unreleased
+
+### Fixed
+
+- Discarding or retrying a job from a list row now returns you to the page you were on (a filtered Failed tab, a queue page, search results) instead of All Jobs. The return path is accepted only when it lies inside the dashboard's mount path.
+- The Workers page stats are now labeled "Processes", "Live" and "Stale" and show a "Live workers" figure, so they no longer read as disagreeing with the nav badge and the dashboard's Active Workers, which count live Worker processes only.
+- The Class and Queue filter dropdowns keep the active filter selected after its last job is gone, instead of falling back to "All Classes" / "All Queues" while the list is still filtered.
+
 ## 0.7.0 - 2026-10-23
 
 ### Changed

@@ -2,8 +2,9 @@
 
 module JobHarbor
   class JobRowComponent < ApplicationComponent
-    def initialize(job:)
+    def initialize(job:, return_to: nil)
       @job = job
+      @return_to = return_to
     end
 
     def call
@@ -92,16 +93,20 @@ module JobHarbor
       end
     end
 
+    def return_to
+      @return_to || request.fullpath
+    end
+
     def retry_button
       return unless @job.can_retry?
 
-      button_to "Retry", retry_job_path(@job), method: :post, class: "btn btn-secondary btn-xs"
+      button_to "Retry", retry_job_path(@job), method: :post, params: { return_to: return_to }, class: "btn btn-secondary btn-xs"
     end
 
     def discard_button
       return unless @job.can_discard?
 
-      button_to "Discard", discard_job_path(@job), method: :delete, class: "btn btn-destructive btn-xs",
+      button_to "Discard", discard_job_path(@job), method: :delete, params: { return_to: return_to }, class: "btn btn-destructive btn-xs",
         form: { data: { confirm: "Are you sure you want to discard this job?" } }
     end
   end

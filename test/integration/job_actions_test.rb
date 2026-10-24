@@ -65,6 +65,61 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     assert_status_tab_count "finished", 0
   end
 
+  test "operator discards from the Failed tab filtered to one class and lands back on that filtered tab" do
+    export = fail_job(enqueue_job(BrokenExportJob, 1, queue: "critical"), worker: @worker)
+    list = "/job_harbor/jobs/status/failed?class_name=FlakyPaymentJob"
+
+    get list
+    return_to = return_to_in_form("/job_harbor/jobs/#{@failed.id}/discard")
+    assert_equal list, return_to, "Discard must remember the filtered Failed tab it was clicked on"
+
+    assert_discarded(SolidQueue::FailedExecution, @failed) { delete "/job_harbor/jobs/#{@failed.id}/discard", params: { return_to: return_to } }
+
+    assert_redirected_to list
+    follow_redirect!
+    assert_select ".alert-success", text: "Job has been discarded."
+    assert_select "p", text: "There are no failed jobs."
+    assert SolidQueue::FailedExecution.exists?(job_id: export.id)
+  end
+
+  test "operator discards from a queue page and lands back on that queue page" do
+    enqueue_job(ReportJob, "monthly")
+
+    get "/job_harbor/queues/default"
+    return_to = return_to_in_form("/job_harbor/jobs/#{@pending.id}/discard")
+    assert_equal "/job_harbor/queues/default", return_to
+
+    assert_discarded(SolidQueue::ReadyExecution, @pending) { delete "/job_harbor/jobs/#{@pending.id}/discard", params: { return_to: return_to } }
+
+    assert_redirected_to "/job_harbor/queues/default"
+    follow_redirect!
+    assert_select ".alert-success", text: "Job has been discarded."
+  end
+
+  test "operator retries from the Failed tab and lands back on that tab" do
+    get "/job_harbor/jobs/status/failed?queue_name=critical"
+    return_to = return_to_in_form("/job_harbor/jobs/#{@failed.id}/retry")
+    assert_equal "/job_harbor/jobs/status/failed?queue_name=critical", return_to
+
+    post "/job_harbor/jobs/#{@failed.id}/retry", params: { return_to: return_to }
+
+    assert_redirected_to "/job_harbor/jobs/status/failed?queue_name=critical"
+    assert SolidQueue::ReadyExecution.exists?(job_id: @failed.id), "Retry should still requeue the job"
+  end
+
+  test "a crafted return path is ignored and the operator lands on the default page" do
+    [ "https://evil.example", "//evil.example", "/../", "/job_harbor/../evil", "/job_harbor@evil.example", "/job_harbor\\evil", "javascript:alert(1)", "/other_app/jobs", [ "/job_harbor/jobs" ] ].each do |crafted|
+      job = fail_job(enqueue_job(FlakyPaymentJob, 7), worker: @worker)
+
+      delete "/job_harbor/jobs/#{job.id}/discard", params: { return_to: crafted }
+
+      assert_redirected_to "/job_harbor/jobs", "Open redirect: #{crafted.inspect} was followed"
+    end
+
+    post "/job_harbor/jobs/#{@failed.id}/retry", params: { return_to: "//evil.example" }
+    assert_redirected_to "/job_harbor/jobs/#{@failed.id}"
+  end
+
   test "operator discards a pending job from the Pending list and it will never run" do
     get "/job_harbor/jobs/status/pending"
     assert_discard_form "/job_harbor/jobs/#{@pending.id}/discard", confirm: DISCARD_JOB_CONFIRM
@@ -313,6 +368,12 @@ class JobActionsTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def return_to_in_form(action)
+      input = css_select("form[action='#{action}'] input[name=return_to]").first
+      assert input, "Operator expected the row's form for #{action} to carry a return path"
+      input["value"]
+    end
+
     # The app's env_config is applied to every request, so the nonce settings have to be swapped there.
     def with_csp_nonce(nonce)
       env_config = Rails.application.env_config

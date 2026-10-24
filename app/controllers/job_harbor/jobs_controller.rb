@@ -44,7 +44,7 @@ module JobHarbor
     def retry
       if @job.can_retry?
         perform_retry(@job)
-        redirect_to job_path(@job), notice: "Job has been queued for retry."
+        redirect_to return_path || job_path(@job), notice: "Job has been queued for retry."
       else
         redirect_to job_path(@job), alert: "This job cannot be retried."
       end
@@ -52,7 +52,7 @@ module JobHarbor
 
     def discard
       if @job.can_discard? && @job.discard
-        redirect_to jobs_path(status: params[:return_status]), notice: "Job has been discarded."
+        redirect_to return_path || jobs_path(status: params[:return_status]), notice: "Job has been discarded."
       else
         redirect_to job_path(@job), alert: "This job cannot be discarded."
       end
@@ -76,6 +76,20 @@ module JobHarbor
       @job = JobPresenter.find(params[:id])
     rescue ActiveRecord::RecordNotFound
       redirect_to jobs_path, alert: "Job not found."
+    end
+
+    # Only a path inside this engine's mount, so a crafted param can't send the operator elsewhere.
+    def return_path
+      path = params[:return_to]
+      return unless path.is_a?(String) && path.match?(%r{\A/[^\\\s]*\z}) && !path.start_with?("//")
+
+      mount = request.script_name
+      return unless path == mount || path.start_with?("#{mount}/", "#{mount}?")
+      return if URI.parse(path).path.split("/").include?("..")
+
+      path
+    rescue URI::InvalidURIError
+      nil
     end
 
     def per_page_param
