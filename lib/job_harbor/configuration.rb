@@ -2,7 +2,6 @@ module JobHarbor
   class Configuration
     attr_accessor :authorize_with,
                   :theme,
-                  :primary_color,
                   :jobs_per_page,
                   :enable_recurring_tasks,
                   :enable_real_time_updates,
@@ -13,7 +12,7 @@ module JobHarbor
                   :return_to_app_path,
                   :return_to_app_label
 
-    attr_reader :filter_parameters
+    attr_reader :filter_parameters, :primary_color
 
     def initialize
       @theme = :dark
@@ -28,6 +27,11 @@ module JobHarbor
       @return_to_app_path = nil
       @return_to_app_label = "Back to App"
       @filter_parameters = nil
+    end
+
+    def primary_color=(value)
+      JobHarbor.deprecator.warn("config.primary_color has no effect and will be removed in 1.0.")
+      @primary_color = value
     end
 
     FILTER_PATTERN_TYPES = [ String, Symbol, Regexp, Proc ].freeze

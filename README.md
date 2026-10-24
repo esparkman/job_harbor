@@ -107,6 +107,9 @@ JobHarbor.configure do |config|
   # Theme: :dark or :light (default: :dark)
   config.theme = :dark
 
+  # Deprecated: config.primary_color has no effect and will be removed in 1.0.
+  # Assigning it logs a deprecation warning.
+
   # Jobs per page (default: 25)
   config.jobs_per_page = 25
 
