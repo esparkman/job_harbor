@@ -50,19 +50,9 @@ module JobHarbor
     def details
       content_tag(:div, class: "space-y-1") do
         safe_join([
-          info_line("Hostname", @worker.hostname),
-          info_line("PID", @worker.pid),
-          info_line("Last Heartbeat", heartbeat_time)
-        ])
-      end
-    end
-
-    def info_line(label, value)
-      content_tag(:div, class: "info-line") do
-        safe_join([
-          content_tag(:span, label, class: "info-line-label"),
-          content_tag(:span, "", class: "info-line-separator"),
-          content_tag(:span, value, class: "info-line-value")
+          render(InfoLineComponent.new(label: "Hostname", value: @worker.hostname)),
+          render(InfoLineComponent.new(label: "PID", value: @worker.pid)),
+          render(InfoLineComponent.new(label: "Last Heartbeat", value: heartbeat_time))
         ])
       end
     end
