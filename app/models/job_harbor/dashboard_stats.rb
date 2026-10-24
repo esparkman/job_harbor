@@ -11,10 +11,6 @@ module JobHarbor
       calculate_stats
     end
 
-    def total_jobs
-      pending_count + scheduled_count + in_progress_count + failed_count + blocked_count
-    end
-
     private
 
     def calculate_stats
