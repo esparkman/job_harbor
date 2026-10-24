@@ -19,42 +19,26 @@
       <h2 class="card-title">Job Details</h2>
     </div>
     <div class="card-content space-y-1">
-      <div class="info-line">
-        <span class="info-line-label">Status</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= render JobHarbor::BadgeComponent.new(status: @job.status) %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Status") do %>
+        <%= render JobHarbor::BadgeComponent.new(status: @job.status) %>
+      <% end %>
 
-      <div class="info-line">
-        <span class="info-line-label">Job Class</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><code class="text-sm font-mono"><%= @job.class_name %></code></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Job Class") do %>
+        <code class="text-sm font-mono"><%= @job.class_name %></code>
+      <% end %>
 
-      <div class="info-line">
-        <span class="info-line-label">Queue</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= link_to @job.queue_name, queue_path(@job.queue_name), class: "link" %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Queue") do %>
+        <%= link_to @job.queue_name, queue_path(@job.queue_name), class: "link" %>
+      <% end %>
 
-      <div class="info-line">
-        <span class="info-line-label">Priority</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @job.priority || "Default" %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Priority", value: @job.priority || "Default") %>
 
-      <div class="info-line">
-        <span class="info-line-label">Active Job ID</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><code class="text-xs font-mono"><%= @job.active_job_id %></code></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Active Job ID") do %>
+        <code class="text-xs font-mono"><%= @job.active_job_id %></code>
+      <% end %>
 
       <% if @job.worker_name %>
-        <div class="info-line">
-          <span class="info-line-label">Worker</span>
-          <span class="info-line-separator"></span>
-          <span class="info-line-value"><%= @job.worker_name %></span>
-        </div>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Worker", value: @job.worker_name) %>
       <% end %>
     </div>
   </div>
@@ -64,34 +48,18 @@
       <h2 class="card-title">Timing</h2>
     </div>
     <div class="card-content space-y-1">
-      <div class="info-line">
-        <span class="info-line-label">Created At</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @job.created_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Created At", value: @job.created_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
 
       <% if @job.scheduled_at %>
-        <div class="info-line">
-          <span class="info-line-label">Scheduled At</span>
-          <span class="info-line-separator"></span>
-          <span class="info-line-value"><%= @job.scheduled_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
-        </div>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Scheduled At", value: @job.scheduled_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
       <% end %>
 
       <% if @job.finished_at %>
-        <div class="info-line">
-          <span class="info-line-label">Finished At</span>
-          <span class="info-line-separator"></span>
-          <span class="info-line-value"><%= @job.finished_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
-        </div>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Finished At", value: @job.finished_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
       <% end %>
 
       <% if @job.failed_at %>
-        <div class="info-line">
-          <span class="info-line-label">Failed At</span>
-          <span class="info-line-separator"></span>
-          <span class="info-line-value"><%= @job.failed_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
-        </div>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Failed At", value: @job.failed_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
       <% end %>
     </div>
   </div>
@@ -120,11 +88,9 @@
       <h2 class="card-title text-red-500">Error Details</h2>
     </div>
     <div class="card-content space-y-3">
-      <div class="info-line">
-        <span class="info-line-label">Exception Class</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><code class="text-sm font-mono"><%= @job.error_class || "Unknown" %></code></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Exception Class") do %>
+        <code class="text-sm font-mono"><%= @job.error_class || "Unknown" %></code>
+      <% end %>
 
       <div>
         <div class="text-sm text-muted-foreground mb-1">Error Message</div>

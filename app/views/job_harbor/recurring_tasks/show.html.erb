@@ -11,29 +11,15 @@
       <h2 class="card-title">Task Details</h2>
     </div>
     <div class="card-content space-y-1">
-      <div class="info-line">
-        <span class="info-line-label">Key</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @task.key %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Key", value: @task.key) %>
 
-      <div class="info-line">
-        <span class="info-line-label">Job Class</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><code class="text-sm font-mono"><%= @task.class_name %></code></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Job Class") do %>
+        <code class="text-sm font-mono"><%= @task.class_name %></code>
+      <% end %>
 
-      <div class="info-line">
-        <span class="info-line-label">Schedule</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @task.schedule %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Schedule", value: @task.schedule) %>
 
-      <div class="info-line">
-        <span class="info-line-label">Queue</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @task.queue_name || "default" %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Queue", value: @task.queue_name || "default") %>
 
       <% if @task_arguments.present? %>
         <div class="mt-3">
@@ -49,18 +35,10 @@
       <h2 class="card-title">Statistics</h2>
     </div>
     <div class="card-content space-y-1">
-      <div class="info-line">
-        <span class="info-line-label">Total Executions</span>
-        <span class="info-line-separator"></span>
-        <span class="info-line-value"><%= @executions_count %></span>
-      </div>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Total Executions", value: @executions_count) %>
 
       <% if @last_run_at %>
-        <div class="info-line">
-          <span class="info-line-label">Last Run</span>
-          <span class="info-line-separator"></span>
-          <span class="info-line-value"><%= @last_run_at.strftime("%Y-%m-%d %H:%M:%S %Z") %></span>
-        </div>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Last Run", value: @last_run_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
       <% end %>
     </div>
   </div>
