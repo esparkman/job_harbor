@@ -2,7 +2,7 @@
 
 module JobHarbor
   class StatusTabsComponent < ApplicationComponent
-    # status is the key of the open tab, or nil for "All"; counts is keyed :all and by status key symbol.
+    # status is the key of the open tab, or nil for "All"; counts is keyed "all" and by status key.
     def initialize(status:, counts:)
       @status = status
       @counts = counts
@@ -18,7 +18,7 @@ module JobHarbor
 
     def all_tab
       link_to jobs_path, class: tab_classes(selected: !@status) do
-        safe_join([ "All ", count_tag(:all, "ml-1 opacity-75") ])
+        safe_join([ "All ", count_tag("all", "ml-1 opacity-75") ])
       end
     end
 
@@ -27,7 +27,7 @@ module JobHarbor
         safe_join([
           content_tag(:span, "", class: "circle #{job_status.circle_class}"),
           " #{job_status.label} ",
-          count_tag(job_status.key.to_sym, "opacity-75")
+          count_tag(job_status.key, "opacity-75")
         ])
       end
     end

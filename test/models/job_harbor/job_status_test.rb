@@ -25,11 +25,11 @@ module JobHarbor
 
     test "every status but finished maps to a real Solid Queue execution association" do
       JobStatus.all.reject(&:finished?).each do |status|
-        reflection = SolidQueue::Job.reflect_on_association(status.execution)
+        reflection = SolidQueue::Job.reflect_on_association(status.execution_association)
         assert reflection, "#{status.key} points at a missing association"
         assert_equal reflection.klass, status.execution_class
       end
-      assert_nil JobStatus.find("finished").execution
+      assert_nil JobStatus.find("finished").execution_association
       assert_nil JobStatus.find("finished").execution_class
     end
 
@@ -54,7 +54,8 @@ module JobHarbor
 
     test "only failed jobs can be retried and only failed and blocked ones are bulk-actionable" do
       assert_equal %w[failed], JobStatus.all.select(&:retryable).map(&:key)
-      assert_equal %w[failed blocked], JobStatus.all.select(&:bulk).map(&:key)
+      assert_equal %w[failed], JobStatus.all.select(&:bulk_retry?).map(&:key)
+      assert_equal %w[failed blocked], JobStatus.all.select(&:bulk_actions).map(&:key)
       assert_equal %w[pending scheduled failed blocked], JobStatus.all.select(&:discardable).map(&:key)
     end
 

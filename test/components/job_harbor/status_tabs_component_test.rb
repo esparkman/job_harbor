@@ -4,7 +4,7 @@ require "test_helper"
 
 module JobHarbor
   class StatusTabsComponentTest < ViewComponentTestCase
-    COUNTS = { all: 12, pending: 3, scheduled: 1, in_progress: 2, failed: 4, blocked: 0, finished: 5 }.freeze
+    COUNTS = { "all" => 12, "pending" => 3, "scheduled" => 1, "in_progress" => 2, "failed" => 4, "blocked" => 0, "finished" => 5 }.freeze
 
     test "operator sees an All tab and one tab per job status, each with its count, in display order" do
       render_inline(StatusTabsComponent.new(status: nil, counts: COUNTS))

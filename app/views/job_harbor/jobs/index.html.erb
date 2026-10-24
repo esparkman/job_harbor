@@ -20,7 +20,7 @@
   <% jobs_label = pluralize(@bulk_count, "#{@status} job") %>
   <% bulk_params = { status: @status, class_name: @class_name.presence, queue_name: @queue_name.presence } %>
   <div class="flex items-center gap-2 mb-4">
-    <% if JobHarbor::JobStatus.find(@status)&.retryable %>
+    <% if JobHarbor::JobStatus.find(@status)&.bulk_retry? %>
       <%= button_to "Retry #{jobs_label}", retry_all_jobs_path(bulk_params), method: :post, class: "btn btn-secondary btn-sm",
           form: { data: { confirm: "Retry #{jobs_label}? Automatic retry counts are not reset." } } %>
     <% end %>

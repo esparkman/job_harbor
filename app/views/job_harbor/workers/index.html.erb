@@ -8,13 +8,13 @@
   <%= render JobHarbor::StatCardComponent.new(
     label: "Live",
     value: @active_count,
-    type: :finished
+    type: :live
   ) %>
 
   <%= render JobHarbor::StatCardComponent.new(
     label: "Stale",
     value: @stale_count,
-    type: :blocked
+    type: :stale
   ) %>
 </div>
 

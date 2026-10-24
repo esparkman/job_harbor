@@ -117,7 +117,7 @@ module JobHarbor
     end
 
     def job_counts
-      { all: SolidQueue::Job.count }.merge(JobStatus.all.to_h { |job_status| [ job_status.key.to_sym, job_status.count ] })
+      { "all" => SolidQueue::Job.count }.merge(JobStatus.all.to_h { |job_status| [ job_status.key, job_status.count ] })
     end
 
     def perform_retry(job)
@@ -130,7 +130,7 @@ module JobHarbor
     # Nil for tabs without bulk actions.
     def bulk_scope(status)
       job_status = JobStatus.find(status)
-      return unless job_status&.bulk
+      return unless job_status&.bulk_actions
 
       JobPresenter.apply_filters(
         SolidQueue::Job.where(id: job_status.execution_class.select(:job_id)),
@@ -153,7 +153,7 @@ module JobHarbor
 
     def retry_all_jobs(status)
       job_status = JobStatus.find(status)
-      return 0 unless job_status&.retryable
+      return 0 unless job_status&.bulk_retry?
 
       bulk_scope(status).in_batches(of: BULK_BATCH_SIZE).sum { |jobs| job_status.execution_class.retry_all(jobs) }
     end

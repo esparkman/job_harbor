@@ -2,7 +2,7 @@
 
 module JobHarbor
   class DashboardStats
-    attr_reader :status_counts, :workers_count, :queues_count, :throughput_per_hour,
+    attr_reader :status_counts, :finished_last_24h, :workers_count, :queues_count, :throughput_per_hour,
                 :recent_failures
 
     def initialize
@@ -12,14 +12,15 @@ module JobHarbor
     private
 
     def calculate_stats
-      @status_counts = JobStatus.all.to_h { |status| [ status.key, status.finished? ? finished_jobs_count : status.count ] }
+      @status_counts = JobStatus.all.reject(&:finished?).to_h { |status| [ status.key, status.count ] }
+      @finished_last_24h = finished_last_24h_count
       @workers_count = active_workers_count
       @queues_count = queues_count_calc
       @throughput_per_hour = calculate_throughput
       @recent_failures = fetch_recent_failures
     end
 
-    def finished_jobs_count
+    def finished_last_24h_count
       SolidQueue::Job.where("finished_at > ?", 24.hours.ago).count
     end
 

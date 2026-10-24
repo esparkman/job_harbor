@@ -126,7 +126,7 @@ module JobHarbor
 
     def determine_status
       JobStatus.by_precedence.each do |status|
-        return status.key if execution_for(status.execution)
+        return status.key if execution_for(status.execution_association)
       end
 
       @job.finished_at.present? ? "finished" : "unknown"
@@ -138,7 +138,7 @@ module JobHarbor
 
     class << self
       def find(id)
-        new(SolidQueue::Job.preload(*JobStatus.executions).find(id))
+        new(SolidQueue::Job.preload(*JobStatus.execution_associations).find(id))
       end
 
       def all_with_status(status = nil, page: 1, per_page: 25, class_name: nil, queue_name: nil)
@@ -182,7 +182,7 @@ module JobHarbor
         page = [ [ page.to_i, 1 ].max, [ pages, 1 ].max ].min
         offset = (page - 1) * per_page
 
-        jobs = scope.preload(*JobStatus.executions).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
+        jobs = scope.preload(*JobStatus.execution_associations).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
         [ PageInfo.new(page: page, per_page: per_page, count: total), jobs ]
       end
     end

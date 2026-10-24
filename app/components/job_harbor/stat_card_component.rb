@@ -6,7 +6,9 @@ module JobHarbor
     OTHER_COLORS = {
       workers: "green",
       queues: "sky",
-      throughput: "green"
+      throughput: "green",
+      live: "green",
+      stale: "zinc"
     }.freeze
 
     def initialize(label:, value:, type: nil, link: nil)
