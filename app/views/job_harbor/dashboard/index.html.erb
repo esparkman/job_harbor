@@ -1,46 +1,13 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Pending",
-    value: @stats.pending_count,
-    type: :pending,
-    link: pending_jobs_path
-  ) %>
+  <% JobHarbor::JobStatus.all.each do |job_status| %>
+    <%= render JobHarbor::StatCardComponent.new(
+      label: job_status.finished? ? "#{job_status.label} (24h)" : job_status.label,
+      value: @stats.status_counts[job_status.key],
+      type: job_status.key,
+      link: public_send(job_status.path_helper)
+    ) %>
 
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Scheduled",
-    value: @stats.scheduled_count,
-    type: :scheduled,
-    link: scheduled_jobs_path
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "In Progress",
-    value: @stats.in_progress_count,
-    type: :in_progress,
-    link: in_progress_jobs_path
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Failed",
-    value: @stats.failed_count,
-    type: :failed,
-    link: failed_jobs_path
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Blocked",
-    value: @stats.blocked_count,
-    type: :blocked,
-    link: blocked_jobs_path
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Finished (24h)",
-    value: @stats.finished_count,
-    type: :finished,
-    link: finished_jobs_path
-  ) %>
-
+  <% end %>
   <%= render JobHarbor::StatCardComponent.new(
     label: "Active Workers",
     value: @stats.workers_count,

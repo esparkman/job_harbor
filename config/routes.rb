@@ -13,12 +13,9 @@ JobHarbor::Engine.routes.draw do
   end
 
   # Status-scoped job routes
-  get "jobs/status/pending", to: "jobs#index", defaults: { status: "pending" }, as: :pending_jobs
-  get "jobs/status/scheduled", to: "jobs#index", defaults: { status: "scheduled" }, as: :scheduled_jobs
-  get "jobs/status/in_progress", to: "jobs#index", defaults: { status: "in_progress" }, as: :in_progress_jobs
-  get "jobs/status/failed", to: "jobs#index", defaults: { status: "failed" }, as: :failed_jobs
-  get "jobs/status/blocked", to: "jobs#index", defaults: { status: "blocked" }, as: :blocked_jobs
-  get "jobs/status/finished", to: "jobs#index", defaults: { status: "finished" }, as: :finished_jobs
+  JobHarbor::JobStatus.all.each do |job_status|
+    get "jobs/status/#{job_status.key}", to: "jobs#index", defaults: { status: job_status.key }, as: job_status.route_name
+  end
 
   resources :queues, only: [ :index, :show ], param: :name do
     member do

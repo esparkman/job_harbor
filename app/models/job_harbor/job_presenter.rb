@@ -4,15 +4,6 @@ module JobHarbor
   class JobPresenter
     include ActionView::Helpers::DateHelper
 
-    # In precedence order: the first execution a job holds decides its status.
-    EXECUTION_STATUSES = {
-      failed_execution: "failed",
-      claimed_execution: "in_progress",
-      blocked_execution: "blocked",
-      scheduled_execution: "scheduled",
-      ready_execution: "pending"
-    }.freeze
-
     LIKE_ESCAPE = "!"
     UUID_FORMAT = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
 
@@ -98,11 +89,11 @@ module JobHarbor
     end
 
     def can_retry?
-      status == "failed"
+      JobStatus.find(status)&.retryable || false
     end
 
     def can_discard?
-      %w[pending scheduled failed blocked].include?(status)
+      JobStatus.find(status)&.discardable || false
     end
 
     def to_param
@@ -134,8 +125,8 @@ module JobHarbor
     end
 
     def determine_status
-      EXECUTION_STATUSES.each do |association, status|
-        return status if execution_for(association)
+      JobStatus.by_precedence.each do |status|
+        return status.key if execution_for(status.execution)
       end
 
       @job.finished_at.present? ? "finished" : "unknown"
@@ -147,7 +138,7 @@ module JobHarbor
 
     class << self
       def find(id)
-        new(SolidQueue::Job.preload(*EXECUTION_STATUSES.keys).find(id))
+        new(SolidQueue::Job.preload(*JobStatus.executions).find(id))
       end
 
       def all_with_status(status = nil, page: 1, per_page: 25, class_name: nil, queue_name: nil)
@@ -169,13 +160,7 @@ module JobHarbor
       private
 
       def scope_for(status)
-        if status.to_s == "finished"
-          SolidQueue::Job.where.not(finished_at: nil)
-        elsif (association = EXECUTION_STATUSES.key(status.to_s))
-          SolidQueue::Job.joins(association)
-        else
-          SolidQueue::Job.all
-        end
+        JobStatus.find(status)&.jobs || SolidQueue::Job.all
       end
 
       def search_scope(query)
@@ -197,7 +182,7 @@ module JobHarbor
         page = [ [ page.to_i, 1 ].max, [ pages, 1 ].max ].min
         offset = (page - 1) * per_page
 
-        jobs = scope.preload(*EXECUTION_STATUSES.keys).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
+        jobs = scope.preload(*JobStatus.executions).order(id: :desc).limit(per_page).offset(offset).map { |job| new(job) }
         [ PageInfo.new(page: page, per_page: per_page, count: total), jobs ]
       end
     end

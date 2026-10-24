@@ -5,35 +5,7 @@
   <% end %>
 <% end %>
 
-<div class="flex gap-1 mb-4 flex-wrap">
-  <%= link_to jobs_path, class: "badge #{@status ? 'badge-secondary' : 'badge-primary'}" do %>
-    All <span class="ml-1 opacity-75"><%= @counts[:all] %></span>
-  <% end %>
-
-  <%= link_to pending_jobs_path, class: "badge #{@status == 'pending' ? 'badge-primary' : 'badge-secondary'}" do %>
-    <span class="circle circle-sky"></span> Pending <span class="opacity-75"><%= @counts[:pending] %></span>
-  <% end %>
-
-  <%= link_to scheduled_jobs_path, class: "badge #{@status == 'scheduled' ? 'badge-primary' : 'badge-secondary'}" do %>
-    <span class="circle circle-yellow"></span> Scheduled <span class="opacity-75"><%= @counts[:scheduled] %></span>
-  <% end %>
-
-  <%= link_to in_progress_jobs_path, class: "badge #{@status == 'in_progress' ? 'badge-primary' : 'badge-secondary'}" do %>
-    <span class="circle circle-amber"></span> In Progress <span class="opacity-75"><%= @counts[:in_progress] %></span>
-  <% end %>
-
-  <%= link_to failed_jobs_path, class: "badge #{@status == 'failed' ? 'badge-primary' : 'badge-secondary'}" do %>
-    <span class="circle circle-red"></span> Failed <span class="opacity-75"><%= @counts[:failed] %></span>
-  <% end %>
-
-  <%= link_to blocked_jobs_path, class: "badge #{@status == 'blocked' ? 'badge-primary' : 'badge-secondary'}" do %>
-    <span class="circle circle-zinc"></span> Blocked <span class="opacity-75"><%= @counts[:blocked] %></span>
-  <% end %>
-
-  <%= link_to finished_jobs_path, class: "badge #{@status == 'finished' ? 'badge-primary' : 'badge-secondary'}" do %>
-    <span class="circle circle-green"></span> Finished <span class="opacity-75"><%= @counts[:finished] %></span>
-  <% end %>
-</div>
+<%= render JobHarbor::StatusTabsComponent.new(status: @status, counts: @counts) %>
 
 <%= render JobHarbor::JobFiltersComponent.new(
   class_names: @filter_data[:class_names],
@@ -48,7 +20,7 @@
   <% jobs_label = pluralize(@bulk_count, "#{@status} job") %>
   <% bulk_params = { status: @status, class_name: @class_name.presence, queue_name: @queue_name.presence } %>
   <div class="flex items-center gap-2 mb-4">
-    <% if @status == "failed" %>
+    <% if JobHarbor::JobStatus.find(@status)&.retryable %>
       <%= button_to "Retry #{jobs_label}", retry_all_jobs_path(bulk_params), method: :post, class: "btn btn-secondary btn-sm",
           form: { data: { confirm: "Retry #{jobs_label}? Automatic retry counts are not reset." } } %>
     <% end %>

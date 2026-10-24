@@ -117,15 +117,7 @@ module JobHarbor
     end
 
     def job_counts
-      {
-        all: SolidQueue::Job.count,
-        pending: SolidQueue::ReadyExecution.count,
-        scheduled: SolidQueue::ScheduledExecution.count,
-        in_progress: SolidQueue::ClaimedExecution.count,
-        failed: SolidQueue::FailedExecution.count,
-        blocked: SolidQueue::BlockedExecution.count,
-        finished: SolidQueue::Job.where.not(finished_at: nil).count
-      }
+      { all: SolidQueue::Job.count }.merge(JobStatus.all.to_h { |job_status| [ job_status.key.to_sym, job_status.count ] })
     end
 
     def perform_retry(job)
@@ -137,14 +129,11 @@ module JobHarbor
 
     # Nil for tabs without bulk actions.
     def bulk_scope(status)
-      executions = case status
-      when "failed" then SolidQueue::FailedExecution
-      when "blocked" then SolidQueue::BlockedExecution
-      end
-      return unless executions
+      job_status = JobStatus.find(status)
+      return unless job_status&.bulk
 
       JobPresenter.apply_filters(
-        SolidQueue::Job.where(id: executions.select(:job_id)),
+        SolidQueue::Job.where(id: job_status.execution_class.select(:job_id)),
         class_name: filter_param(:class_name),
         queue_name: filter_param(:queue_name)
       )
@@ -163,16 +152,17 @@ module JobHarbor
     end
 
     def retry_all_jobs(status)
-      return 0 unless status == "failed"
+      job_status = JobStatus.find(status)
+      return 0 unless job_status&.retryable
 
-      bulk_scope(status).in_batches(of: BULK_BATCH_SIZE).sum { |jobs| SolidQueue::FailedExecution.retry_all(jobs) }
+      bulk_scope(status).in_batches(of: BULK_BATCH_SIZE).sum { |jobs| job_status.execution_class.retry_all(jobs) }
     end
 
     def discard_all_jobs(status)
       scope = bulk_scope(status)
       return 0 unless scope
 
-      executions = status == "failed" ? SolidQueue::FailedExecution : SolidQueue::BlockedExecution
+      executions = JobStatus.find(status).execution_class
       scope.in_batches(of: BULK_BATCH_SIZE).sum do |jobs|
         ids = jobs.ids
         executions.discard_all_from_jobs(jobs)
