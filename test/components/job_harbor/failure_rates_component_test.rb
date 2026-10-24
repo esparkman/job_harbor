@@ -31,6 +31,15 @@ module JobHarbor
       assert_includes @rendered, "sqd-rate-high"
     end
 
+    test "rate badge colors change at 5 and 20 percent" do
+      { 0.0 => "sqd-rate-low", 4.9 => "sqd-rate-low", 5.0 => "sqd-rate-medium",
+        19.9 => "sqd-rate-medium", 20.0 => "sqd-rate-high", 100.0 => "sqd-rate-high" }.each do |rate, css_class|
+        render_inline(FailureRatesComponent.new(stats: [ { class_name: "J", total: 100, failed: rate, rate: rate } ]))
+
+        assert_includes @rendered, "badge #{css_class}", "A #{rate}% failure rate should use #{css_class}"
+      end
+    end
+
     test "renders empty state when no stats" do
       render_inline(FailureRatesComponent.new(stats: []))
 

@@ -100,6 +100,18 @@ module SolidQueueTestHelper
     assert card, "Operator expected a '#{label}' stat card but the page has none"
     assert_equal value.to_s, card.at_css(".stat-card-value").text.strip, "'#{label}' stat card shows the wrong number"
   end
+
+  # Statements that reached the database: no schema lookups, transaction control or query-cache hits.
+  def count_queries(&block)
+    queries = []
+    counter = lambda do |*, payload|
+      next if payload[:name] == "SCHEMA" || payload[:cached] || payload[:sql].match?(/\A\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i)
+
+      queries << payload[:sql]
+    end
+    ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
+    queries
+  end
 end
 
 class ActionDispatch::IntegrationTest

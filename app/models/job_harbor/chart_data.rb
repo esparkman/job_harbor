@@ -13,7 +13,7 @@ module JobHarbor
     def initialize(range: "24h")
       @range = RANGES[range] || RANGES["24h"]
       @duration = @range[:duration]
-      @interval = @range[:interval]
+      @interval = @range[:interval].to_i
       @cutoff = Time.current - @duration
     end
 
@@ -22,83 +22,42 @@ module JobHarbor
     end
 
     def series
-      @series ||= calculate_series
+      @series ||= {
+        labels: bucket_starts.map { |time| format_label(time) },
+        completed: counts_per_bucket(SolidQueue::Job, :finished_at),
+        failed: counts_per_bucket(SolidQueue::FailedExecution, :created_at),
+        enqueued: counts_per_bucket(SolidQueue::Job, :created_at)
+      }
     end
 
     private
 
-    def calculate_series
-      buckets = generate_time_buckets
-      labels = buckets.map { |t| format_label(t) }
-
-      completed = count_by_bucket(completed_jobs, :finished_at, buckets)
-      failed = count_by_bucket(failed_jobs, :created_at, buckets)
-      enqueued = count_by_bucket(enqueued_jobs, :created_at, buckets)
-
-      {
-        labels: labels,
-        completed: completed,
-        failed: failed,
-        enqueued: enqueued
-      }
+    def bucket_count
+      @duration.to_i / @interval
     end
 
-    def generate_time_buckets
-      buckets = []
-      current = @cutoff
-      while current <= Time.current
-        buckets << current
-        current += @interval
-      end
-      buckets
+    def bucket_starts
+      Array.new(bucket_count) { |index| @cutoff + index * @interval }
     end
 
     def format_label(time)
-      if @duration <= 1.hour
-        time.strftime("%H:%M")
-      elsif @duration <= 24.hours
-        time.strftime("%H:%M")
-      else
-        time.strftime("%b %d")
-      end
+      @duration <= 24.hours ? time.strftime("%H:%M") : time.strftime("%b %d")
     end
 
-    def count_by_bucket(scope, time_field, buckets)
-      # Get counts grouped by time bucket
-      counts = scope
-        .where("#{time_field} >= ?", @cutoff)
-        .group_by_period(@interval, time_field)
+    # One row of SUM(CASE ...) per series: ANSI SQL, so it needs no per-database date truncation.
+    def counts_per_bucket(model, time_field)
+      column = "#{model.quoted_table_name}.#{model.connection.quote_column_name(time_field)}"
+      sums = bucket_starts.each_with_index.map { |start, index| bucket_sum(model, column, start, last: index == bucket_count - 1) }
 
-      # Map to bucket array
-      buckets.map do |bucket_start|
-        bucket_end = bucket_start + @interval
-        counts.count { |time, _| time >= bucket_start && time < bucket_end }
-      end
-    rescue => e
-      # Fallback to simple counting if group_by_period isn't available
-      buckets.map do |bucket_start|
-        bucket_end = bucket_start + @interval
-        scope.where("#{time_field} >= ? AND #{time_field} < ?", bucket_start, bucket_end).count
-      end
+      model.where(time_field => @cutoff..).pick(*sums).map(&:to_i)
     end
 
-    def completed_jobs
-      SolidQueue::Job.where.not(finished_at: nil)
-    end
+    # The last bucket is open-ended so a job stamped at the instant of the query still counts.
+    def bucket_sum(model, column, start, last:)
+      within = last ? "#{column} >= ?" : "#{column} >= ? AND #{column} < ?"
+      binds = last ? [ start ] : [ start, start + @interval ]
 
-    def failed_jobs
-      SolidQueue::FailedExecution.all
-    end
-
-    def enqueued_jobs
-      SolidQueue::Job.all
-    end
-
-    def group_by_period(scope, interval, time_field)
-      # Simple implementation - group records by time bucket
-      scope.pluck(time_field).group_by do |time|
-        time.to_i / interval.to_i * interval.to_i
-      end.transform_keys { |ts| Time.at(ts) }
+      Arel.sql(model.sanitize_sql_array([ "SUM(CASE WHEN #{within} THEN 1 ELSE 0 END)", *binds ]))
     end
   end
 end
