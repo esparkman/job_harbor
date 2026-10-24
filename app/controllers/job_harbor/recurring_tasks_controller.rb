@@ -14,6 +14,7 @@ module JobHarbor
 
     def show
       executions = SolidQueue::RecurringExecution.where(task_key: @task.key)
+      @task_arguments = RecurringTaskPresenter.new(@task)
       @executions_count = executions.count
       @last_run_at = executions.maximum(:run_at)
       @recent_executions = executions.order(run_at: :desc).limit(RECENT_EXECUTIONS_LIMIT)

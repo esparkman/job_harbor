@@ -11,7 +11,8 @@ module JobHarbor
                   :enable_charts,
                   :default_chart_range,
                   :return_to_app_path,
-                  :return_to_app_label
+                  :return_to_app_label,
+                  :filter_parameters
 
     def initialize
       @theme = :dark
@@ -25,6 +26,18 @@ module JobHarbor
       @default_chart_range = "24h"
       @return_to_app_path = nil
       @return_to_app_label = "Back to App"
+      @filter_parameters = nil
+    end
+
+    def filtering_parameters?
+      filter_parameters != false
+    end
+
+    # nil follows the host app's list, read each time because the host can change it after boot.
+    def parameter_filter
+      return unless filtering_parameters?
+
+      ActiveSupport::ParameterFilter.new(Array(filter_parameters || Rails.application.config.filter_parameters))
     end
 
     def authorize_with_configured?

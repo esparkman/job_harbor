@@ -1,6 +1,8 @@
 require "test_helper"
 
 class JobsPagesTest < ActionDispatch::IntegrationTest
+  teardown { JobHarbor.configuration.filter_parameters = nil }
+
   setup do
     freeze_time
     @worker = register_worker(name: "worker-1")
@@ -164,11 +166,19 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_equal [ [ "FlakyPaymentJob", "critical", "Failed" ] ], job_rows
   end
 
-  test "operator searches by a job argument and sees every job enqueued with it" do
+  test "with filtering off, operator searches by a job argument and sees every job enqueued with it" do
+    JobHarbor.configuration.filter_parameters = false
+
     get "/job_harbor/search", params: { q: "acme" }
 
     assert_select "p", text: /Found 2 results for "acme"/
     assert_equal [ [ "ThrottledImportJob", "imports", "Blocked" ], [ "ThrottledImportJob", "imports", "Pending" ] ], job_rows.sort
+  end
+
+  test "with filtering on, searching for argument text finds nothing" do
+    get "/job_harbor/search", params: { q: "acme" }
+
+    assert_select "p", text: /Found 0 results for "acme"/
   end
 
   test "operator searches for a percent sign and no job matches it as a wildcard" do
@@ -185,6 +195,7 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     get "/job_harbor/search", params: { q: "Flak_Payment" }
     assert_select "p", text: /Found 0 results/
 
+    JobHarbor.configuration.filter_parameters = false
     get "/job_harbor/search", params: { q: "job_class" }
     assert_select "p", text: /Found 9 results/
   end

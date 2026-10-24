@@ -129,8 +129,35 @@ JobHarbor.configure do |config|
 
   # Also accepts a proc for dynamic paths:
   # config.return_to_app_path = -> { main_app.root_path }
+
+  # Sensitive values (default: nil, use the app's config.filter_parameters)
+  # An array replaces that list; false shows raw values and brings argument search back.
+  config.filter_parameters = nil
 end
 ```
+
+### Sensitive values
+
+Job arguments, the full payload and recurring task arguments are filtered with your app's
+`config.filter_parameters`, read each time a page renders. Values under keys like `password` or
+`token` show as `[FILTERED]`. Active Job's own `_aj_*` markers are left as they are.
+
+While filtering is on, search matches job class, job ID and Active Job ID, but not argument
+text: matching hidden values would let a search reveal them. Set `config.filter_parameters = false`
+to show raw values and search arguments again.
+
+Key filters don't redact free text or arguments passed positionally (not in a hash), because
+those have no key. Error messages and backtraces are also shown as written. A Proc in
+`filter_parameters` can scrub all of these by pattern; the dashboard runs it over positional
+strings, error messages and backtraces too:
+
+```ruby
+Rails.application.config.filter_parameters << ->(_key, value) {
+  value.gsub!(/\b(tok|sk)_live_\w+/, "[FILTERED]") if value.is_a?(String)
+}
+```
+
+If a filter raises, the whole value shows as `[FILTERED]`.
 
 ## Authorization
 
