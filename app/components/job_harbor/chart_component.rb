@@ -20,7 +20,7 @@ module JobHarbor
 
     def header
       content_tag(:div, class: "card-header") do
-        content_tag(:div, class: "flex items-center justify-between") do
+        content_tag(:div, class: "flex flex-wrap items-center justify-between gap-2") do
           safe_join([
             content_tag(:h3, "Job Activity", class: "card-title"),
             range_selector
