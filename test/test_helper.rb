@@ -101,10 +101,14 @@ module SolidQueueTestHelper
     assert_equal value.to_s, card.at_css(".stat-card-value").text.strip, "'#{label}' stat card shows the wrong number"
   end
 
-  # SQL statements the block runs, leaving out schema lookups and transaction control.
+  # Statements that reached the database: no schema lookups, transaction control or query-cache hits.
   def count_queries(&block)
     queries = []
-    counter = ->(*, payload) { queries << payload[:sql] unless payload[:name] == "SCHEMA" || payload[:sql].match?(/\A\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i) }
+    counter = lambda do |*, payload|
+      next if payload[:name] == "SCHEMA" || payload[:cached] || payload[:sql].match?(/\A\s*(BEGIN|COMMIT|ROLLBACK|SAVEPOINT|RELEASE)/i)
+
+      queries << payload[:sql]
+    end
     ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
     queries
   end

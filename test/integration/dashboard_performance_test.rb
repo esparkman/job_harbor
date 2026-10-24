@@ -3,19 +3,17 @@ require "test_helper"
 class DashboardPerformanceTest < ActionDispatch::IntegrationTest
   QUERY_BUDGET = 30
 
+  class OtherFlakyJob < ActiveJob::Base
+    def perform(*) = raise(PaymentGatewayError, "Gateway timeout")
+  end
+
   setup do
     freeze_time
-    worker = register_worker(name: "worker-1")
-
-    20.times { |i| enqueue_job(ReportJob, "pending-#{i}") }
-    5.times { |i| enqueue_job(NewsletterJob, "later-#{i}", queue: "mailers", at: 2.hours.from_now) }
-    2.times { enqueue_job(ThrottledImportJob, "acme", queue: "imports") }
-    5.times { |i| claim_job(enqueue_job(ReportJob, "claimed-#{i}", queue: "critical"), worker: worker) }
-    8.times { |i| fail_job(enqueue_job(FlakyPaymentJob, i, queue: "critical"), worker: worker) }
-    10.times { |i| finish_job(enqueue_job(ReportJob, "done-#{i}"), worker: worker) }
+    @worker = register_worker(name: "worker-1")
   end
 
   test "operator loads the dashboard on the default range and it stays within the query budget" do
+    seed_jobs(40)
     queries = count_queries { get "/job_harbor" }
 
     assert_response :success
@@ -23,10 +21,24 @@ class DashboardPerformanceTest < ActionDispatch::IntegrationTest
   end
 
   test "operator loads the dashboard on the 7 day range and it stays within the query budget" do
+    seed_jobs(40)
     queries = count_queries { get "/job_harbor", params: { chart_range: "7d" } }
 
     assert_response :success
     assert_operator queries.size, :<, QUERY_BUDGET, "7d dashboard ran #{queries.size} queries:\n#{queries.join("\n")}"
+  end
+
+  test "the dashboard runs the same queries for 5 jobs as for 45 on every range" do
+    %w[24h 7d].each do |range|
+      SolidQueue::Job.destroy_all
+      seed_failures
+      small = count_queries { get "/job_harbor", params: { chart_range: range } }
+
+      seed_jobs(40)
+      large = count_queries { get "/job_harbor", params: { chart_range: range } }
+
+      assert_equal small.size, large.size, "#{range} dashboard should not query per job, got:\n#{large.join("\n")}"
+    end
   end
 
   test "operator picks the 7 day range and the chart shows 7 days with that button highlighted" do
@@ -59,6 +71,24 @@ class DashboardPerformanceTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  # Failures of two classes, so recent failures and failure rates have rows to render.
+  def seed_failures
+    enqueue_job(ReportJob, "pending")
+    2.times { |i| fail_job(enqueue_job(FlakyPaymentJob, i, queue: "critical"), worker: @worker) }
+    fail_job(enqueue_job(OtherFlakyJob, 1, queue: "mailers"), worker: @worker)
+    finish_job(enqueue_job(ReportJob, "done"), worker: @worker)
+  end
+
+  def seed_jobs(count)
+    seed_failures if SolidQueue::Job.none?
+    (count / 4).times { |i| enqueue_job(ReportJob, "pending-#{i}") }
+    (count / 8).times { |i| enqueue_job(NewsletterJob, "later-#{i}", queue: "mailers", at: 2.hours.from_now) }
+    (count / 8).times { |i| claim_job(enqueue_job(ReportJob, "claimed-#{i}", queue: "imports"), worker: @worker) }
+    (count / 8).times { |i| fail_job(enqueue_job(i.even? ? FlakyPaymentJob : OtherFlakyJob, i, queue: "critical"), worker: @worker) }
+    (count / 4).times { |i| finish_job(enqueue_job(ReportJob, "done-#{i}"), worker: @worker) }
+    2.times { enqueue_job(ThrottledImportJob, "acme", queue: "imports") }
+  end
 
   def chart_series
     JSON.parse(css_select(".sqd-chart").first["data-chart-data"])
