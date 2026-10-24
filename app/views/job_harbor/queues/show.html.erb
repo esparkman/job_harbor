@@ -55,30 +55,7 @@
     icon: :jobs
   ) %>
 <% else %>
-  <div class="card">
-    <div class="card-header">
-      <h2 class="card-title">Jobs in Queue</h2>
-    </div>
-    <div class="table-wrapper">
-      <table class="sqd-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Job Class</th>
-            <th>Queue</th>
-            <th>Status</th>
-            <th>Scheduled At</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @jobs.each do |job| %>
-            <%= render JobHarbor::JobRowComponent.new(job: job) %>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <%= render JobHarbor::JobsTableComponent.new(jobs: @jobs, title: "Jobs in Queue") %>
 
   <div class="mt-4">
     <%= render JobHarbor::PaginationComponent.new(page_info: @page_info) %>

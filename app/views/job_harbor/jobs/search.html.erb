@@ -1,8 +1,5 @@
 <% content_for :header_actions do %>
-  <%= form_with url: search_path, method: :get, class: "flex flex-wrap items-center gap-2" do |f| %>
-    <%= f.text_field :q, placeholder: "Search jobs...", class: "select w-full sm:w-64", value: params[:q] %>
-    <%= f.submit "Search", class: "btn btn-secondary btn-sm" %>
-  <% end %>
+  <%= render JobHarbor::JobSearchFormComponent.new(query: params[:q]) %>
 <% end %>
 
 <p class="text-sm text-muted-foreground mb-4">
@@ -17,27 +14,7 @@
     icon: :search
   ) %>
 <% else %>
-  <div class="card">
-    <div class="table-wrapper">
-      <table class="sqd-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Job Class</th>
-            <th>Queue</th>
-            <th>Status</th>
-            <th>Scheduled At</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @jobs.each do |job| %>
-            <%= render JobHarbor::JobRowComponent.new(job: job) %>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <%= render JobHarbor::JobsTableComponent.new(jobs: @jobs) %>
 
   <div class="mt-4">
     <%= render JobHarbor::PaginationComponent.new(page_info: @page_info) %>
