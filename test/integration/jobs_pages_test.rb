@@ -106,9 +106,28 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_info_line "Exception Class", "PaymentGatewayError"
     assert_select ".card", text: /Error Message\s*Card declined for order 42/
     assert_select "pre.code-block", text: /test_helper\.rb:\d+.*perform/
-    assert_select "pre.code-block", text: /job_class.*FlakyPaymentJob/
     assert_select "button", text: "Retry Job"
     assert_select "button", text: "Discard Job"
+  end
+
+  test "operator opens a job and sees its real arguments first, with the full payload tucked in a details block" do
+    get "/job_harbor/jobs/#{@failed.id}"
+
+    assert_select ".card-title", text: "Arguments"
+    shown_arguments = css_select("pre.code-block").first.text
+    assert_equal [ 42 ], JSON.parse(shown_arguments), "The Arguments card should show the order id the job was enqueued with"
+    assert_not_includes shown_arguments, "job_class"
+    assert_select "details > summary", text: "Full payload"
+    assert_select "details pre.code-block", text: /"job_class": "FlakyPaymentJob"/
+  end
+
+  test "operator opens a job with no arguments and the page says so instead of showing an empty list" do
+    job = enqueue_job(NewsletterJob)
+
+    get "/job_harbor/jobs/#{job.id}"
+
+    assert_select ".card", text: /Arguments\s*No arguments/
+    assert_select "details pre.code-block", text: /"job_class": "NewsletterJob"/
   end
 
   test "operator opens a running job and sees which worker claimed it" do
@@ -135,7 +154,7 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", text: "Search Results"
-    assert_select "p", text: /Found 1 results for "FlakyPayment"/
+    assert_select "p", text: /Found 1 result for "FlakyPayment"/
     assert_equal [ [ "FlakyPaymentJob", "critical", "Failed" ] ], job_rows
   end
 
@@ -144,6 +163,37 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
 
     assert_select "p", text: /Found 2 results for "acme"/
     assert_equal [ [ "ThrottledImportJob", "imports", "Blocked" ], [ "ThrottledImportJob", "imports", "Pending" ] ], job_rows.sort
+  end
+
+  test "operator searches for a percent sign and no job matches it as a wildcard" do
+    get "/job_harbor/search", params: { q: "%" }
+
+    assert_select "p", text: /Found 0 results for "%"/
+    assert_empty job_rows
+  end
+
+  test "operator searches with an underscore and it matches that character, not any character" do
+    get "/job_harbor/search", params: { q: "Flaky_Payment" }
+    assert_select "p", text: /Found 0 results/
+
+    get "/job_harbor/search", params: { q: "Flak_Payment" }
+    assert_select "p", text: /Found 0 results/
+
+    get "/job_harbor/search", params: { q: "job_class" }
+    assert_select "p", text: /Found 9 results/
+  end
+
+  test "operator searches by job id and sees that job" do
+    get "/job_harbor/search", params: { q: @failed.id.to_s }
+
+    assert_includes job_rows, [ "FlakyPaymentJob", "critical", "Failed" ]
+  end
+
+  test "operator searches by an Active Job ID and sees exactly that job" do
+    get "/job_harbor/search", params: { q: @failed.active_job_id }
+
+    assert_select "p", text: /Found 1 result for/
+    assert_equal [ [ "FlakyPaymentJob", "critical", "Failed" ] ], job_rows
   end
 
   test "operator searches for something no job matches and sees a no-results message" do

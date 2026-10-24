@@ -6,7 +6,7 @@
 <% end %>
 
 <p class="text-sm text-muted-foreground mb-4">
-  Found <%= @pagy.count %> results for "<%= params[:q] %>"
+  Found <%= pluralize(@pagy.count, "result") %> for "<%= params[:q] %>"
   <%= link_to "Clear search", jobs_path, class: "link ml-2" %>
 </p>
 

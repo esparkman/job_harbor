@@ -4,52 +4,127 @@ require "test_helper"
 
 module JobHarbor
   class JobPresenterTest < ActiveSupport::TestCase
-    test "execution_count returns executions from job arguments" do
-      # Create a mock job with executions metadata
-      job = mock_job(arguments: { "executions" => 3 }.to_json)
-      presenter = JobPresenter.new(job)
+    include SolidQueueTestHelper
 
-      assert_equal 3, presenter.execution_count
+    setup do
+      @worker = register_worker(name: "worker-1")
     end
 
-    test "execution_count returns 1 for first execution" do
-      job = mock_job(arguments: {}.to_json)
-      presenter = JobPresenter.new(job)
+    test "serialized_payload is the whole Active Job payload an enqueued job was stored with" do
+      presenter = JobPresenter.new(enqueue_job(ReportJob, "weekly", 42))
 
-      assert_equal 1, presenter.execution_count
+      payload = presenter.serialized_payload
+      assert_equal "ReportJob", payload["job_class"]
+      assert_equal [ "weekly", 42 ], payload["arguments"]
+      assert_equal 0, payload["executions"]
+      assert_includes payload.keys, "locale"
     end
 
-    test "running_duration returns nil when job has finished" do
-      # Since we can't easily mock the status determination without real SolidQueue models,
-      # we test the method logic directly by creating a simple scenario
-      # This will exercise the running_duration code path
-      job = mock_job(finished_at: Time.current)
+    test "job_arguments are the arguments the job was enqueued with, not the payload around them" do
+      presenter = JobPresenter.new(enqueue_job(ReportJob, "weekly", { "region" => "eu" }))
+
+      assert_equal "weekly", presenter.job_arguments.first
+      assert_equal "eu", presenter.job_arguments.last["region"]
+      assert_equal 2, presenter.job_arguments.size
+    end
+
+    test "job_arguments is empty when the job was enqueued without any" do
+      assert_empty JobPresenter.new(enqueue_job(NewsletterJob)).job_arguments
+    end
+
+    test "job_arguments and serialized_payload tolerate a row whose arguments are not a payload hash" do
+      job = SolidQueue::Job.create!(queue_name: "default", class_name: "OddJob", arguments: "{}")
       presenter = JobPresenter.new(job)
 
-      # A finished job should have nil running_duration
-      # (even though determine_status will fail in test, we're testing the method exists)
-      assert_respond_to presenter, :running_duration
+      assert_empty presenter.job_arguments
+      assert_equal "{}", presenter.serialized_payload
+    end
+
+    test "formatted_arguments and formatted_payload are pretty-printed JSON" do
+      presenter = JobPresenter.new(enqueue_job(ReportJob, "weekly"))
+
+      assert_equal "[\n  \"weekly\"\n]", presenter.formatted_arguments
+      assert_equal "ReportJob", JSON.parse(presenter.formatted_payload)["job_class"]
+    end
+
+    test "execution_count is 1 for a job that has not run yet" do
+      assert_equal 1, JobPresenter.new(enqueue_job(ReportJob)).execution_count
+    end
+
+    test "execution_count reads the executions the payload records" do
+      job = enqueue_job(ReportJob)
+      job.update!(arguments: job.arguments.merge("executions" => 3))
+
+      assert_equal 3, JobPresenter.new(job).execution_count
+    end
+
+    test "retry_badge is nil for a first run and shows the count after retries" do
+      job = enqueue_job(ReportJob)
+      assert_nil JobPresenter.new(job).retry_badge
+
+      job.update!(arguments: job.arguments.merge("executions" => 3))
+      assert_equal "(x3)", JobPresenter.new(job).retry_badge
+    end
+
+    test "status names where each job is in its lifecycle" do
+      pending = enqueue_job(ReportJob)
+      scheduled = enqueue_job(NewsletterJob, at: 1.hour.from_now)
+      running = claim_job(enqueue_job(ReportJob), worker: @worker).job
+      failed = fail_job(enqueue_job(FlakyPaymentJob, 1), worker: @worker)
+      finished = finish_job(enqueue_job(ReportJob), worker: @worker)
+      enqueue_job(ThrottledImportJob, "acme")
+      blocked = enqueue_job(ThrottledImportJob, "acme")
+      orphan = enqueue_job(ReportJob)
+      orphan.ready_execution.destroy
+
+      statuses = [ pending, scheduled, running, failed, blocked, finished, orphan ].map { |job| JobPresenter.new(SolidQueue::Job.find(job.id)).status }
+
+      assert_equal %w[pending scheduled in_progress failed blocked finished unknown], statuses
+    end
+
+    test "status reports failed ahead of any other execution the job still holds" do
+      job = fail_job(enqueue_job(FlakyPaymentJob, 1), worker: @worker)
+      SolidQueue::ReadyExecution.create!(job_id: job.id, queue_name: job.queue_name, priority: job.priority)
+
+      assert_equal "failed", JobPresenter.new(SolidQueue::Job.find(job.id)).status
+    end
+
+    test "running_duration is how long the claimed job has run, and nil for a job that is not running" do
+      running = claim_job(enqueue_job(ReportJob), worker: @worker).job
+      travel 5.minutes
+
+      assert_equal "5 minutes", JobPresenter.new(SolidQueue::Job.find(running.id)).running_duration
+      assert_nil JobPresenter.new(enqueue_job(ReportJob)).running_duration
+    end
+
+    test "status and running_duration run no queries once the page's jobs are loaded" do
+      claim_job(enqueue_job(ReportJob), worker: @worker)
+      fail_job(enqueue_job(FlakyPaymentJob, 1), worker: @worker)
+      enqueue_job(ReportJob)
+      enqueue_job(NewsletterJob, at: 1.hour.from_now)
+
+      _, presenters = JobPresenter.all_with_status(nil, per_page: 10)
+      queries = []
+      counter = ->(*, payload) { queries << payload[:sql] unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
+      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+        presenters.each { |presenter| [ presenter.status, presenter.running_duration, presenter.execution_count, presenter.can_retry? ] }
+      end
+
+      assert_empty queries, "Reading a loaded row's status should not hit the database"
     end
 
     test "relative_created_at returns human-readable time" do
-      job = mock_job(created_at: 5.minutes.ago)
-      presenter = JobPresenter.new(job)
-
-      assert_includes presenter.relative_created_at, "ago"
+      assert_includes JobPresenter.new(enqueue_job(ReportJob)).relative_created_at, "ago"
     end
 
-    test "retry_badge returns nil when execution_count is 1" do
-      job = mock_job(arguments: {}.to_json)
-      presenter = JobPresenter.new(job)
+    test "all_with_status lists the newest job first" do
+      older = enqueue_job(ReportJob)
+      newer = enqueue_job(ReportJob)
+      newer.update_columns(created_at: 1.day.ago)
 
-      assert_nil presenter.retry_badge
-    end
+      _, jobs = JobPresenter.all_with_status(nil)
 
-    test "retry_badge returns formatted count when execution_count > 1" do
-      job = mock_job(arguments: { "executions" => 3 }.to_json)
-      presenter = JobPresenter.new(job)
-
-      assert_equal "(x3)", presenter.retry_badge
+      assert_equal [ newer.id, older.id ], jobs.map(&:id), "Order follows the primary key, which rises with insert order"
     end
 
     test "all_with_status page info reports page, pages, count, prev and next across first, middle and last page" do
@@ -67,25 +142,22 @@ module JobHarbor
       assert_equal 1, last_jobs.size
     end
 
-    MockJob = Struct.new(:id, :class_name, :queue_name, :arguments, :created_at, :updated_at,
-                         :scheduled_at, :finished_at, :priority, :active_job_id)
+    test "all_with_status narrows to each status through the job's execution record" do
+      pending = enqueue_job(ReportJob)
+      scheduled = enqueue_job(NewsletterJob, at: 1.hour.from_now)
+      running = claim_job(enqueue_job(ReportJob), worker: @worker).job
+      failed = fail_job(enqueue_job(FlakyPaymentJob, 1), worker: @worker)
+      finished = finish_job(enqueue_job(ReportJob), worker: @worker)
+      enqueue_job(ThrottledImportJob, "acme")
+      blocked = enqueue_job(ThrottledImportJob, "acme")
 
-    private
-
-    def mock_job(attributes = {})
-      defaults = {
-        id: 1,
-        class_name: "TestJob",
-        queue_name: "default",
-        arguments: "{}",
-        created_at: Time.current,
-        updated_at: Time.current,
-        scheduled_at: nil,
-        finished_at: nil,
-        priority: 0,
-        active_job_id: SecureRandom.uuid
-      }
-      MockJob.new(**defaults.merge(attributes))
+      expected = { "pending" => [ pending ], "scheduled" => [ scheduled ], "in_progress" => [ running ],
+                   "failed" => [ failed ], "blocked" => [ blocked ], "finished" => [ finished ] }
+      expected.each do |status, jobs|
+        _, found = JobPresenter.all_with_status(status)
+        assert_includes found.map(&:id), jobs.first.id, "#{status} tab is missing its job"
+        assert_equal [ status ], found.map(&:status).uniq, "#{status} tab lists jobs in another status"
+      end
     end
   end
 end
