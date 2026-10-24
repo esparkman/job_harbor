@@ -61,15 +61,24 @@ class SensitiveValuesTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /Found 1 result/
   end
 
-  test "a host Proc filter scrubs the error message on the job page and the dashboard" do
+  test "a host Proc filter scrubs the error message on the job page" do
     failed = fail_job(enqueue_job(FlakyPaymentJob, "tok_live_abc123"), worker: @worker)
     Rails.application.config.filter_parameters << SCRUBBER
 
     get "/job_harbor/jobs/#{failed.id}"
+
     assert_not_includes response.body, "tok_live_abc123", "The job page leaked a token that the host filter scrubs"
     assert_select ".card", text: /Error Message\s*Card declined for order \[SCRUBBED\]/
+  ensure
+    Rails.application.config.filter_parameters.delete(SCRUBBER)
+  end
+
+  test "a host Proc filter scrubs the error message in the dashboard's recent failures" do
+    fail_job(enqueue_job(FlakyPaymentJob, "tok_live_abc123"), worker: @worker)
+    Rails.application.config.filter_parameters << SCRUBBER
 
     get "/job_harbor"
+
     assert_not_includes response.body, "tok_live_abc123", "The dashboard's recent failures leaked a token"
     assert_select "td", text: /Card declined for order \[SCRUBBED\]/
   ensure
