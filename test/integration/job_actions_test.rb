@@ -96,6 +96,18 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     assert_select ".alert-success", text: "Job has been discarded."
   end
 
+  test "operator discards the last job of a queue page and lands on Queues with the discarded notice" do
+    get "/job_harbor/queues/default"
+    return_to = return_to_in_form("/job_harbor/jobs/#{@pending.id}/discard")
+
+    assert_discarded(SolidQueue::ReadyExecution, @pending) { delete "/job_harbor/jobs/#{@pending.id}/discard", params: { return_to: return_to } }
+
+    assert_redirected_to "/job_harbor/queues"
+    follow_redirect!
+    assert_select ".alert-success", text: "Job has been discarded."
+    assert_select ".alert-error", count: 0
+  end
+
   test "operator retries from the Failed tab and lands back on that tab" do
     get "/job_harbor/jobs/status/failed?queue_name=critical"
     return_to = return_to_in_form("/job_harbor/jobs/#{@failed.id}/retry")
@@ -108,7 +120,7 @@ class JobActionsTest < ActionDispatch::IntegrationTest
   end
 
   test "a crafted return path is ignored and the operator lands on the default page" do
-    [ "https://evil.example", "//evil.example", "/../", "/job_harbor/../evil", "/job_harbor@evil.example", "/job_harbor\\evil", "javascript:alert(1)", "/other_app/jobs", [ "/job_harbor/jobs" ] ].each do |crafted|
+    [ "https://evil.example", "//evil.example", "/../", "/job_harbor/../evil", "/job_harbor/%2e%2e/admin", "/job_harbor/%2E%2E/admin", "/job_harbor/%2f%2fevil.example", "/job_harbor/%5cevil", "/job_harbor@evil.example", "/job_harbor\\evil", "javascript:alert(1)", "/other_app/jobs", [ "/job_harbor/jobs" ] ].each do |crafted|
       job = fail_job(enqueue_job(FlakyPaymentJob, 7), worker: @worker)
 
       delete "/job_harbor/jobs/#{job.id}/discard", params: { return_to: crafted }

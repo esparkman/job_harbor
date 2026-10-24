@@ -18,6 +18,20 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     2.times { |i| finish_job(enqueue_job(ReportJob, "daily-#{i}"), worker: @worker) }
   end
 
+  test "operator follows a stale page link past the end and sees the last real page" do
+    24.times { |i| enqueue_job(ReportJob, "bulk-#{i}") }
+    oldest = SolidQueue::Job.minimum(:id)
+    newest = SolidQueue::Job.maximum(:id)
+
+    get "/job_harbor/jobs", params: { page: 99 }
+
+    assert_response :success
+    assert_select "a[href=?]", "/job_harbor/jobs/#{oldest}"
+    assert_select "a[href=?]", "/job_harbor/jobs/#{newest}", count: 0
+    get "/job_harbor/jobs", params: { page: 0 }
+    assert_select "a[href=?]", "/job_harbor/jobs/#{newest}"
+  end
+
   test "operator opens All Jobs and sees every job with a count on each status tab" do
     get "/job_harbor/jobs"
 
