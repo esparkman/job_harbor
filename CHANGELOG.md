@@ -15,6 +15,10 @@ Earlier releases are documented in git history and GitHub releases.
 - The Workers page stats are now labeled "Processes", "Live" and "Stale" and show a "Live workers" figure, so they no longer read as disagreeing with the nav badge and the dashboard's Active Workers, which count live Worker processes only.
 - The Class and Queue filter dropdowns keep the active filter selected after its last job is gone, instead of falling back to "All Classes" / "All Queues" while the list is still filtered.
 
+### Internal
+
+- CI now runs the suite on PostgreSQL and MySQL
+
 ## 0.7.0 - 2026-10-23
 
 ### Changed

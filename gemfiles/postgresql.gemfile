@@ -1,0 +1,9 @@
+source "https://rubygems.org"
+
+gemspec path: ".."
+
+# No pins and no lockfile: this lane picks up new releases on every run.
+# Run the suite on PostgreSQL by setting DATABASE_URL (see test/dummy/config/database.yml).
+gem "puma"
+gem "pg"
+gem "propshaft"
