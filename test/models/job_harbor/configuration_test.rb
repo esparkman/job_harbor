@@ -45,7 +45,7 @@ module JobHarbor
     end
 
     test "filter_parameters accepts strings, symbols, regexps and procs together" do
-      list = [ :password, "secret", /token/, ->(key, value) {} ]
+      list = [ :password, "secret", /token/, ->(key, value) { } ]
 
       @configuration.filter_parameters = list
 
