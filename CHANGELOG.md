@@ -16,6 +16,7 @@ Earlier releases are documented in git history and GitHub releases.
 ### Changed
 
 - `PaginationComponent.new` takes `page_info:` instead of `pagy:`. Only matters if you render the component yourself.
+- The dashboard's timestamp formats are registered as `Time::DATE_FORMATS[:job_harbor_timestamp]`, `[:job_harbor_timestamp_with_zone]` and `[:job_harbor_short]`. Set any of them in your own initializer to change how the dashboard shows times. No other formats are touched.
 
 ### Internal
 

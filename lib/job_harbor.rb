@@ -1,5 +1,6 @@
 require "job_harbor/version"
 require "job_harbor/configuration"
+require "job_harbor/time_formats"
 require "job_harbor/engine"
 
 module JobHarbor
