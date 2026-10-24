@@ -16,6 +16,9 @@ development:
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
 # Do not set this db to the same as development or production.
+#
+# Set DATABASE_URL (e.g. postgres:///job_harbor_test) to run the suite on another
+# database: Rails merges it over this entry, so the URL's adapter and database win.
 test:
   <<: *default
   database: storage/test.sqlite3
