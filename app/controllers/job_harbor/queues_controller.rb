@@ -2,6 +2,9 @@
 
 module JobHarbor
   class QueuesController < ApplicationController
+    # Solid Queue's queue_name columns are plain strings; 255 fits every adapter's default string limit.
+    MAX_QUEUE_NAME_LENGTH = 255
+
     before_action :set_queue, only: [ :show, :pause, :resume ]
 
     def index
@@ -17,6 +20,22 @@ module JobHarbor
     def pause
       @queue.pause
       redirect_to queues_path, notice: "Queue '#{@queue.name}' has been paused."
+    end
+
+    def pre_pause
+      name = params[:name]
+      name = name.strip if name.is_a?(String)
+
+      if !name.is_a?(String) || name.empty?
+        redirect_to queues_path, alert: "Enter a queue name to pause."
+      elsif name.length > MAX_QUEUE_NAME_LENGTH
+        redirect_to queues_path, alert: "Queue name must be #{MAX_QUEUE_NAME_LENGTH} characters or fewer."
+      else
+        queue = QueueStats.new(name)
+        already_paused = queue.paused?
+        queue.pause
+        redirect_to queues_path, notice: "Queue '#{name}' #{already_paused ? "is already paused" : "has been paused"}."
+      end
     end
 
     def resume

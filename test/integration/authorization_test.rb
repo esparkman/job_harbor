@@ -35,6 +35,16 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
     assert SolidQueue::FailedExecution.exists?(job_id: @failed.id), "Failed job was retried by an anonymous request"
   end
 
+  test "anonymous visitor to an unconfigured production install cannot pre-pause a queue" do
+    assert_no_difference -> { SolidQueue::Pause.count } do
+      in_production do
+        post "/job_harbor/queues/pause", params: { name: "reports" }
+      end
+    end
+
+    assert_response :forbidden
+  end
+
   test "visitor to an unconfigured production install with a host root page is sent there with an alert" do
     draw_host_routes_with_root
 

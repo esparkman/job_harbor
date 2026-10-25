@@ -1,3 +1,9 @@
+<%= form_with url: pause_queues_path, method: :post, class: "flex flex-wrap items-center gap-2 mb-4" do |f| %>
+  <%= f.text_field :name, placeholder: "Queue name", maxlength: JobHarbor::QueuesController::MAX_QUEUE_NAME_LENGTH, required: true,
+      "aria-label": "Queue name to pause", class: "select w-full sm:w-64" %>
+  <%= f.button "Pause", type: "submit", class: "btn btn-secondary btn-sm" %>
+<% end %>
+
 <% if @queues.empty? %>
   <%= render JobHarbor::EmptyStateComponent.new(
     title: "No queues found",

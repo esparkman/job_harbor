@@ -18,6 +18,9 @@ JobHarbor::Engine.routes.draw do
   end
 
   resources :queues, only: [ :index, :show ], param: :name do
+    collection do
+      post :pause, action: :pre_pause
+    end
     member do
       post :pause
       delete :resume

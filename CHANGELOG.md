@@ -9,6 +9,10 @@ Earlier releases are documented in git history and GitHub releases.
 
 ## Unreleased
 
+### Added
+
+- A "Pause a queue" form on the Queues page pauses a queue by name before it has any jobs. The paused queue shows up as a card, and resuming it removes the card once it still has no jobs.
+
 ### Changed
 
 - Search no longer matches the stored job envelope: a number finds that job ID, and text matches the job class or its arguments. Searching `job_class` or `2026` used to list nearly every job. Active Job's own argument markers (such as `_aj_symbol_keys`) still match, since they live inside the arguments.
