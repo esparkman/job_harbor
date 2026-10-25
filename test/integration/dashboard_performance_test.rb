@@ -3,10 +3,6 @@ require "test_helper"
 class DashboardPerformanceTest < ActionDispatch::IntegrationTest
   QUERY_BUDGET = 30
 
-  class OtherFlakyJob < ActiveJob::Base
-    def perform(*) = raise(PaymentGatewayError, "Gateway timeout")
-  end
-
   setup do
     freeze_time
     @worker = register_worker(name: "worker-1")

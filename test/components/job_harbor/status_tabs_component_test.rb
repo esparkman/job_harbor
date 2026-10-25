@@ -45,10 +45,6 @@ module JobHarbor
 
     private
 
-    def fragment
-      Nokogiri::HTML.fragment(@rendered)
-    end
-
     def assert_highlighted(href, highlighted)
       tab = fragment.at_css("a[href='#{href}']")
       assert tab, "expected a tab linking to #{href}"

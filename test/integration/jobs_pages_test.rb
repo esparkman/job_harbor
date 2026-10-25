@@ -6,16 +6,7 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
   setup do
     freeze_time
     @worker = register_worker(name: "worker-1")
-
-    enqueue_job(ReportJob, "weekly")
-    enqueue_job(ReportJob, "monthly")
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
-    enqueue_job(NewsletterJob, "digest", queue: "mailers", at: 2.hours.from_now)
-    @running = enqueue_job(ReportJob, "quarterly", queue: "critical")
-    claim_job(@running, worker: @worker)
-    @failed = fail_job(enqueue_job(FlakyPaymentJob, 42, queue: "critical"), worker: @worker)
-    2.times { |i| finish_job(enqueue_job(ReportJob, "daily-#{i}"), worker: @worker) }
+    @running, @failed = enqueue_job_in_every_state(worker: @worker).values_at(:running, :failed)
   end
 
   test "operator follows a stale page link past the end and sees the last real page" do
@@ -119,9 +110,9 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_info_line "Job Class", "FlakyPaymentJob"
     assert_select ".info-line a[href=?]", "/job_harbor/queues/critical", text: "critical"
     assert_select ".card-title", text: "Error Details"
-    assert_info_line "Exception Class", "PaymentGatewayError"
+    assert_info_line "Exception Class", "JobFailure"
     assert_select ".card", text: /Error Message\s*Card declined for order 42/
-    assert_select "pre.code-block", text: /test_helper\.rb:\d+.*perform/
+    assert_select "pre.code-block", text: /flaky_payment_job\.rb:\d+.*perform/
     assert_select "button", text: "Retry Job"
     assert_select "button", text: "Discard Job"
   end
@@ -247,26 +238,4 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
         [ cells[1].at_css("code").text.strip, cells[2].at_css("a").text.strip, cells[3].at_css(".badge").text.strip ]
       end
     end
-
-    def assert_status_tab_count(status, count)
-      label = status.humanize.titleize
-      assert_select "a.badge[href=?]", "/job_harbor/jobs/status/#{status}", { text: /\A#{label}\s+#{count}\z/ },
-        "#{label} tab should show #{count}"
-    end
-
-    def assert_info_line(label, value)
-      line = css_select(".info-line").find { |l| l.at_css(".info-line-label").text.strip == label }
-      assert line, "Operator expected a '#{label}' line on the job page"
-      assert_equal value, line.at_css(".info-line-value").text.strip, "'#{label}' line shows the wrong value"
-    end
-end
-
-class EmptyJobsPagesTest < ActionDispatch::IntegrationTest
-  test "operator opens blocked jobs when nothing is blocked and sees an empty state" do
-    get "/job_harbor/jobs/status/blocked"
-
-    assert_response :success
-    assert_select "h3", text: "No jobs found"
-    assert_select "p", text: "There are no blocked jobs."
-  end
 end

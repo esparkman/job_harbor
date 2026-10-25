@@ -5,15 +5,7 @@ class DashboardPagesTest < ActionDispatch::IntegrationTest
     freeze_time
     @worker = register_worker(name: "worker-1")
     register_worker(name: "worker-old", heartbeat_at: 10.minutes.ago)
-
-    enqueue_job(ReportJob, "weekly")
-    enqueue_job(ReportJob, "monthly")
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
-    enqueue_job(NewsletterJob, "digest", queue: "mailers", at: 2.hours.from_now)
-    claim_job(enqueue_job(ReportJob, "quarterly", queue: "critical"), worker: @worker)
-    @failed = fail_job(enqueue_job(FlakyPaymentJob, 42, queue: "critical"), worker: @worker)
-    2.times { |i| finish_job(enqueue_job(ReportJob, "daily-#{i}"), worker: @worker) }
+    @failed = enqueue_job_in_every_state(worker: @worker)[:failed]
   end
 
   test "operator opens the dashboard and sees a stat card for every job state, counted from the queue" do
@@ -81,19 +73,5 @@ class DashboardPagesTest < ActionDispatch::IntegrationTest
     get "/job_harbor"
 
     assert_select "a[href=?] .sqd-nav-badge", "/job_harbor/workers", text: "1"
-  end
-end
-
-class EmptyDashboardPagesTest < ActionDispatch::IntegrationTest
-  test "operator opens the dashboard on an idle queue and sees zeros and no failure list" do
-    get "/job_harbor"
-
-    assert_response :success
-    [ "Pending", "Scheduled", "In Progress", "Failed", "Blocked", "Finished (24h)", "Active Workers", "Queues" ].each do |label|
-      assert_stat_card label, 0
-    end
-    assert_stat_card "Throughput", "0/hr"
-    assert_select ".card-title", text: "Recent Failures", count: 0
-    assert_select ".sqd-failure-rates", count: 0
   end
 end

@@ -7,7 +7,7 @@ module JobHarbor
     test "operator sees an empty search box that submits to job search" do
       render_inline(JobSearchFormComponent.new)
 
-      form = Nokogiri::HTML.fragment(@rendered).at_css("form")
+      form = fragment.at_css("form")
       assert_equal "get", form["method"]
       assert_equal search_path, form["action"]
 
@@ -20,7 +20,7 @@ module JobHarbor
     test "search box is prefilled with the current query" do
       render_inline(JobSearchFormComponent.new(query: "ReportJob"))
 
-      assert_equal "ReportJob", Nokogiri::HTML.fragment(@rendered).at_css("input[name=q]")["value"]
+      assert_equal "ReportJob", fragment.at_css("input[name=q]")["value"]
     end
 
     test "current query is escaped in the search box" do

@@ -72,7 +72,7 @@ module JobHarbor
     private
 
     def options
-      Nokogiri::HTML.fragment(@rendered).css("select.sqd-per-page-select option")
+      fragment.css("select.sqd-per-page-select option")
     end
   end
 end

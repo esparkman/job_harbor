@@ -95,13 +95,13 @@ class SensitiveValuesTest < ActionDispatch::IntegrationTest
 
   test "a host Proc filter scrubs the backtrace on the job page" do
     failed = fail_job(enqueue_job(FlakyPaymentJob, 42), worker: @worker)
-    scrubber = ->(_key, value) { value.gsub!("test_helper", "[SCRUBBED]") if value.is_a?(String) }
+    scrubber = ->(_key, value) { value.gsub!("flaky_payment_job", "[SCRUBBED]") if value.is_a?(String) }
     Rails.application.config.filter_parameters << scrubber
 
     get "/job_harbor/jobs/#{failed.id}"
 
     assert_select "pre.code-block", text: /\[SCRUBBED\]\.rb/
-    assert_not_includes css_select("pre.code-block").map(&:text).join, "test_helper"
+    assert_not_includes css_select("pre.code-block").map(&:text).join, "flaky_payment_job"
   ensure
     Rails.application.config.filter_parameters.delete(scrubber)
   end

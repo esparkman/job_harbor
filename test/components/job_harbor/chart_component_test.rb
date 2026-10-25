@@ -53,7 +53,7 @@ module JobHarbor
 
       render_inline(ChartComponent.new(series: series, current_range: "24h"))
 
-      chart_data = Nokogiri::HTML.fragment(@rendered).at_css(".sqd-chart")["data-chart-data"]
+      chart_data = fragment.at_css(".sqd-chart")["data-chart-data"]
       assert_equal series.stringify_keys, JSON.parse(chart_data)
     end
   end
