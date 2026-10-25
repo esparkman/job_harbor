@@ -28,27 +28,51 @@ module JobHarbor
       assert_includes @rendered, ">100<"
     end
 
-    test "marks current per_page as selected" do
+    test "operator sees the current page size as the only chosen option" do
       render_inline(PerPageSelectorComponent.new(current_per_page: 50, current_path: "/jobs"))
 
-      # The selected option should be marked
-      assert_includes @rendered, "selected"
+      assert_equal [ "50" ], options.select { |option| option["selected"] }.map(&:text),
+        "The page size dropdown should show 50 and only 50 as chosen"
     end
 
-    test "generates correct links with per_page parameter" do
+    test "each page size links back to /jobs with that per_page" do
       render_inline(PerPageSelectorComponent.new(current_per_page: 25, current_path: "/jobs"))
 
-      assert_includes @rendered, "per_page="
+      assert_equal %w[/jobs?per_page=10 /jobs?per_page=25 /jobs?per_page=50 /jobs?per_page=100],
+        options.map { |option| option["value"] }
     end
 
-    test "preserves existing query parameters" do
+    test "changing page size keeps the operator's other filters" do
       render_inline(PerPageSelectorComponent.new(
         current_per_page: 25,
         current_path: "/jobs",
         params: { status: "failed" }
       ))
 
-      assert_includes @rendered, "status=failed"
+      assert_equal %w[10 25 50 100].map { |size| "/jobs?per_page=#{size}&status=failed" },
+        options.map { |option| option["value"] }
+    end
+
+    test "changing page size sends the operator back to page 1" do
+      render_inline(PerPageSelectorComponent.new(
+        current_per_page: 25,
+        current_path: "/jobs",
+        params: { page: 3, status: "failed" }
+      ))
+
+      queries = options.map { |option| Rack::Utils.parse_query(URI.parse(option["value"]).query) }
+
+      assert_equal 4, queries.size
+      queries.each do |query|
+        refute query.key?("page"), "Picking a new page size should land on page 1, got #{query.inspect}"
+        assert_equal "failed", query["status"], "Picking a new page size should keep the status filter"
+      end
+    end
+
+    private
+
+    def options
+      Nokogiri::HTML.fragment(@rendered).css("select.sqd-per-page-select option")
     end
   end
 end

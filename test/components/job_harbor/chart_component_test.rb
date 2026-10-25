@@ -43,17 +43,18 @@ module JobHarbor
       assert_match(%r{class="btn btn-secondary btn-xs" href="[^"]*chart_range=24h">24 hours}, @rendered)
     end
 
-    test "includes chart data as JSON" do
+    test "the chart is handed the series it should draw as JSON" do
       series = {
-        labels: [ "10:00" ],
-        completed: [ 10 ],
-        failed: [ 1 ],
-        enqueued: [ 15 ]
+        labels: [ "10:00", "11:00" ],
+        completed: [ 10, 20 ],
+        failed: [ 1, 0 ],
+        enqueued: [ 15, 25 ]
       }
 
       render_inline(ChartComponent.new(series: series, current_range: "24h"))
 
-      assert_includes @rendered, "data-chart-data"
+      chart_data = Nokogiri::HTML.fragment(@rendered).at_css(".sqd-chart")["data-chart-data"]
+      assert_equal series.stringify_keys, JSON.parse(chart_data)
     end
   end
 end

@@ -120,8 +120,11 @@ module JobHarbor
       assert_empty queries, "Reading a loaded row's status should not hit the database"
     end
 
-    test "relative_created_at returns human-readable time" do
-      assert_includes JobPresenter.new(enqueue_job(ReportJob)).relative_created_at, "ago"
+    test "relative_created_at says how long ago the job was enqueued" do
+      job = enqueue_job(ReportJob)
+      travel 5.minutes
+
+      assert_equal "5 minutes ago", JobPresenter.new(job).relative_created_at
     end
   end
 end

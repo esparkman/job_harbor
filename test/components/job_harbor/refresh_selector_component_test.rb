@@ -28,10 +28,12 @@ module JobHarbor
       refute_includes @rendered, "data-action"
     end
 
-    test "accepts default_interval parameter" do
+    test "operator sees the given default interval as the only chosen refresh option" do
       render_inline(RefreshSelectorComponent.new(default_interval: 30))
 
-      assert_includes @rendered, "sqd-refresh-selector"
+      selected = Nokogiri::HTML.fragment(@rendered).css("select.sqd-refresh-select option[selected]")
+      assert_equal [ [ "30s", "30" ] ], selected.map { |option| [ option.text, option["value"] ] },
+        "The refresh dropdown should show 30s and only 30s as chosen"
     end
   end
 end
