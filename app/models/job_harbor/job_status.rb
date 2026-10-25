@@ -65,8 +65,9 @@ module JobHarbor
       finished? ? SolidQueue::Job.where.not(finished_at: nil) : SolidQueue::Job.joins(execution_association)
     end
 
-    # Counts the execution rows themselves, which skips the join `jobs` needs.
-    def count
+    def count(queue_name: nil)
+      return jobs.where(queue_name:).count if queue_name
+
       execution_class ? execution_class.count : jobs.count
     end
   end

@@ -2,6 +2,9 @@
 
 module JobHarbor
   class QueueCardComponent < ApplicationComponent
+    # Failed is left off the card; the queue page shows it.
+    STATUSES = %w[pending scheduled in_progress blocked].map { |key| JobStatus.find(key) }.freeze
+
     def initialize(queue:)
       @queue = queue
     end
@@ -31,12 +34,7 @@ module JobHarbor
 
     def stats
       content_tag(:div, class: "grid grid-cols-4 gap-4 mb-4") do
-        safe_join([
-          stat("Pending", @queue.pending_count),
-          stat("Scheduled", @queue.scheduled_count),
-          stat("In Progress", @queue.in_progress_count),
-          stat("Blocked", @queue.blocked_count)
-        ])
+        safe_join(STATUSES.map { |status| stat(status.label, @queue.count(status)) })
       end
     end
 
