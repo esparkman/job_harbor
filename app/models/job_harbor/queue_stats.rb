@@ -32,21 +32,16 @@ module JobHarbor
 
     class << self
       def all
-        queue_names.map { |name| new(name) }
+        names.map { |name| new(name) }
       end
 
       def find(name)
-        new(name) if queue_names.include?(name)
+        new(name) if SolidQueue::Job.exists?(queue_name: name) || SolidQueue::Pause.exists?(queue_name: name)
       end
 
-      private
-
-      def queue_names
-        # Every queue that has a job, plus queues that are paused before any job arrives
-        job_queues = SolidQueue::Job.distinct.pluck(:queue_name)
-        paused_queues = SolidQueue::Pause.distinct.pluck(:queue_name)
-
-        (job_queues + paused_queues).uniq.compact.sort
+      def names
+        # Every queue that has a job, plus paused queues that have no jobs
+        (SolidQueue::Job.distinct.pluck(:queue_name) | SolidQueue::Pause.pluck(:queue_name)).sort
       end
     end
   end

@@ -37,6 +37,27 @@ module JobHarbor
       end
     end
 
+    test "names lists every queue once, sorted, including a paused queue that has no jobs" do
+      SolidQueue::Pause.create!(queue_name: "archive")
+      SolidQueue::Pause.create!(queue_name: "mailers")
+
+      assert_equal %w[archive mailers reports], QueueStats.names
+    end
+
+    test "find returns a queue that has jobs" do
+      assert_equal "mailers", QueueStats.find("mailers").name
+    end
+
+    test "find returns a paused queue that has no jobs" do
+      SolidQueue::Pause.create!(queue_name: "archive")
+
+      assert_equal "archive", QueueStats.find("archive").name
+    end
+
+    test "find returns nil for an unknown queue" do
+      assert_nil QueueStats.find("nope")
+    end
+
     private
       def seed_queue(queue, ready:, later:, running:, failed:, throttled:, done:)
         ready.times { |n| enqueue_job(ReportJob, "ready-#{n}", queue: queue) }
