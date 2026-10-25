@@ -72,6 +72,10 @@ jobs:
           bundler-cache: true
       - run: bin/rails db:test:prepare
       - run: bin/rails test
+      - if: matrix.lane == 'lockfile'
+        run: bin/rails app:db:seed:replant
+        env:
+          RAILS_ENV: test
 
   # The search, chart and grouped-count SQL is written to be portable; these two
   # jobs run the whole suite against real PostgreSQL and MySQL servers to prove it.
