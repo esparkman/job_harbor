@@ -51,8 +51,7 @@ Claude Code MUST delegate ALL code generation to the [Sub-Agents](https://docs.a
 
 ### Pre-Commit Requirements
 - **ALL tests MUST pass before committing or pushing**
-- Run: `bin/rails db:test:prepare test`
-- Run: `bin/rubocop`
+- Run: `bin/ci` (rubocop, bundler-audit, brakeman, `bin/rails test`, seed replant; config in `config/ci.rb`)
 
 ### Git Commit & PR Rules
 - **NEVER mention AI assistance in commit messages or PR descriptions**
