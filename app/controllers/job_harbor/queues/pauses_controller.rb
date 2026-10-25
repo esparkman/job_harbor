@@ -2,10 +2,9 @@
 
 module JobHarbor
   module Queues
-    # Pauses a queue by name, which is how an operator pauses one that has no jobs yet.
     class PausesController < ApplicationController
       def create
-        name = params[:name].try(:strip).presence
+        name = params[:name].try(:gsub, /\A[[:space:]]+|[[:space:]]+\z/, "").presence
 
         if name.nil?
           redirect_to queues_path, alert: "Enter a queue name."

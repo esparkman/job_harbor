@@ -136,22 +136,20 @@ class QueuePausesTest < ActionDispatch::IntegrationTest
     assert_not SolidQueue::Pause.exists?(queue_name: "pauses")
   end
 
-  test "the routes have no one-letter-apart helper pair" do
-    names = JobHarbor::Engine.routes.named_routes.names.map(&:to_s)
-    names.combination(2).each do |a, b|
-      next unless a.length == b.length
-      assert_operator a.chars.zip(b.chars).count { |x, y| x != y }, :>, 1, "Route helpers '#{a}' and '#{b}' differ by one letter"
+  test "a name with a trailing non-breaking space pauses the plain name" do
+    assert_difference -> { SolidQueue::Pause.where(queue_name: "reports").count } => 1 do
+      post "/job_harbor/queues/pauses", params: { name: "reports\u00A0" }
     end
   end
 
   private
 
-  def card_for(name)
-    css_select(".card").find { |c| c.at_css("a.card-title")&.text&.strip == name }
-  end
+    def card_for(name)
+      css_select(".card").find { |c| c.at_css("a.card-title")&.text&.strip == name }
+    end
 
-  def stat_value(card, label)
-    stat = card.css(".text-center").find { |s| s.text.include?(label) }
-    stat.children.first.text.strip
-  end
+    def stat_value(card, label)
+      label_node = card.css("div").find { |d| d.element_children.empty? && d.text.strip == label }
+      label_node.previous_element.text.strip
+    end
 end

@@ -59,4 +59,31 @@ class QueueDottedNamesTest < ActionDispatch::IntegrationTest
     delete "/job_harbor/queues/a%2Fb/resume"
     assert_not SolidQueue::Pause.exists?(queue_name: "a/b")
   end
+
+  { "a?b" => "a%3Fb", "a#b" => "a%23b" }.each do |name, escaped|
+    test "operator pauses #{name} from the form, sees its card link and resumes it" do
+      post "/job_harbor/queues/pauses", params: { name: name }
+      assert SolidQueue::Pause.exists?(queue_name: name)
+
+      get "/job_harbor/queues"
+      assert_response :success
+      assert_select "a.card-title[href=?]", "/job_harbor/queues/#{escaped}", text: name
+      assert_select "form[action=?] button", "/job_harbor/queues/#{escaped}/resume", text: "Resume"
+
+      delete "/job_harbor/queues/#{escaped}/resume"
+      assert_not SolidQueue::Pause.exists?(queue_name: name)
+    end
+
+    test "operator opens a queue named #{name} that already has jobs" do
+      enqueue_job(ReportJob, "weekly", queue: name)
+
+      get "/job_harbor/queues"
+      assert_response :success
+      assert_select "a.card-title[href=?]", "/job_harbor/queues/#{escaped}", text: name
+
+      get "/job_harbor/queues/#{escaped}"
+      assert_response :success
+      assert_select "table", 1
+    end
+  end
 end
