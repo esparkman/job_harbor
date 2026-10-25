@@ -23,7 +23,7 @@ module JobHarbor
 
     def series
       @series ||= {
-        labels: bucket_starts.map { |time| format_label(time) },
+        labels: labels,
         completed: counts_per_bucket(SolidQueue::Job, :finished_at),
         failed: counts_per_bucket(SolidQueue::FailedExecution, :created_at),
         enqueued: counts_per_bucket(SolidQueue::Job, :created_at)
@@ -40,8 +40,13 @@ module JobHarbor
       Array.new(bucket_count) { |index| @cutoff + index * @interval }
     end
 
-    def format_label(time)
-      @duration <= 24.hours ? time.strftime("%H:%M") : time.strftime("%b %d")
+    # Clock labels repeat or skip an hour across a daylight-saving change, so a series that spans one names the zone.
+    def labels
+      starts = bucket_starts
+      return starts.map { |time| time.strftime("%b %d") } if @duration > 24.hours
+
+      pattern = starts.map(&:utc_offset).uniq.one? ? "%H:%M" : "%H:%M %Z"
+      starts.map { |time| time.strftime(pattern) }
     end
 
     # One row of SUM(CASE ...) per series: ANSI SQL, so it needs no per-database date truncation.
