@@ -71,5 +71,25 @@ module JobHarbor
       assert_equal expected, JobStatus.all.to_h { |status| [ status.key, status.count ] }
       assert_equal expected, JobStatus.all.to_h { |status| [ status.key, status.jobs.count ] }
     end
+
+    test "counting for a queue counts only that queue's jobs, whichever table carries the queue name" do
+      worker = register_worker(name: "worker-1")
+      enqueue_job(ReportJob, "ready")
+      enqueue_job(ReportJob, "elsewhere", queue: "mailers")
+      enqueue_job(NewsletterJob, "later", at: 2.hours.from_now)
+      enqueue_job(NewsletterJob, "later elsewhere", queue: "mailers", at: 2.hours.from_now)
+      claim_job(enqueue_job(ReportJob, "running"), worker: worker)
+      fail_job(enqueue_job(FlakyPaymentJob, 1), worker: worker)
+      claim_job(enqueue_job(ReportJob, "running elsewhere", queue: "mailers"), worker: worker)
+      fail_job(enqueue_job(FlakyPaymentJob, 2, queue: "mailers"), worker: worker)
+      2.times { enqueue_job(ThrottledImportJob, "acme") }
+      2.times { enqueue_job(ThrottledImportJob, "acme-mailers", queue: "mailers") }
+      finish_job(enqueue_job(ReportJob, "done"), worker: worker)
+      finish_job(enqueue_job(ReportJob, "done elsewhere", queue: "mailers"), worker: worker)
+
+      expected = { "pending" => 2, "scheduled" => 1, "in_progress" => 1, "failed" => 1, "blocked" => 1, "finished" => 1 }
+      assert_equal expected, JobStatus.all.to_h { |status| [ status.key, status.count(queue_name: "default") ] }
+      assert_equal 0, JobStatus.find("failed").count(queue_name: "nowhere")
+    end
   end
 end

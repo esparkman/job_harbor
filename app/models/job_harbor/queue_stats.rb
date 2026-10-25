@@ -8,34 +8,7 @@ module JobHarbor
       @name = name
     end
 
-    def pending_count
-      SolidQueue::ReadyExecution.where(queue_name: @name).count
-    end
-
-    def scheduled_count
-      SolidQueue::ScheduledExecution
-        .joins(:job)
-        .where(solid_queue_jobs: { queue_name: @name })
-        .count
-    end
-
-    def in_progress_count
-      SolidQueue::ClaimedExecution
-        .joins(:job)
-        .where(solid_queue_jobs: { queue_name: @name })
-        .count
-    end
-
-    def failed_count
-      SolidQueue::FailedExecution
-        .joins(:job)
-        .where(solid_queue_jobs: { queue_name: @name })
-        .count
-    end
-
-    def blocked_count
-      SolidQueue::BlockedExecution.where(queue_name: @name).count
-    end
+    def count(status) = status.count(queue_name: @name)
 
     delegate :paused?, to: :solid_queue
 

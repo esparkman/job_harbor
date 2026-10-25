@@ -10,35 +10,9 @@
 <% end %>
 
 <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Pending",
-    value: @queue.pending_count,
-    type: :pending
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Scheduled",
-    value: @queue.scheduled_count,
-    type: :scheduled
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "In Progress",
-    value: @queue.in_progress_count,
-    type: :in_progress
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Failed",
-    value: @queue.failed_count,
-    type: :failed
-  ) %>
-
-  <%= render JobHarbor::StatCardComponent.new(
-    label: "Blocked",
-    value: @queue.blocked_count,
-    type: :blocked
-  ) %>
+  <% JobHarbor::JobStatus.all.reject(&:finished?).each do |status| %>
+    <%= render JobHarbor::StatCardComponent.new(label: status.label, value: @queue.count(status), type: status.key) %>
+  <% end %>
 </div>
 
 <% if @queue.paused? %>
