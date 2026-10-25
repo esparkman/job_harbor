@@ -21,6 +21,7 @@ Earlier releases are documented in git history and GitHub releases.
 ### Fixed
 
 - The dashboard's Queues count now includes paused queues that have no jobs, so it matches the Queues page.
+- Auto-refresh now updates the Workers and Recurring badges in the navbar along with the page content. They used to lag until the next navigation.
 
 ### Internal
 

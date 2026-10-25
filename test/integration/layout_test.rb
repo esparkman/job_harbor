@@ -33,6 +33,27 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "[data-refresh-target=content] .sqd-refresh-select", count: 0
   end
 
+  test "the nav links sit in one refresh target so the worker and recurring badges refresh with the content" do
+    register_worker(name: "worker-1")
+    SolidQueue::RecurringTask.create!(key: "nightly_report", schedule: "every day at 3am", class_name: "ReportJob", queue_name: "reports")
+
+    get "/job_harbor"
+
+    assert_select "nav.navbar [data-refresh-target=nav]", count: 1
+    assert_select "[data-refresh-target=nav] a[href$='/workers'] .navbar-badge", count: 1
+    assert_select "[data-refresh-target=nav] a[href$='/recurring_tasks'] .navbar-badge", count: 1
+    assert_select "[data-refresh-target=nav] .sqd-refresh-select", count: 0
+  end
+
+  test "the refresh script swaps the nav target from the same response and skips it while focus is inside" do
+    get "/job_harbor"
+
+    script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
+    assert_includes script, 'data-refresh-target="nav"', "Auto-refresh must find the nav target to update the badges"
+    assert_includes script, "refreshNav(doc)", "The content refresh must also refresh the nav badges"
+    assert_includes script, "if (focusWithin(currentNav)) return;", "A focused nav link must not be replaced mid-use"
+  end
+
   test "the refresh selector shows the default interval as selected" do
     get "/job_harbor"
 
