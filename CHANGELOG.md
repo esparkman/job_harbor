@@ -11,6 +11,7 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Changed
 
+- Search no longer matches the stored job envelope: a number finds that job ID, and text matches the job class or its arguments. Searching `job_class` or `2026` used to list nearly every job. Active Job's own argument markers (such as `_aj_symbol_keys`) still match, since they live inside the arguments.
 - `PaginationComponent.new` takes `page_info:` instead of `pagy:`. Only matters if you render the component yourself.
 - The dashboard's timestamp formats are registered as `Time::DATE_FORMATS[:job_harbor_timestamp]`, `[:job_harbor_timestamp_with_zone]` and `[:job_harbor_short]`. Set any of them in your own initializer to change how the dashboard shows times. No other formats are touched.
 

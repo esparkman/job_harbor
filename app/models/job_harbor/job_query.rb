@@ -65,17 +65,41 @@ module JobHarbor
       scope
     end
 
+    # The arguments column holds the whole Active Job envelope; search only its arguments.
     def matching_search
       jobs = SolidQueue::Job
+      return jobs.where(id: @search) if @search.match?(/\A\d+\z/)
+
       pattern = "%#{jobs.sanitize_sql_like(@search, LIKE_ESCAPE)}%"
       scope = jobs.where("LOWER(class_name) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE)
       # Matching argument text would let a search reveal values the page masks.
       unless JobHarbor.configuration.filtering_parameters?
-        scope = scope.or(jobs.where("LOWER(arguments) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE))
+        if (arguments_sql = job_arguments_sql)
+          scope = scope.or(jobs.where("LOWER(#{arguments_sql}) LIKE LOWER(:pattern) ESCAPE :escape", pattern: pattern, escape: LIKE_ESCAPE))
+        end
       end
-      scope = scope.or(jobs.where(id: @search)) if @search.match?(/\A\d+\z/)
       scope = scope.or(jobs.where(active_job_id: @search)) if @search.match?(UUID_FORMAT)
       scope
+    end
+
+    # NULL for rows that aren't a JSON object, so a bad row can't break search.
+    def job_arguments_sql
+      column = "#{SolidQueue::Job.quoted_table_name}.arguments"
+      adapter, version = SolidQueue::Job.with_connection { |connection| [ connection.adapter_name, connection.database_version ] }
+
+      case adapter
+      when /postg/i
+        if version >= 160_000
+          "CASE WHEN pg_input_is_valid(#{column}, 'jsonb') THEN (#{column}::jsonb -> 'arguments')::text END"
+        else
+          # Best effort below PostgreSQL 16, which has no pg_input_is_valid.
+          "CASE WHEN #{column} ~ '^\\s*\\{.*\\}\\s*$' THEN (#{column}::jsonb -> 'arguments')::text END"
+        end
+      when /mysql|trilogy/i
+        "CASE WHEN JSON_VALID(#{column}) THEN CAST(JSON_EXTRACT(#{column}, '$.arguments') AS CHAR) END"
+      when /sqlite/i
+        "CASE WHEN json_valid(#{column}) THEN json_extract(#{column}, '$.arguments') END"
+      end
     end
   end
 end

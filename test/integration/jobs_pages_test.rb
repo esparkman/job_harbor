@@ -201,8 +201,10 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /Found 0 results/
 
     JobHarbor.configuration.filter_parameters = false
-    get "/job_harbor/search", params: { q: "job_class" }
-    assert_select "p", text: /Found 9 results/
+    enqueue_job(ReportJob, "a_b")
+    enqueue_job(ReportJob, "axb")
+    get "/job_harbor/search", params: { q: "a_b" }
+    assert_select "p", text: /Found 1 result\b/
   end
 
   test "operator searches by job id and sees that job" do
