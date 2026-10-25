@@ -48,18 +48,18 @@
       <h2 class="card-title">Timing</h2>
     </div>
     <div class="card-content space-y-1">
-      <%= render JobHarbor::InfoLineComponent.new(label: "Created At", value: @job.created_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Created At", value: @job.created_at.to_fs(:job_harbor_timestamp_with_zone)) %>
 
       <% if @job.scheduled_at %>
-        <%= render JobHarbor::InfoLineComponent.new(label: "Scheduled At", value: @job.scheduled_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Scheduled At", value: @job.scheduled_at.to_fs(:job_harbor_timestamp_with_zone)) %>
       <% end %>
 
       <% if @job.finished_at %>
-        <%= render JobHarbor::InfoLineComponent.new(label: "Finished At", value: @job.finished_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Finished At", value: @job.finished_at.to_fs(:job_harbor_timestamp_with_zone)) %>
       <% end %>
 
       <% if @job.failed_at %>
-        <%= render JobHarbor::InfoLineComponent.new(label: "Failed At", value: @job.failed_at.strftime("%Y-%m-%d %H:%M:%S %Z")) %>
+        <%= render JobHarbor::InfoLineComponent.new(label: "Failed At", value: @job.failed_at.to_fs(:job_harbor_timestamp_with_zone)) %>
       <% end %>
     </div>
   </div>

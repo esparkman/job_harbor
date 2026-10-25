@@ -13,6 +13,10 @@ module JobHarbor
       app.deprecators[:job_harbor] = JobHarbor.deprecator
     end
 
+    initializer "job_harbor.time_formats" do
+      JobHarbor::TimeFormats.register
+    end
+
     # Sprockets hosts only; Propshaft ignores precompile.
     initializer "job_harbor.assets" do |app|
       if app.config.respond_to?(:assets)

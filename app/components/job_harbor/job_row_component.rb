@@ -67,7 +67,7 @@ module JobHarbor
     def scheduled_cell
       content_tag(:td) do
         if @job.scheduled_at
-          time_tag(@job.scheduled_at, @job.scheduled_at.strftime("%b %d, %H:%M:%S"))
+          time_tag(@job.scheduled_at, @job.scheduled_at.to_fs(:job_harbor_short))
         else
           relative_time_tag
         end
