@@ -4,7 +4,7 @@ require "test_helper"
 
 module JobHarbor
   class JobFiltersComponentTest < ViewComponentTestCase
-    test "renders filter form" do
+    test "renders the class and queue filter dropdowns" do
       render_inline(JobFiltersComponent.new(
         class_names: [ "TestJob", "OtherJob" ],
         queue_names: [ "default", "high" ],
@@ -13,8 +13,10 @@ module JobHarbor
         current_path: "/jobs"
       ))
 
-      assert_includes @rendered, "sqd-filters"
-      assert_includes @rendered, "select"
+      filters = Nokogiri::HTML.fragment(@rendered).at_css("div.sqd-filters")
+      assert filters, "Filter bar should render"
+      assert filters.at_css("select#class_filter"), "Class filter dropdown should render"
+      assert filters.at_css("select#queue_filter"), "Queue filter dropdown should render"
     end
 
     test "keeps the selected class as an option even when no job has it any more" do
@@ -55,9 +57,8 @@ module JobHarbor
         current_path: "/jobs"
       ))
 
-      assert_includes @rendered, "TestJob"
-      assert_includes @rendered, "OtherJob"
-      assert_includes @rendered, "All Classes"
+      assert_equal [ "All Classes", "TestJob", "OtherJob" ],
+        Nokogiri::HTML.fragment(@rendered).css("#class_filter option").map(&:text)
     end
 
     test "includes all queue name options" do
@@ -69,12 +70,11 @@ module JobHarbor
         current_path: "/jobs"
       ))
 
-      assert_includes @rendered, "default"
-      assert_includes @rendered, "high"
-      assert_includes @rendered, "All Queues"
+      assert_equal [ "All Queues", "default", "high" ],
+        Nokogiri::HTML.fragment(@rendered).css("#queue_filter option").map(&:text)
     end
 
-    test "marks current filters as selected" do
+    test "operator sees the active class and queue filters as the chosen options, and no others" do
       render_inline(JobFiltersComponent.new(
         class_names: [ "TestJob", "OtherJob" ],
         queue_names: [ "default", "high" ],
@@ -83,8 +83,11 @@ module JobHarbor
         current_path: "/jobs"
       ))
 
-      # Just verify the form renders - specific selected logic is handled by HTML
-      assert_includes @rendered, "sqd-filters"
+      doc = Nokogiri::HTML.fragment(@rendered)
+      assert_equal [ "TestJob" ], doc.css("#class_filter option[selected]").map(&:text),
+        "Class dropdown should show the active class filter and nothing else"
+      assert_equal [ "high" ], doc.css("#queue_filter option[selected]").map(&:text),
+        "Queue dropdown should show the active queue filter and nothing else"
     end
   end
 end
