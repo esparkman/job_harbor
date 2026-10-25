@@ -22,6 +22,19 @@ class QueuesPagesTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] button", "/job_harbor/queues/default/pause", text: "Pause"
   end
 
+  test "operator sees the same queue total on the dashboard as the Queues page lists when a queue is paused and empty" do
+    enqueue_job(ReportJob, "weekly")
+    SolidQueue::Pause.create!(queue_name: "low_priority")
+
+    get "/job_harbor/queues"
+    listed = css_select(".card a.card-title").size
+    assert_equal 2, listed
+
+    get "/job_harbor"
+
+    assert_stat_card "Queues", listed
+  end
+
   test "operator opens Queues before any job exists and sees an empty state" do
     get "/job_harbor/queues"
 

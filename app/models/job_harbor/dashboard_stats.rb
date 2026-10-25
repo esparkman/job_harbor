@@ -29,7 +29,7 @@ module JobHarbor
     end
 
     def queues_count_calc
-      SolidQueue::Job.distinct.count(:queue_name)
+      QueueStats.names.size
     end
 
     def calculate_throughput

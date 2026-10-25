@@ -9,14 +9,18 @@ Earlier releases are documented in git history and GitHub releases.
 
 ## Unreleased
 
-### Deprecated
-
-- `config.primary_color` has never had any effect. Assigning it now logs a deprecation warning, and it will be removed in 1.0. Delete the line from your initializer.
-
 ### Changed
 
 - `PaginationComponent.new` takes `page_info:` instead of `pagy:`. Only matters if you render the component yourself.
 - The dashboard's timestamp formats are registered as `Time::DATE_FORMATS[:job_harbor_timestamp]`, `[:job_harbor_timestamp_with_zone]` and `[:job_harbor_short]`. Set any of them in your own initializer to change how the dashboard shows times. No other formats are touched.
+
+### Deprecated
+
+- `config.primary_color` has never had any effect. Assigning it now logs a deprecation warning, and it will be removed in 1.0. Delete the line from your initializer.
+
+### Fixed
+
+- The dashboard's Queues count now includes paused queues that have no jobs, so it matches the Queues page.
 
 ### Internal
 
