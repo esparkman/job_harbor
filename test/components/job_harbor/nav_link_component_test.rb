@@ -12,15 +12,15 @@ module JobHarbor
 
       assert_includes @rendered, "sqd-nav-link"
       assert_includes @rendered, "Dashboard"
-      assert_equal "/dashboard", Nokogiri::HTML.fragment(@rendered).at_css("a.sqd-nav-link")["href"]
+      assert_equal "/dashboard", fragment.at_css("a.sqd-nav-link")["href"]
     end
 
     test "the current section's link is highlighted and other links are not" do
       render_inline(NavLinkComponent.new(path: "/jobs", label: "Jobs", active: true))
-      active_classes = Nokogiri::HTML.fragment(@rendered).at_css("a[href='/jobs']")["class"].split
+      active_classes = fragment.at_css("a[href='/jobs']")["class"].split
 
       render_inline(NavLinkComponent.new(path: "/queues", label: "Queues"))
-      inactive_classes = Nokogiri::HTML.fragment(@rendered).at_css("a[href='/queues']")["class"].split
+      inactive_classes = fragment.at_css("a[href='/queues']")["class"].split
 
       assert_includes active_classes, "active"
       assert_includes active_classes, "navbar-item-current"

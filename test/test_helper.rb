@@ -31,4 +31,9 @@ end
 SolidQueueTestSchema.load!
 
 require_relative "test_helpers/solid_queue_test_helper"
+require_relative "test_helpers/page_test_helper"
 require_relative "test_helpers/view_component_test_case"
+
+class ActionDispatch::IntegrationTest
+  include SolidQueueTestHelper, PageTestHelper
+end

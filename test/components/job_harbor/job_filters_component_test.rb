@@ -13,7 +13,7 @@ module JobHarbor
         current_path: "/jobs"
       ))
 
-      filters = Nokogiri::HTML.fragment(@rendered).at_css("div.sqd-filters")
+      filters = fragment.at_css("div.sqd-filters")
       assert filters, "Filter bar should render"
       assert filters.at_css("select#class_filter"), "Class filter dropdown should render"
       assert filters.at_css("select#queue_filter"), "Queue filter dropdown should render"
@@ -25,7 +25,7 @@ module JobHarbor
         current_class: "GoneJob", current_queue: nil, current_path: "/jobs"
       ))
 
-      selected = Nokogiri::HTML.fragment(@rendered).css("#class_filter option[selected]")
+      selected = fragment.css("#class_filter option[selected]")
       assert_equal [ "GoneJob" ], selected.map(&:text), "Dropdown must still show the active class filter"
     end
 
@@ -35,7 +35,7 @@ module JobHarbor
         current_class: nil, current_queue: "gone_queue", current_path: "/jobs"
       ))
 
-      selected = Nokogiri::HTML.fragment(@rendered).css("#queue_filter option[selected]")
+      selected = fragment.css("#queue_filter option[selected]")
       assert_equal [ "gone_queue" ], selected.map(&:text), "Dropdown must still show the active queue filter"
     end
 
@@ -45,7 +45,7 @@ module JobHarbor
         current_class: "TestJob", current_queue: nil, current_path: "/jobs"
       ))
 
-      assert_equal 1, Nokogiri::HTML.fragment(@rendered).css("#class_filter option").count { |o| o.text == "TestJob" }
+      assert_equal 1, fragment.css("#class_filter option").count { |o| o.text == "TestJob" }
     end
 
     test "includes all class name options" do
@@ -58,7 +58,7 @@ module JobHarbor
       ))
 
       assert_equal [ "All Classes", "TestJob", "OtherJob" ],
-        Nokogiri::HTML.fragment(@rendered).css("#class_filter option").map(&:text)
+        fragment.css("#class_filter option").map(&:text)
     end
 
     test "includes all queue name options" do
@@ -71,7 +71,7 @@ module JobHarbor
       ))
 
       assert_equal [ "All Queues", "default", "high" ],
-        Nokogiri::HTML.fragment(@rendered).css("#queue_filter option").map(&:text)
+        fragment.css("#queue_filter option").map(&:text)
     end
 
     test "operator sees the active class and queue filters as the chosen options, and no others" do
@@ -83,7 +83,7 @@ module JobHarbor
         current_path: "/jobs"
       ))
 
-      doc = Nokogiri::HTML.fragment(@rendered)
+      doc = fragment
       assert_equal [ "TestJob" ], doc.css("#class_filter option[selected]").map(&:text),
         "Class dropdown should show the active class filter and nothing else"
       assert_equal [ "high" ], doc.css("#queue_filter option[selected]").map(&:text),

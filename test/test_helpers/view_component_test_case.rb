@@ -7,4 +7,6 @@ class ViewComponentTestCase < ActiveSupport::TestCase
     controller.request = ActionDispatch::TestRequest.create
     @rendered = component.render_in(controller.view_context)
   end
+
+  def fragment = Nokogiri::HTML.fragment(@rendered)
 end

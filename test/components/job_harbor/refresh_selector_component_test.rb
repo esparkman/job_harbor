@@ -31,7 +31,7 @@ module JobHarbor
     test "operator sees the given default interval as the only chosen refresh option" do
       render_inline(RefreshSelectorComponent.new(default_interval: 30))
 
-      selected = Nokogiri::HTML.fragment(@rendered).css("select.sqd-refresh-select option[selected]")
+      selected = fragment.css("select.sqd-refresh-select option[selected]")
       assert_equal [ [ "30s", "30" ] ], selected.map { |option| [ option.text, option["value"] ] },
         "The refresh dropdown should show 30s and only 30s as chosen"
     end

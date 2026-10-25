@@ -29,10 +29,19 @@ module SolidQueueTestHelper
     job.reload
   end
 
-  def assert_stat_card(label, value)
-    card = css_select(".stat-card").find { |c| c.at_css(".stat-card-label").text.strip == label }
-    assert card, "Operator expected a '#{label}' stat card but the page has none"
-    assert_equal value.to_s, card.at_css(".stat-card-value").text.strip, "'#{label}' stat card shows the wrong number"
+  # Three pending (one a throttled import), one scheduled, one running, one failed,
+  # one blocked behind the throttled import and two finished, across four queues.
+  def enqueue_job_in_every_state(worker:)
+    enqueue_job(ReportJob, "weekly")
+    enqueue_job(ReportJob, "monthly")
+    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
+    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
+    enqueue_job(NewsletterJob, "digest", queue: "mailers", at: 2.hours.from_now)
+    running = enqueue_job(ReportJob, "quarterly", queue: "critical")
+    claim_job(running, worker: worker)
+    failed = fail_job(enqueue_job(FlakyPaymentJob, 42, queue: "critical"), worker: worker)
+    2.times { |i| finish_job(enqueue_job(ReportJob, "daily-#{i}"), worker: worker) }
+    { running: running, failed: failed }
   end
 
   # Statements that reached the database: no schema lookups, transaction control or query-cache hits.
@@ -46,8 +55,4 @@ module SolidQueueTestHelper
     ActiveSupport::Notifications.subscribed(counter, "sql.active_record", &block)
     queries
   end
-end
-
-class ActionDispatch::IntegrationTest
-  include SolidQueueTestHelper
 end

@@ -380,18 +380,6 @@ class JobActionsTest < ActionDispatch::IntegrationTest
       input["value"]
     end
 
-    # The app's env_config is applied to every request, so the nonce settings have to be swapped there.
-    def with_csp_nonce(nonce)
-      env_config = Rails.application.env_config
-      keys = { "action_dispatch.content_security_policy" => ActionDispatch::ContentSecurityPolicy.new { |policy| policy.script_src :self },
-               "action_dispatch.content_security_policy_nonce_generator" => ->(_request) { nonce } }
-      originals = keys.keys.to_h { |key| [ key, env_config[key] ] }
-      env_config.merge!(keys)
-      yield
-    ensure
-      env_config.merge!(originals)
-    end
-
     # Discard goes through Solid Queue, which deletes the job row (and frees its concurrency slot) rather than marking it finished.
     def assert_discarded(execution_class, *jobs, &block)
       ids = jobs.map(&:id)
@@ -423,17 +411,5 @@ class JobActionsTest < ActionDispatch::IntegrationTest
       assert_redirected_to "/job_harbor/jobs"
       follow_redirect!
       assert_select ".alert-success", text: notice
-    end
-
-    def assert_status_tab_count(status, count)
-      label = status.humanize.titleize
-      assert_select "a.badge[href=?]", "/job_harbor/jobs/status/#{status}", { text: /\A#{label}\s+#{count}\z/ },
-        "#{label} tab should show #{count} after the action"
-    end
-
-    def assert_info_line(label, value)
-      line = css_select(".info-line").find { |l| l.at_css(".info-line-label").text.strip == label }
-      assert line, "Operator expected a '#{label}' line on the job page"
-      assert_equal value, line.at_css(".info-line-value").text.strip, "'#{label}' line shows the wrong value"
     end
 end

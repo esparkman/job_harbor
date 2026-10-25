@@ -38,7 +38,7 @@ module JobHarbor
       job = mock_job_presenter(can_retry?: true)
       render_inline(JobRowComponent.new(job: job, return_to: "/job_harbor/jobs/status/failed?class_name=TestJob"))
 
-      forms = Nokogiri::HTML.fragment(@rendered).css("form")
+      forms = fragment.css("form")
       assert_equal 2, forms.size
       forms.each do |form|
         assert_equal "/job_harbor/jobs/status/failed?class_name=TestJob", form.at_css("input[name=return_to]")["value"]

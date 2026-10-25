@@ -11,14 +11,14 @@ module JobHarbor
     test "operator sees the six job columns in order" do
       render_inline(JobsTableComponent.new(jobs: [ mock_job(id: 1) ]))
 
-      headers = Nokogiri::HTML.fragment(@rendered).css("thead th").map(&:text)
+      headers = fragment.css("thead th").map(&:text)
       assert_equal [ "ID", "Job Class", "Queue", "Status", "Scheduled At", "Actions" ], headers
     end
 
     test "operator sees one row per job" do
       render_inline(JobsTableComponent.new(jobs: [ mock_job(id: 1, class_name: "AlphaJob"), mock_job(id: 2, class_name: "BetaJob") ]))
 
-      rows = Nokogiri::HTML.fragment(@rendered).css("tbody tr")
+      rows = fragment.css("tbody tr")
       assert_equal 2, rows.size
       assert_includes @rendered, "AlphaJob"
       assert_includes @rendered, "BetaJob"
@@ -27,7 +27,7 @@ module JobHarbor
     test "table sits in a plain card with no heading by default" do
       render_inline(JobsTableComponent.new(jobs: [ mock_job ]))
 
-      doc = Nokogiri::HTML.fragment(@rendered)
+      doc = fragment
       assert doc.at_css("div.card > div.table-wrapper > table.sqd-table"), "expected the table inside a plain card"
       assert_nil doc.at_css(".card-header")
     end

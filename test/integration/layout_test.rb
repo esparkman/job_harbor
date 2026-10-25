@@ -112,16 +112,4 @@ class LayoutTest < ActionDispatch::IntegrationTest
     css = File.read(JobHarbor::Engine.root.join("app/assets/stylesheets/job_harbor/application.css"))
     assert_match(/@media not all and \(min-width:40rem\)\{\.navbar\{[^}]*flex-wrap:wrap/, css, "Compiled CSS is missing the small-screen navbar rule (below sm), rebuild Tailwind")
   end
-
-  private
-    def with_csp_nonce(nonce)
-      env_config = Rails.application.env_config
-      keys = { "action_dispatch.content_security_policy" => ActionDispatch::ContentSecurityPolicy.new { |policy| policy.script_src :self },
-               "action_dispatch.content_security_policy_nonce_generator" => ->(_request) { nonce } }
-      originals = keys.keys.to_h { |key| [ key, env_config[key] ] }
-      env_config.merge!(keys)
-      yield
-    ensure
-      env_config.merge!(originals)
-    end
 end

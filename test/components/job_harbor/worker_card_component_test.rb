@@ -9,7 +9,7 @@ module JobHarbor
     test "lists the queues a worker polls, trimming spaces and dropping blanks" do
       render_inline(WorkerCardComponent.new(worker: register_worker(name: "w", queues: "default, mailers,,")))
 
-      assert_equal %w[default mailers], Nokogiri::HTML.fragment(@rendered).css("code").map { |c| c.text.strip }
+      assert_equal %w[default mailers], fragment.css("code").map { |c| c.text.strip }
       assert_includes @rendered, "Queues:"
     end
 
@@ -22,7 +22,7 @@ module JobHarbor
     test "labels the process kind and marks a long-silent process Stale, not Blocked" do
       render_inline(WorkerCardComponent.new(worker: register_worker(name: "w", kind: "Dispatcher", heartbeat_at: 1.hour.ago)))
 
-      assert_equal "Dispatcher", Nokogiri::HTML.fragment(@rendered).at_css("[data-kind]").text.strip
+      assert_equal "Dispatcher", fragment.at_css("[data-kind]").text.strip
       assert_includes @rendered, "Stale"
       refute_includes @rendered, "Blocked"
     end

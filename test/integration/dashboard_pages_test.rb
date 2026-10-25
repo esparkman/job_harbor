@@ -5,15 +5,7 @@ class DashboardPagesTest < ActionDispatch::IntegrationTest
     freeze_time
     @worker = register_worker(name: "worker-1")
     register_worker(name: "worker-old", heartbeat_at: 10.minutes.ago)
-
-    enqueue_job(ReportJob, "weekly")
-    enqueue_job(ReportJob, "monthly")
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
-    enqueue_job(ThrottledImportJob, "acme", queue: "imports")
-    enqueue_job(NewsletterJob, "digest", queue: "mailers", at: 2.hours.from_now)
-    claim_job(enqueue_job(ReportJob, "quarterly", queue: "critical"), worker: @worker)
-    @failed = fail_job(enqueue_job(FlakyPaymentJob, 42, queue: "critical"), worker: @worker)
-    2.times { |i| finish_job(enqueue_job(ReportJob, "daily-#{i}"), worker: @worker) }
+    @failed = enqueue_job_in_every_state(worker: @worker)[:failed]
   end
 
   test "operator opens the dashboard and sees a stat card for every job state, counted from the queue" do
