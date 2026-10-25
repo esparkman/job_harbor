@@ -110,7 +110,7 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_info_line "Job Class", "FlakyPaymentJob"
     assert_select ".info-line a[href=?]", "/job_harbor/queues/critical", text: "critical"
     assert_select ".card-title", text: "Error Details"
-    assert_info_line "Exception Class", "FlakyPaymentJob::GatewayError"
+    assert_info_line "Exception Class", "JobFailure"
     assert_select ".card", text: /Error Message\s*Card declined for order 42/
     assert_select "pre.code-block", text: /flaky_payment_job\.rb:\d+.*perform/
     assert_select "button", text: "Retry Job"

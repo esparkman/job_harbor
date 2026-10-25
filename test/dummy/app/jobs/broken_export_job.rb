@@ -1,5 +1,5 @@
 class BrokenExportJob < ApplicationJob
   def perform(*)
-    raise FlakyPaymentJob::GatewayError, "Export crashed"
+    raise JobFailure, "Export crashed"
   end
 end

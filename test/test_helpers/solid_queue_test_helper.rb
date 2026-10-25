@@ -25,12 +25,11 @@ module SolidQueueTestHelper
   end
 
   def fail_job(job, worker:)
-    assert_raises(FlakyPaymentJob::GatewayError) { claim_job(job, worker: worker).perform }
+    assert_raises(JobFailure) { claim_job(job, worker: worker).perform }
     job.reload
   end
 
-  # Three pending (one a throttled import), one scheduled, one running, one failed,
-  # one blocked behind the throttled import and two finished, across four queues.
+  # At least one job in every state, across four queues.
   def enqueue_job_in_every_state(worker:)
     enqueue_job(ReportJob, "weekly")
     enqueue_job(ReportJob, "monthly")

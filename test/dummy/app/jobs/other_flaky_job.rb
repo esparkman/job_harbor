@@ -1,3 +1,3 @@
 class OtherFlakyJob < ApplicationJob
-  def perform(*) = raise(FlakyPaymentJob::GatewayError, "Gateway timeout")
+  def perform(*) = raise(JobFailure, "Gateway timeout")
 end
