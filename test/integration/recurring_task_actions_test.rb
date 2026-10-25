@@ -1,13 +1,5 @@
 require "test_helper"
 
-class RefusedReportJob < ReportJob
-  before_enqueue { throw :abort }
-end
-
-class RefusedNewsletterJob < NewsletterJob
-  before_enqueue { throw :abort }
-end
-
 class RecurringTaskActionsTest < ActionDispatch::IntegrationTest
   setup do
     @nightly = SolidQueue::RecurringTask.create!(key: "nightly_report", schedule: "every day at 3am",

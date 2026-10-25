@@ -1,11 +1,5 @@
 require "test_helper"
 
-class BrokenExportJob < ActiveJob::Base
-  def perform(*)
-    raise PaymentGatewayError, "Export crashed"
-  end
-end
-
 class JobActionsTest < ActionDispatch::IntegrationTest
   RETRY_COUNTERS_NOTE = "Retry %s? Automatic retry counts are not reset."
   DISCARD_JOB_CONFIRM = "Are you sure you want to discard this job?"

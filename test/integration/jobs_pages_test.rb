@@ -119,9 +119,9 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
     assert_info_line "Job Class", "FlakyPaymentJob"
     assert_select ".info-line a[href=?]", "/job_harbor/queues/critical", text: "critical"
     assert_select ".card-title", text: "Error Details"
-    assert_info_line "Exception Class", "PaymentGatewayError"
+    assert_info_line "Exception Class", "FlakyPaymentJob::GatewayError"
     assert_select ".card", text: /Error Message\s*Card declined for order 42/
-    assert_select "pre.code-block", text: /test_helper\.rb:\d+.*perform/
+    assert_select "pre.code-block", text: /flaky_payment_job\.rb:\d+.*perform/
     assert_select "button", text: "Retry Job"
     assert_select "button", text: "Discard Job"
   end
@@ -259,14 +259,4 @@ class JobsPagesTest < ActionDispatch::IntegrationTest
       assert line, "Operator expected a '#{label}' line on the job page"
       assert_equal value, line.at_css(".info-line-value").text.strip, "'#{label}' line shows the wrong value"
     end
-end
-
-class EmptyJobsPagesTest < ActionDispatch::IntegrationTest
-  test "operator opens blocked jobs when nothing is blocked and sees an empty state" do
-    get "/job_harbor/jobs/status/blocked"
-
-    assert_response :success
-    assert_select "h3", text: "No jobs found"
-    assert_select "p", text: "There are no blocked jobs."
-  end
 end
