@@ -17,14 +17,18 @@ JobHarbor::Engine.routes.draw do
     get "jobs/status/#{job_status.key}", to: "jobs#index", defaults: { status: job_status.key }, as: job_status.route_name
   end
 
-  resources :queues, only: [ :index, :show ], param: :name do
-    collection do
-      post :pause, action: :pre_pause
-    end
+  # Queue names are free text: dotted ("billing.charges") and occasionally slashed ("a/b",
+  # linked as a%2Fb). The default :name constraint rejects both, so loosen it and turn off
+  # the .format split.
+  resources :queues, only: [ :index, :show ], param: :name, constraints: { name: %r{[^?#]+} }, format: false do
     member do
       post :pause
       delete :resume
     end
+  end
+
+  namespace :queues do
+    resources :pauses, only: :create, format: false
   end
 
   resources :workers, only: [ :index ]

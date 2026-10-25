@@ -11,7 +11,7 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Added
 
-- A "Pause a queue" form on the Queues page pauses a queue by name before it has any jobs. The paused queue shows up as a card, and resuming it removes the card once it still has no jobs.
+- A "Pause a queue" form on the Queues page pauses a queue by name before it has any jobs. The paused queue shows up as a card, and resuming removes the card if the queue still has no jobs.
 
 ### Changed
 
@@ -25,6 +25,7 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Fixed
 
+- Queues whose names contain a dot (e.g. `billing.charges`) can now be opened, paused and resumed; their links used to 404.
 - The dashboard's Queues count now includes paused queues that have no jobs, so it matches the Queues page.
 - Auto-refresh now updates the Workers and Recurring badges in the navbar along with the page content. They used to lag until the next navigation.
 - Hourly chart labels show the time zone (e.g. 01:00 EDT / 01:00 EST) on days with a daylight-saving change, so the repeated or skipped hour is no longer ambiguous.
