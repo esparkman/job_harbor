@@ -33,7 +33,7 @@ module JobHarbor
 
     test "counting a status takes a single query" do
       JobStatus.all.each do |status|
-        assert_equal 1, count_queries { QueueStats.new("mailers").count(status) }.size, "#{status.key} count ran more than one query"
+        assert_equal 1, capture_sql { QueueStats.new("mailers").count(status) }.size, "#{status.key} count ran more than one query"
       end
     end
 

@@ -136,7 +136,7 @@ module JobHarbor
       3.times { |i| finish_job(enqueue_job(ReportJob, "f#{i}"), worker: worker) }
       fail_job(enqueue_job(FlakyPaymentJob, 1), worker: worker)
 
-      queries = count_queries { ChartData.new(range: "24h").series }
+      queries = capture_sql { ChartData.new(range: "24h").series }
 
       assert_equal 3, queries.size, "The chart should issue one query per series, got:\n#{queries.join("\n")}"
     end

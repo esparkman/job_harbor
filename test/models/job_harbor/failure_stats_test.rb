@@ -45,14 +45,14 @@ module JobHarbor
     end
 
     test "the query count stays the same however many jobs there are" do
-      baseline = count_queries { FailureStats.new.stats }.size
+      baseline = capture_sql { FailureStats.new.stats }
 
       30.times { |i| enqueue_job(ReportJob, i) }
       5.times { |i| fail_job(enqueue_job(FlakyPaymentJob, i), worker: @worker) }
-      queries = count_queries { FailureStats.new.stats }
+      queries = capture_sql { FailureStats.new.stats }
 
-      assert_equal 2, baseline
-      assert_equal baseline, queries.size, "Failure stats should not query per job or per class, got:\n#{queries.join("\n")}"
+      assert_equal 2, baseline.size
+      assert_equal baseline.size, queries.size, "Failure stats should not query per job or per class:\n#{sql_growth(baseline, queries)}"
     end
   end
 end
