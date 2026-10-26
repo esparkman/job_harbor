@@ -21,7 +21,7 @@
       Job Harbor
     </a>
 
-    <div class="navbar-section sm:ml-4">
+    <div class="navbar-section sm:ml-4" data-refresh-target="nav">
       <%= render JobHarbor::NavLinkComponent.new(
         path: root_path,
         label: "Dashboard",
@@ -155,12 +155,25 @@
         localStorage.setItem(STORAGE_KEY, interval);
       }
 
+      function focusWithin(el) {
+        var active = document.activeElement;
+        return !!active && active !== document.body && el.contains(active);
+      }
+
       // Leave the page alone while the operator is using it: focus inside the content, or selected text
       function operatorBusy(content) {
-        var active = document.activeElement;
-        if (active && active !== document.body && content.contains(active)) return true;
+        if (focusWithin(content)) return true;
         var selection = window.getSelection();
         return !!selection && selection.toString() !== '';
+      }
+
+      // The nav badges live outside the content, so swap them from the same response
+      function refreshNav(doc) {
+        var currentNav = document.querySelector('[data-refresh-target="nav"]');
+        var newNav = doc.querySelector('[data-refresh-target="nav"]');
+        if (!currentNav || !newNav) return;
+        if (focusWithin(currentNav)) return;
+        currentNav.innerHTML = newNav.innerHTML;
       }
 
       function refreshContent() {
@@ -178,6 +191,7 @@
           // The operator may have started interacting while the request was out
           if (!newContent || operatorBusy(currentContent)) return;
           currentContent.innerHTML = newContent.innerHTML;
+          refreshNav(doc);
           document.dispatchEvent(new CustomEvent('jh:content-refreshed'));
         })
         .catch(function(e) { console.error('JH refresh error:', e); })
