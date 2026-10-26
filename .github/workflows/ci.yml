@@ -72,6 +72,9 @@ jobs:
           bundler-cache: true
       - run: bin/rails db:test:prepare
       - run: bin/rails test
+      # Browser-side behavior doesn't vary by Ruby or Rails version, so one lane runs the system tests.
+      - if: matrix.lane == 'lockfile'
+        run: bin/rails test:system
       - if: matrix.lane == 'lockfile'
         run: bin/rails app:db:seed:replant
         env:

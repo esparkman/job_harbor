@@ -34,6 +34,7 @@ Earlier releases are documented in git history and GitHub releases.
 ### Internal
 
 - Removed dead code: the unused `icon` argument of `NavLinkComponent` (now `NavLinkComponent.new(path:, label:, active:, badge:)`), unused CSS rules and test setup, and the empty `JobHarbor::ApplicationHelper`.
+- System tests (Capybara with headless Chrome) now run the auto-refresh script in a real browser. `bin/ci` and the lockfile CI lane run them.
 
 ## 0.7.1 - 2026-10-23
 

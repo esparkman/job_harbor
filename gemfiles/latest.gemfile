@@ -6,3 +6,8 @@ gemspec path: ".."
 gem "puma"
 gem "sqlite3"
 gem "propshaft"
+
+group :test do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
