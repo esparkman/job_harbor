@@ -32,13 +32,11 @@ class SensitiveValuesTest < ActionDispatch::IntegrationTest
   end
 
   test "a filter key the host app adds after boot masks the value on the next page view" do
-    Rails.application.config.filter_parameters << :plan
+    with_host_filter_parameters(:plan) do
+      get "/job_harbor/jobs/#{@job.id}"
 
-    get "/job_harbor/jobs/#{@job.id}"
-
-    assert_select "pre.code-block", text: /"plan": "\[FILTERED\]"/
-  ensure
-    Rails.application.config.filter_parameters.delete(:plan)
+      assert_select "pre.code-block", text: /"plan": "\[FILTERED\]"/
+    end
   end
 
   test "searching for a hidden value finds nothing, and finds the job only when filtering is off" do
@@ -71,39 +69,36 @@ class SensitiveValuesTest < ActionDispatch::IntegrationTest
 
   test "a host Proc filter scrubs the error message on the job page" do
     failed = fail_job(enqueue_job(FlakyPaymentJob, "tok_live_abc123"), worker: @worker)
-    Rails.application.config.filter_parameters << SCRUBBER
 
-    get "/job_harbor/jobs/#{failed.id}"
+    with_host_filter_parameters(SCRUBBER) do
+      get "/job_harbor/jobs/#{failed.id}"
 
-    assert_not_includes response.body, "tok_live_abc123", "The job page leaked a token that the host filter scrubs"
-    assert_select ".card", text: /Error Message\s*Card declined for order \[SCRUBBED\]/
-  ensure
-    Rails.application.config.filter_parameters.delete(SCRUBBER)
+      assert_not_includes response.body, "tok_live_abc123", "The job page leaked a token that the host filter scrubs"
+      assert_select ".card", text: /Error Message\s*Card declined for order \[SCRUBBED\]/
+    end
   end
 
   test "a host Proc filter scrubs the error message in the dashboard's recent failures" do
     fail_job(enqueue_job(FlakyPaymentJob, "tok_live_abc123"), worker: @worker)
-    Rails.application.config.filter_parameters << SCRUBBER
 
-    get "/job_harbor"
+    with_host_filter_parameters(SCRUBBER) do
+      get "/job_harbor"
 
-    assert_not_includes response.body, "tok_live_abc123", "The dashboard's recent failures leaked a token"
-    assert_select "td", text: /Card declined for order \[SCRUBBED\]/
-  ensure
-    Rails.application.config.filter_parameters.delete(SCRUBBER)
+      assert_not_includes response.body, "tok_live_abc123", "The dashboard's recent failures leaked a token"
+      assert_select "td", text: /Card declined for order \[SCRUBBED\]/
+    end
   end
 
   test "a host Proc filter scrubs the backtrace on the job page" do
     failed = fail_job(enqueue_job(FlakyPaymentJob, 42), worker: @worker)
     scrubber = ->(_key, value) { value.gsub!("flaky_payment_job", "[SCRUBBED]") if value.is_a?(String) }
-    Rails.application.config.filter_parameters << scrubber
 
-    get "/job_harbor/jobs/#{failed.id}"
+    with_host_filter_parameters(scrubber) do
+      get "/job_harbor/jobs/#{failed.id}"
 
-    assert_select "pre.code-block", text: /\[SCRUBBED\]\.rb/
-    assert_not_includes css_select("pre.code-block").map(&:text).join, "flaky_payment_job"
-  ensure
-    Rails.application.config.filter_parameters.delete(scrubber)
+      assert_select "pre.code-block", text: /\[SCRUBBED\]\.rb/
+      assert_not_includes css_select("pre.code-block").map(&:text).join, "flaky_payment_job"
+    end
   end
 
   test "operator opens a recurring task and sees its secret arguments masked" do
