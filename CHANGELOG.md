@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## Unreleased
+
+### Removed
+
+- The gem no longer packages the engine's development `Rakefile`, which could not run outside the repository.
+
 ## 0.8.0 - 2026-10-25
 
 ### Added
