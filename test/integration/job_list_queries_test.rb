@@ -8,48 +8,48 @@ class JobListQueriesTest < ActionDispatch::IntegrationTest
 
   test "operator opens All Jobs and the page runs the same number of queries for 10 jobs as for 30" do
     enqueue_mixed_jobs(10)
-    ten = count_queries { get "/job_harbor/jobs", params: { per_page: 100 } }.size
+    ten = capture_sql { get "/job_harbor/jobs", params: { per_page: 100 } }
     assert_equal 10, job_rows.size
 
     enqueue_mixed_jobs(20)
-    thirty = count_queries { get "/job_harbor/jobs", params: { per_page: 100 } }.size
+    thirty = capture_sql { get "/job_harbor/jobs", params: { per_page: 100 } }
     assert_equal 30, job_rows.size
 
-    assert_equal ten, thirty, "All Jobs ran more SQL for 30 jobs than for 10: the status of each row is queried separately"
+    assert_equal ten.size, thirty.size, "All Jobs ran more SQL for 30 jobs than for 10:\n#{sql_growth(ten, thirty)}"
   end
 
   test "operator opens the Failed tab and the page runs the same number of queries however many jobs failed" do
     enqueue_mixed_jobs(10)
-    few = count_queries { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }.size
+    few = capture_sql { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }
     failed_few = job_rows.size
 
     enqueue_mixed_jobs(20)
-    many = count_queries { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }.size
+    many = capture_sql { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }
 
     assert_operator job_rows.size, :>, failed_few
-    assert_equal few, many, "The Failed tab ran more SQL for more failed jobs"
+    assert_equal few.size, many.size, "The Failed tab ran more SQL for more failed jobs:\n#{sql_growth(few, many)}"
   end
 
   test "operator searches and the results page runs the same number of queries however many jobs match" do
     enqueue_mixed_jobs(10)
-    few = count_queries { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }.size
+    few = capture_sql { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }
     matches_few = job_rows.size
 
     enqueue_mixed_jobs(20)
-    many = count_queries { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }.size
+    many = capture_sql { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }
 
     assert_operator job_rows.size, :>, matches_few
-    assert_equal few, many, "Search ran more SQL for more matching jobs"
+    assert_equal few.size, many.size, "Search ran more SQL for more matching jobs:\n#{sql_growth(few, many)}"
   end
 
   test "operator opens a queue page and it runs the same number of queries for 10 jobs as for 30" do
     enqueue_mixed_jobs(10)
-    ten = count_queries { get "/job_harbor/queues/default" }.size
+    ten = capture_sql { get "/job_harbor/queues/default" }
 
     enqueue_mixed_jobs(20)
-    thirty = count_queries { get "/job_harbor/queues/default" }.size
+    thirty = capture_sql { get "/job_harbor/queues/default" }
 
-    assert_equal ten, thirty, "The queue page ran more SQL for 30 jobs than for 10"
+    assert_equal ten.size, thirty.size, "The queue page ran more SQL for 30 jobs than for 10:\n#{sql_growth(ten, thirty)}"
   end
 
   private

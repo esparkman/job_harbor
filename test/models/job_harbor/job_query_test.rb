@@ -100,13 +100,13 @@ module JobHarbor
 
     test "the job list runs the same number of queries however many jobs are on the page" do
       enqueue_job(ReportJob)
-      few = count_queries { JobQuery.new.page(1, per_page: 25) }.size
+      few = capture_sql { JobQuery.new.page(1, per_page: 25) }
       claim_job(enqueue_job(ReportJob), worker: @worker)
       fail_job(enqueue_job(FlakyPaymentJob, 1), worker: @worker)
       enqueue_job(NewsletterJob, at: 1.hour.from_now)
-      many = count_queries { JobQuery.new.page(1, per_page: 25) }.size
+      many = capture_sql { JobQuery.new.page(1, per_page: 25) }
 
-      assert_equal few, many, "The job list should preload executions instead of querying per row"
+      assert_equal few.size, many.size, "The job list should preload executions instead of querying per row:\n#{sql_growth(few, many)}"
     end
 
     test "filter options list each job class and queue once, sorted" do

@@ -111,11 +111,9 @@ module JobHarbor
       enqueue_job(NewsletterJob, at: 1.hour.from_now)
 
       _, presenters = JobQuery.new.page(1, per_page: 10)
-      queries = count_queries do
+      assert_no_queries do
         presenters.each { |presenter| [ presenter.status, presenter.running_duration, presenter.execution_count, presenter.can_retry? ] }
       end
-
-      assert_empty queries, "Reading a loaded row's status should not hit the database"
     end
 
     test "relative_created_at says how long ago the job was enqueued" do

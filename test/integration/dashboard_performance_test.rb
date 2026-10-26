@@ -10,7 +10,7 @@ class DashboardPerformanceTest < ActionDispatch::IntegrationTest
 
   test "operator loads the dashboard on the default range and it stays within the query budget" do
     seed_jobs(40)
-    queries = count_queries { get "/job_harbor" }
+    queries = capture_sql { get "/job_harbor" }
 
     assert_response :success
     assert_operator queries.size, :<, QUERY_BUDGET, "Dashboard ran #{queries.size} queries:\n#{queries.join("\n")}"
@@ -18,7 +18,7 @@ class DashboardPerformanceTest < ActionDispatch::IntegrationTest
 
   test "operator loads the dashboard on the 7 day range and it stays within the query budget" do
     seed_jobs(40)
-    queries = count_queries { get "/job_harbor", params: { chart_range: "7d" } }
+    queries = capture_sql { get "/job_harbor", params: { chart_range: "7d" } }
 
     assert_response :success
     assert_operator queries.size, :<, QUERY_BUDGET, "7d dashboard ran #{queries.size} queries:\n#{queries.join("\n")}"
@@ -28,12 +28,12 @@ class DashboardPerformanceTest < ActionDispatch::IntegrationTest
     %w[24h 7d].each do |range|
       SolidQueue::Job.destroy_all
       seed_failures
-      small = count_queries { get "/job_harbor", params: { chart_range: range } }
+      small = capture_sql { get "/job_harbor", params: { chart_range: range } }
 
       seed_jobs(40)
-      large = count_queries { get "/job_harbor", params: { chart_range: range } }
+      large = capture_sql { get "/job_harbor", params: { chart_range: range } }
 
-      assert_equal small.size, large.size, "#{range} dashboard should not query per job, got:\n#{large.join("\n")}"
+      assert_equal small.size, large.size, "#{range} dashboard should not query per job:\n#{sql_growth(small, large)}"
     end
   end
 

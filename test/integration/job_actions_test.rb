@@ -319,15 +319,15 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     assert_select ".alert-success", text: "2 jobs queued for retry."
   end
 
-  test "operator retries a large failed list in bulk with the same queries as retrying one job" do
-    one = count_queries { post "/job_harbor/jobs/retry_all?status=failed" }
+  test "operator retries a large failed list in bulk with the same number of queries as retrying one job" do
+    one = capture_sql { post "/job_harbor/jobs/retry_all?status=failed" }
     assert_equal 0, SolidQueue::FailedExecution.where(job_id: @failed.id).count
 
     jobs = Array.new(20) { |i| fail_job(enqueue_job(FlakyPaymentJob, 100 + i), worker: @worker) }
-    twenty = count_queries { post "/job_harbor/jobs/retry_all?status=failed" }
+    twenty = capture_sql { post "/job_harbor/jobs/retry_all?status=failed" }
 
     assert_equal 0, SolidQueue::FailedExecution.where(job_id: jobs.map(&:id)).count
-    assert_equal one.size, twenty.size, "Bulk retry of #{jobs.size} jobs ran more SQL than retrying one:\n#{twenty.join("\n")}"
+    assert_equal one.size, twenty.size, "Bulk retry of #{jobs.size} jobs ran more SQL than retrying one:\n#{sql_growth(one, twenty)}"
   end
 
   test "every page's discard button asks for confirmation through a form-level data-confirm the layout handles" do
