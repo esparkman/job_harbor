@@ -44,7 +44,7 @@ module JobHarbor
 
       def names
         # Every queue that has a job, plus paused queues that have no jobs
-        (SolidQueue::Job.distinct.pluck(:queue_name) | SolidQueue::Pause.pluck(:queue_name)).sort
+        (DistinctJobValues.of(:queue_name) | SolidQueue::Pause.pluck(:queue_name)).sort
       end
     end
   end

@@ -12,8 +12,8 @@ module JobHarbor
 
       def filter_options
         {
-          class_names: SolidQueue::Job.distinct.pluck(:class_name).sort,
-          queue_names: SolidQueue::Job.distinct.pluck(:queue_name).sort
+          class_names: DistinctJobValues.of(:class_name),
+          queue_names: DistinctJobValues.of(:queue_name)
         }
       end
 
