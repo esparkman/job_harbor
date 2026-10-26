@@ -15,6 +15,7 @@ module JobHarbor
       assert_equal QueueStats::MAX_NAME_LENGTH.to_s, input["maxlength"]
       assert_equal "Queue name", input["placeholder"]
       assert input.key?("required"), "Operator should not be able to submit an empty queue name"
+      assert_equal "off", input["autocomplete"], "Browser form restoration would refill this field and hold the queues page content indefinitely"
       assert_equal "Pause", form.at_css("button[type=submit]").text.strip
     end
   end

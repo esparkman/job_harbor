@@ -98,7 +98,7 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert css_select("script").any? { |tag| tag.text.include?("jh-refresh-interval") }
   end
 
-  test "the refresh script skips a poll while one is in flight or the operator is focused or selecting text" do
+  test "the refresh script skips overlapping polls and holds the content swap while the operator is focused or selecting text" do
     get "/job_harbor"
 
     script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
@@ -120,9 +120,12 @@ class LayoutTest < ActionDispatch::IntegrationTest
     get "/job_harbor"
 
     script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
-    refresh = script[script.index("function refreshContent")..]
-    assert_operator refresh.index("refreshNav(doc)"), :<, refresh.index("operatorBusy(currentContent)"), "Nav badges must refresh even while the content is held"
-    assert_equal 1, refresh.scan("operatorBusy(").size, "Only the post-response check may hold the poll, so the fetch and nav refresh always run"
+    refresh = script[/function refreshContent\(\).*?\n      \}\n/m]
+    assert refresh, "refreshContent must exist in the refresh script"
+    nav = refresh.index("refreshNav(doc)")
+    busy = refresh.index("operatorBusy(currentContent)")
+    assert nav && busy && nav < busy, "Nav badges must refresh even while the content is held"
+    refute_includes refresh[/\A.*?fetch\(/m], "operatorBusy", "No busy gate may run before the fetch, or a held page would stop polling"
   end
 
   test "every table sits in a scrolling wrapper so a wide table scrolls inside its card, not the whole page on a phone" do

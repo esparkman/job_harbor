@@ -196,7 +196,7 @@
           var newContent = doc.querySelector('[data-refresh-target="content"]');
           // Held content can wait on the operator indefinitely, so the nav badges refresh regardless
           refreshNav(doc);
-          // Checked after the response so input typed while the request was out is protected too
+          // Checked after the response so input typed during the request is protected
           if (!newContent || operatorBusy(currentContent)) return;
           currentContent.innerHTML = newContent.innerHTML;
           document.dispatchEvent(new CustomEvent('jh:content-refreshed'));
