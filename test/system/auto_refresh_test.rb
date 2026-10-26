@@ -22,17 +22,18 @@ class AutoRefreshTest < ApplicationSystemTestCase
     assert_selector WORKERS_BADGE, exact_text: "1"
     type_queue_name_and_look_away "repo"
 
-    register_worker(name: "worker-2", pid: 4343)
+    register_worker(name: "worker-2")
 
     assert_selector WORKERS_BADGE, exact_text: "2"
     assert_field "Queue name", with: "repo", wait: 0
   end
 
-  test "operator clears the half-typed name and the page shows a queue paused meanwhile" do
+  test "operator clears a half-typed queue name and then sees the queue that was paused while they were typing" do
     type_queue_name_and_look_away "repo"
     SolidQueue::Pause.create!(queue_name: "reports")
     wait_for_poll
     assert_no_selector ".card a.card-title", exact_text: "reports", wait: 0
+    assert_field "Queue name", with: "repo", wait: 0
 
     type_queue_name_and_look_away ""
 
@@ -51,10 +52,11 @@ class AutoRefreshTest < ApplicationSystemTestCase
       JS
     end
 
+    # A request already in flight may predate the caller's change; requests never overlap, so the second response is fresh
     def wait_for_poll
       execute_script("window.jhPolls = 0")
       page.document.synchronize do
-        raise Capybara::ExpectationNotMet, "Auto-refresh never polled" unless evaluate_script("window.jhPolls") > 0
+        raise Capybara::ExpectationNotMet, "Auto-refresh never polled" unless evaluate_script("window.jhPolls") >= 2
       end
     end
 
