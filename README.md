@@ -284,7 +284,7 @@ To work on the gem itself, clone the repo and run `bundle install`. The dummy Ra
 
 ```bash
 bin/ci                  # rubocop, bundler-audit, brakeman, unit tests, system tests, seed replant
-bin/rails test          # unit tests only
+bin/rails test          # everything except the system tests
 bin/rails test:system   # browser tests only
 ```
 
@@ -292,4 +292,4 @@ The system tests drive headless Chrome through selenium-webdriver, so they need 
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See [MIT-LICENSE](MIT-LICENSE) for details.
