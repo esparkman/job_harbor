@@ -201,6 +201,70 @@ module JobHarbor
       assert_equal [ job.id ], JobQuery.search("hunter2").page(1, per_page: 25).last.map(&:id)
     end
 
+    test "searching 2026 finds only job 2026, not every job enqueued in 2026" do
+      JobHarbor.configuration.filter_parameters = false
+      year_job = SolidQueue::Job.create!(id: 2026, queue_name: "default", class_name: "ReportJob", arguments: "{}")
+      enqueued = Array.new(2) { enqueue_job(ReportJob) }
+      enqueued.each { |job| job.update_columns(arguments: job.arguments.merge("enqueued_at" => "2026-10-25T09:10:11Z")) }
+
+      assert_equal [ year_job.id ], JobQuery.search("2026").jobs.ids
+    end
+
+    test "a number matches the job ID only, not digits in the payload, the class name or the arguments" do
+      JobHarbor.configuration.filter_parameters = false
+      enqueue_job(ReportJob, 4242)
+      job = enqueue_job(ReportJob)
+      job.update_columns(class_name: "Report4242Job")
+
+      assert_empty JobQuery.search("4242").jobs.ids
+    end
+
+    test "searching for an envelope key matches nothing unless a class or argument contains it" do
+      JobHarbor.configuration.filter_parameters = false
+      enqueue_job(ReportJob)
+      %w[job_class job_id enqueued_at locale executions].each do |key|
+        assert_empty JobQuery.search(key).jobs.ids, "Searching #{key.inspect} matched the stored job envelope"
+      end
+
+      with_argument = enqueue_job(ReportJob, "job_class")
+      assert_equal [ with_argument.id ], JobQuery.search("job_class").jobs.ids
+    end
+
+    test "argument search copes with rows whose stored arguments are not a JSON object" do
+      JobHarbor.configuration.filter_parameters = false
+      broken = SolidQueue::Job.create!(queue_name: "default", class_name: "OddJob", arguments: "{}")
+      plain = SolidQueue::Job.create!(queue_name: "default", class_name: "OddJob", arguments: "{}")
+      SolidQueue::Job.where(id: broken.id).update_all([ "arguments = ?", "{broken" ])
+      SolidQueue::Job.where(id: plain.id).update_all([ "arguments = ?", "not json" ])
+      job = enqueue_job(ReportJob, "hunter2")
+
+      assert_equal [ job.id ], JobQuery.search("hunter2").jobs.ids
+      assert_empty JobQuery.search("broken").jobs.ids
+      assert_empty JobQuery.search("not json").jobs.ids
+    end
+
+    test "below PostgreSQL 16 argument search guards non-object rows with a regex" do
+      JobHarbor.configuration.filter_parameters = false
+
+      sql = SolidQueue::Job.with_connection do |connection|
+        connection.define_singleton_method(:adapter_name) { "PostgreSQL" }
+        connection.define_singleton_method(:database_version) { 150_000 }
+        JobQuery.search("hunter2").jobs.to_sql
+      ensure
+        connection.singleton_class.remove_method(:adapter_name, :database_version)
+      end
+
+      assert_includes sql, %q(~ '^\s*\{.*\}\s*$'), "PostgreSQL 15 needs the regex guard on the arguments column"
+      assert_not_includes sql, "pg_input_is_valid"
+    end
+
+    test "Active Job's own argument markers still match, since they live inside the arguments" do
+      JobHarbor.configuration.filter_parameters = false
+      job = enqueue_job(ReportJob, { user: "ann" })
+
+      assert_equal [ job.id ], JobQuery.search("_aj_symbol_keys").jobs.ids
+    end
+
     test "searching by a numeric job id finds that job while filtering is on" do
       job = enqueue_job(ReportJob)
 

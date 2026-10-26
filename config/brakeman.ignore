@@ -1,0 +1,28 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "warning_code": 0,
+      "fingerprint": "370eeed666faaeb6908131096f8d6eac06f36ff4c6a3480ec9b9db31568126a4",
+      "check_name": "SQL",
+      "message": "Possible SQL injection",
+      "file": "app/models/job_harbor/job_query.rb",
+      "line": 78,
+      "link": "https://brakemanscanner.org/docs/warning_types/sql_injection/",
+      "code": "SolidQueue::Job.where(\"LOWER(#{job_arguments_sql}) LIKE LOWER(:pattern) ESCAPE :escape\", :pattern => (\"%#{SolidQueue::Job.sanitize_sql_like(@search, \"!\")}%\"), :escape => \"!\")",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "JobHarbor::JobQuery",
+        "method": "matching_search"
+      },
+      "user_input": "job_arguments_sql",
+      "confidence": "Weak",
+      "cwe_id": [
+        89
+      ],
+      "note": "job_arguments_sql is built only from fixed per-adapter SQL and quoted_table_name; the search text is bound as :pattern, never interpolated."
+    }
+  ],
+  "brakeman_version": "8.0.6"
+}
