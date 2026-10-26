@@ -29,6 +29,20 @@ jobs:
           bundler-cache: true
       - run: bin/rubocop -f github
 
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@b1da4809b005e0178fe08a1d57317bffc00b7b4c # v1.332.0
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+      - run: bundle exec bundler-audit check --update
+      - run: bundle exec brakeman --no-pager -q
+
   test:
     name: test (${{ matrix.lane }})
     runs-on: ubuntu-latest
@@ -58,6 +72,10 @@ jobs:
           bundler-cache: true
       - run: bin/rails db:test:prepare
       - run: bin/rails test
+      - if: matrix.lane == 'lockfile'
+        run: bin/rails app:db:seed:replant
+        env:
+          RAILS_ENV: test
 
   # The search, chart and grouped-count SQL is written to be portable; these two
   # jobs run the whole suite against real PostgreSQL and MySQL servers to prove it.
