@@ -98,13 +98,34 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert css_select("script").any? { |tag| tag.text.include?("jh-refresh-interval") }
   end
 
-  test "the refresh script skips a poll while one is in flight or the operator is focused or selecting text" do
+  test "the refresh script skips overlapping polls and holds the content swap while the operator is focused or selecting text" do
     get "/job_harbor"
 
     script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
     assert_includes script, "inFlight", "Overlapping polls must be skipped"
     assert_includes script, "document.activeElement", "A focused button or link inside the content must block the swap"
     assert_includes script, "getSelection", "Selected text must block the swap"
+  end
+
+  test "the refresh script treats a field changed from its default as operator-busy, and the pause field sits in the refreshed content" do
+    get "/job_harbor/queues"
+
+    assert_select "[data-refresh-target=content] input[name=name]", count: 1
+    script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
+    assert_includes script, "field.value !== field.defaultValue", "A field whose value differs from its default is unsubmitted input"
+    assert_includes script, "hasUnsubmittedInput(content)", "The busy check must consult unsubmitted input, not only focus"
+  end
+
+  test "the refresh script updates the nav badges before it decides whether held content may be swapped" do
+    get "/job_harbor"
+
+    script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
+    refresh = script[/function refreshContent\(\).*?\n      \}\n/m]
+    assert refresh, "refreshContent must exist in the refresh script"
+    nav = refresh.index("refreshNav(doc)")
+    busy = refresh.index("operatorBusy(currentContent)")
+    assert nav && busy && nav < busy, "Nav badges must refresh even while the content is held"
+    refute_includes refresh[/\A.*?fetch\(/m], "operatorBusy", "No busy gate may run before the fetch, or a held page would stop polling"
   end
 
   test "every table sits in a scrolling wrapper so a wide table scrolls inside its card, not the whole page on a phone" do

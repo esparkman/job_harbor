@@ -160,9 +160,15 @@
         return !!active && active !== document.body && el.contains(active);
       }
 
-      // Leave the page alone while the operator is using it: focus inside the content, or selected text
+      function hasUnsubmittedInput(el) {
+        return Array.prototype.some.call(el.querySelectorAll('input, textarea'), function(field) {
+          return field.value !== field.defaultValue;
+        });
+      }
+
+      // Leave the page alone while the operator is using it: focus inside the content, unsubmitted input, or selected text
       function operatorBusy(content) {
-        if (focusWithin(content)) return true;
+        if (focusWithin(content) || hasUnsubmittedInput(content)) return true;
         var selection = window.getSelection();
         return !!selection && selection.toString() !== '';
       }
@@ -178,7 +184,7 @@
 
       function refreshContent() {
         var currentContent = document.querySelector('[data-refresh-target="content"]');
-        if (inFlight || !currentContent || operatorBusy(currentContent)) return;
+        if (inFlight || !currentContent) return;
         inFlight = true;
         fetch(window.location.href, {
           headers: { 'Accept': 'text/html', 'X-Requested-With': 'XMLHttpRequest' }
@@ -188,10 +194,11 @@
           if (html === null) return;
           var doc = new DOMParser().parseFromString(html, 'text/html');
           var newContent = doc.querySelector('[data-refresh-target="content"]');
-          // The operator may have started interacting while the request was out
+          // Held content can wait on the operator indefinitely, so the nav badges refresh regardless
+          refreshNav(doc);
+          // Checked after the response so input typed during the request is protected
           if (!newContent || operatorBusy(currentContent)) return;
           currentContent.innerHTML = newContent.innerHTML;
-          refreshNav(doc);
           document.dispatchEvent(new CustomEvent('jh:content-refreshed'));
         })
         .catch(function(e) { console.error('JH refresh error:', e); })

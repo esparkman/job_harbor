@@ -1,3 +1,5 @@
+<%= render JobHarbor::QueuePauseFormComponent.new %>
+
 <% if @queues.empty? %>
   <%= render JobHarbor::EmptyStateComponent.new(
     title: "No queues found",

@@ -2,6 +2,9 @@
 
 module JobHarbor
   class QueueStats
+    # Solid Queue's queue_name columns are plain strings; 255 fits every adapter's default string limit.
+    MAX_NAME_LENGTH = 255
+
     attr_reader :name
 
     def initialize(name)

@@ -17,11 +17,16 @@ JobHarbor::Engine.routes.draw do
     get "jobs/status/#{job_status.key}", to: "jobs#index", defaults: { status: job_status.key }, as: job_status.route_name
   end
 
-  resources :queues, only: [ :index, :show ], param: :name do
+  # Queue names are free text; generation escapes them and format: false keeps dots in the name.
+  resources :queues, only: [ :index, :show ], param: :name, constraints: { name: /.+/ }, format: false do
     member do
       post :pause
       delete :resume
     end
+  end
+
+  namespace :queues do
+    resources :pauses, only: :create, format: false
   end
 
   resources :workers, only: [ :index ]
