@@ -319,17 +319,15 @@ class JobActionsTest < ActionDispatch::IntegrationTest
     assert_select ".alert-success", text: "2 jobs queued for retry."
   end
 
-  test "operator retries a large failed list in bulk without a query per job" do
-    jobs = Array.new(20) { |i| fail_job(enqueue_job(FlakyPaymentJob, 100 + i), worker: @worker) }
+  test "operator retries a large failed list in bulk with the same queries as retrying one job" do
+    one = count_queries { post "/job_harbor/jobs/retry_all?status=failed" }
+    assert_equal 0, SolidQueue::FailedExecution.where(job_id: @failed.id).count
 
-    queries = 0
-    counter = ->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" || payload[:sql].match?(/\A\s*(BEGIN|COMMIT|SAVEPOINT|RELEASE)/i) }
-    ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
-      post "/job_harbor/jobs/retry_all?status=failed"
-    end
+    jobs = Array.new(20) { |i| fail_job(enqueue_job(FlakyPaymentJob, 100 + i), worker: @worker) }
+    twenty = count_queries { post "/job_harbor/jobs/retry_all?status=failed" }
 
     assert_equal 0, SolidQueue::FailedExecution.where(job_id: jobs.map(&:id)).count
-    assert_operator queries, :<, jobs.size, "Bulk retry ran #{queries} SQL statements for #{jobs.size + 1} jobs; it should not scale per job"
+    assert_equal one.size, twenty.size, "Bulk retry of #{jobs.size} jobs ran more SQL than retrying one:\n#{twenty.join("\n")}"
   end
 
   test "every page's discard button asks for confirmation through a form-level data-confirm the layout handles" do

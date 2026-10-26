@@ -8,11 +8,11 @@ class JobListQueriesTest < ActionDispatch::IntegrationTest
 
   test "operator opens All Jobs and the page runs the same number of queries for 10 jobs as for 30" do
     enqueue_mixed_jobs(10)
-    ten = sql_count { get "/job_harbor/jobs", params: { per_page: 100 } }
+    ten = count_queries { get "/job_harbor/jobs", params: { per_page: 100 } }.size
     assert_equal 10, job_rows.size
 
     enqueue_mixed_jobs(20)
-    thirty = sql_count { get "/job_harbor/jobs", params: { per_page: 100 } }
+    thirty = count_queries { get "/job_harbor/jobs", params: { per_page: 100 } }.size
     assert_equal 30, job_rows.size
 
     assert_equal ten, thirty, "All Jobs ran more SQL for 30 jobs than for 10: the status of each row is queried separately"
@@ -20,11 +20,11 @@ class JobListQueriesTest < ActionDispatch::IntegrationTest
 
   test "operator opens the Failed tab and the page runs the same number of queries however many jobs failed" do
     enqueue_mixed_jobs(10)
-    few = sql_count { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }
+    few = count_queries { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }.size
     failed_few = job_rows.size
 
     enqueue_mixed_jobs(20)
-    many = sql_count { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }
+    many = count_queries { get "/job_harbor/jobs/status/failed", params: { per_page: 100 } }.size
 
     assert_operator job_rows.size, :>, failed_few
     assert_equal few, many, "The Failed tab ran more SQL for more failed jobs"
@@ -32,11 +32,11 @@ class JobListQueriesTest < ActionDispatch::IntegrationTest
 
   test "operator searches and the results page runs the same number of queries however many jobs match" do
     enqueue_mixed_jobs(10)
-    few = sql_count { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }
+    few = count_queries { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }.size
     matches_few = job_rows.size
 
     enqueue_mixed_jobs(20)
-    many = sql_count { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }
+    many = count_queries { get "/job_harbor/search", params: { q: "Job", per_page: 100 } }.size
 
     assert_operator job_rows.size, :>, matches_few
     assert_equal few, many, "Search ran more SQL for more matching jobs"
@@ -44,10 +44,10 @@ class JobListQueriesTest < ActionDispatch::IntegrationTest
 
   test "operator opens a queue page and it runs the same number of queries for 10 jobs as for 30" do
     enqueue_mixed_jobs(10)
-    ten = sql_count { get "/job_harbor/queues/default" }
+    ten = count_queries { get "/job_harbor/queues/default" }.size
 
     enqueue_mixed_jobs(20)
-    thirty = sql_count { get "/job_harbor/queues/default" }
+    thirty = count_queries { get "/job_harbor/queues/default" }.size
 
     assert_equal ten, thirty, "The queue page ran more SQL for 30 jobs than for 10"
   end
@@ -65,17 +65,6 @@ class JobListQueriesTest < ActionDispatch::IntegrationTest
         when 5 then finish_job(enqueue_job(ReportJob, "done-#{i}"), worker: @worker)
         end
       end
-    end
-
-    def sql_count
-      count = 0
-      counter = lambda do |*, payload|
-        next if payload[:name] == "SCHEMA" || payload[:name] == "TRANSACTION" || payload[:cached]
-
-        count += 1
-      end
-      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") { yield }
-      count
     end
 
     def job_rows

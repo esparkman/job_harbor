@@ -111,9 +111,7 @@ module JobHarbor
       enqueue_job(NewsletterJob, at: 1.hour.from_now)
 
       _, presenters = JobQuery.new.page(1, per_page: 10)
-      queries = []
-      counter = ->(*, payload) { queries << payload[:sql] unless %w[SCHEMA TRANSACTION].include?(payload[:name]) }
-      ActiveSupport::Notifications.subscribed(counter, "sql.active_record") do
+      queries = count_queries do
         presenters.each { |presenter| [ presenter.status, presenter.running_duration, presenter.execution_count, presenter.can_retry? ] }
       end
 
