@@ -44,6 +44,12 @@ module JobHarbor
       assert_equal %w[archive mailers reports], QueueStats.names
     end
 
+    test "a queue whose jobs have all finished still appears on the Queues page" do
+      finish_job(enqueue_job(ReportJob, queue: "archive"), worker: @worker)
+
+      assert_includes QueueStats.all.map(&:name), "archive"
+    end
+
     test "find returns a queue that has jobs" do
       assert_equal "mailers", QueueStats.find("mailers").name
     end

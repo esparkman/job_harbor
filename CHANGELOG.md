@@ -9,6 +9,10 @@ Earlier releases are documented in git history and GitHub releases.
 
 ## Unreleased
 
+### Changed
+
+- The dashboard, Queues page and Jobs filters now read queue and class names from the index instead of scanning every job, so they stay fast with millions of jobs (about 26 ms to 0.2 ms at 1M jobs on PostgreSQL).
+
 ### Removed
 
 - The gem no longer packages the engine's development `Rakefile`, which could not run outside the repository.

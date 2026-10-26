@@ -117,6 +117,19 @@ module JobHarbor
       assert_equal({ class_names: %w[NewsletterJob ReportJob], queue_names: %w[default reports] }, JobQuery.filter_options)
     end
 
+    test "a queue whose jobs have all finished still appears in the Jobs page queue filter" do
+      finish_job(enqueue_job(ReportJob, queue: "archive"), worker: @worker)
+
+      assert_equal %w[archive], JobQuery.filter_options[:queue_names]
+    end
+
+    test "the class filter lists a class once however many jobs it has" do
+      3.times { enqueue_job(ReportJob) }
+      finish_job(enqueue_job(ReportJob), worker: @worker)
+
+      assert_equal %w[ReportJob], JobQuery.filter_options[:class_names]
+    end
+
     test "filter options are empty before any job exists" do
       assert_equal({ class_names: [], queue_names: [] }, JobQuery.filter_options)
     end
