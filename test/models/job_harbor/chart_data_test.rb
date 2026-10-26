@@ -35,6 +35,45 @@ module JobHarbor
       assert_match(/\A[A-Z][a-z]{2} \d\d\z/, ChartData.new(range: "7d").series[:labels].first)
     end
 
+    test "hourly chart labels stay distinct across the autumn clock change" do
+      Time.use_zone("America/New_York") do
+        travel_to Time.zone.local(2026, 11, 1, 12, 0) do
+          labels = ChartData.new(range: "24h").series[:labels]
+
+          assert_equal 24, labels.size
+          assert_equal labels.uniq, labels, "The repeated 01:00 hour must not show two identical labels"
+          assert_includes labels, "01:00 EDT"
+          assert_includes labels, "01:00 EST"
+          assert_equal [ "00:00 EDT", "01:00 EDT", "01:00 EST", "02:00 EST" ], labels[11..14]
+        end
+      end
+    end
+
+    test "hourly chart labels name the zone after the spring clock change" do
+      Time.use_zone("America/New_York") do
+        travel_to Time.zone.local(2026, 3, 8, 12, 0) do
+          labels = ChartData.new(range: "24h").series[:labels]
+
+          assert_equal 24, labels.size
+          assert_equal labels.uniq, labels
+          assert_includes labels, "01:00 EST"
+          assert_includes labels, "03:00 EDT"
+          assert labels.none? { |label| label.start_with?("02:00") }, "The skipped 02:00 hour never happened"
+        end
+      end
+    end
+
+    test "hourly chart labels on an ordinary day carry no zone suffix" do
+      Time.use_zone("America/New_York") do
+        travel_to Time.zone.local(2026, 6, 15, 12, 0) do
+          labels = ChartData.new(range: "24h").series[:labels]
+
+          assert_equal "12:00", labels.first
+          assert(labels.all? { |label| label.match?(/\A\d\d:\d\d\z/) }, "Labels were #{labels.inspect}")
+        end
+      end
+    end
+
     test "enqueued jobs land in the bucket for their enqueue time" do
       # 24h buckets are an hour wide and start 24 hours ago: bucket 4 is 20h to 19h ago, bucket 23 is the last hour.
       enqueue_job(ReportJob, "mid").update_columns(created_at: 19.hours.ago - 30.minutes)
