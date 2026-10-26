@@ -7,5 +7,6 @@ CI.run do
   step "Security: Brakeman code analysis", "bundle exec brakeman --no-pager -q"
 
   step "Tests: Rails", "bin/rails test"
+  step "Tests: System", "bin/rails test:system"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails app:db:seed:replant"
 end

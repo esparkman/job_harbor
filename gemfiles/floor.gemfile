@@ -10,3 +10,8 @@ gem "view_component", "~> 4.1.0"
 gem "puma"
 gem "sqlite3"
 gem "propshaft"
+
+group :test do
+  gem "capybara"
+  gem "selenium-webdriver"
+end
