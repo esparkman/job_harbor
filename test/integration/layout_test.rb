@@ -107,13 +107,22 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_includes script, "getSelection", "Selected text must block the swap"
   end
 
-  test "the refresh script keeps an unsubmitted form field through a poll, so a half-typed queue name survives blur" do
+  test "the refresh script treats a field changed from its default as operator-busy, and the pause field sits in the refreshed content" do
     get "/job_harbor/queues"
 
     assert_select "[data-refresh-target=content] input[name=name]", count: 1
     script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
-    assert_includes script, "f.value !== f.defaultValue", "A field whose value differs from its default is unsubmitted input and must block the swap"
-    assert_includes script, "if (focusWithin(content) || hasUnsubmittedInput(content)) return true;", "The busy check must consult unsubmitted input, not only focus"
+    assert_includes script, "field.value !== field.defaultValue", "A field whose value differs from its default is unsubmitted input"
+    assert_includes script, "hasUnsubmittedInput(content)", "The busy check must consult unsubmitted input, not only focus"
+  end
+
+  test "the refresh script updates the nav badges before it decides whether held content may be swapped" do
+    get "/job_harbor"
+
+    script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
+    refresh = script[script.index("function refreshContent")..]
+    assert_operator refresh.index("refreshNav(doc)"), :<, refresh.index("operatorBusy(currentContent)"), "Nav badges must refresh even while the content is held"
+    assert_equal 1, refresh.scan("operatorBusy(").size, "Only the post-response check may hold the poll, so the fetch and nav refresh always run"
   end
 
   test "every table sits in a scrolling wrapper so a wide table scrolls inside its card, not the whole page on a phone" do
