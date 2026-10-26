@@ -29,6 +29,7 @@ Earlier releases are documented in git history and GitHub releases.
 - The dashboard's Queues count now includes paused queues that have no jobs, so it matches the Queues page.
 - Auto-refresh now updates the Workers and Recurring badges in the navbar along with the page content. They used to lag until the next navigation.
 - Hourly chart labels show the time zone (e.g. 01:00 EDT / 01:00 EST) on days with a daylight-saving change, so the repeated or skipped hour is no longer ambiguous.
+- The dashboard no longer errors when the host app sets `ActiveRecord.permanent_connection_checkout = :disallowed` (and no longer logs a deprecation warning under `:deprecated`).
 
 ### Internal
 
