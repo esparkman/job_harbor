@@ -81,10 +81,9 @@ module JobHarbor
     end
 
     test "the host app's filter_parameters is read at call time" do
-      Rails.application.config.filter_parameters << :plan
-      assert_equal "[FILTERED]", SensitiveValueFilter.filter({ "plan" => "pro" })["plan"]
-    ensure
-      Rails.application.config.filter_parameters.delete(:plan)
+      with_host_filter_parameters(:plan) do
+        assert_equal "[FILTERED]", SensitiveValueFilter.filter({ "plan" => "pro" })["plan"]
+      end
     end
 
     test "configured filter_parameters replace the host list" do
