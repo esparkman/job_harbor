@@ -51,7 +51,8 @@ module JobHarbor
 
     # One row of SUM(CASE ...) per series: ANSI SQL, so it needs no per-database date truncation.
     def counts_per_bucket(model, time_field)
-      column = "#{model.quoted_table_name}.#{model.connection.quote_column_name(time_field)}"
+      quoted_field = model.with_connection { |connection| connection.quote_column_name(time_field) }
+      column = "#{model.quoted_table_name}.#{quoted_field}"
       sums = bucket_starts.each_with_index.map { |start, index| bucket_sum(model, column, start, last: index == bucket_count - 1) }
 
       model.where(time_field => @cutoff..).pick(*sums).map(&:to_i)
