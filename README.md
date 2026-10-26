@@ -278,6 +278,18 @@ alert. If your app has no root route, or the request is not HTML, the response i
 - Solid Queue >= 1.0, < 2
 - ViewComponent >= 4.1
 
+## Development
+
+To work on the gem itself, clone the repo and run `bundle install`. The dummy Rails app the tests run against lives in `test/dummy`.
+
+```bash
+bin/ci                  # rubocop, bundler-audit, brakeman, unit tests, system tests, seed replant
+bin/rails test          # everything except the system tests
+bin/rails test:system   # browser tests only
+```
+
+The system tests drive headless Chrome through selenium-webdriver, so they need Google Chrome installed locally.
+
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See [MIT-LICENSE](MIT-LICENSE) for details.

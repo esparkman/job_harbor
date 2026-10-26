@@ -7,16 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
-## Unreleased
+## 0.8.0 - 2026-10-25
 
 ### Added
 
-- A "Pause a queue" form on the Queues page pauses a queue by name before it has any jobs. The paused queue shows up as a card, and resuming removes the card if the queue still has no jobs.
+- A queue-name field with a Pause button on the Queues page pauses a queue by name before it has any jobs. The paused queue shows up as a card, and resuming removes the card if the queue still has no jobs.
 
 ### Changed
 
-- Search no longer matches the stored job envelope: a number finds that job ID, and text matches the job class or its arguments. Searching `job_class` or `2026` used to list nearly every job. Active Job's own argument markers (such as `_aj_symbol_keys`) still match, since they live inside the arguments.
-- `PaginationComponent.new` takes `page_info:` instead of `pagy:`. Only matters if you render the component yourself.
+- Search no longer matches the stored job envelope: a number finds that job ID, and text matches the job class. Searching `job_class` or `2026` used to list nearly every job. With `config.filter_parameters = false`, text also matches the job's arguments, including Active Job's own argument markers (such as `_aj_symbol_keys`).
+- `PaginationComponent.new` takes `page_info:` instead of `pagy:`, and `NavLinkComponent.new` no longer takes `icon:` (it is now `NavLinkComponent.new(path:, label:, active:, badge:)`). Only matters if you render these components yourself.
 - The dashboard's timestamp formats are registered as `Time::DATE_FORMATS[:job_harbor_timestamp]`, `[:job_harbor_timestamp_with_zone]` and `[:job_harbor_short]`. Set any of them in your own initializer to change how the dashboard shows times. No other formats are touched.
 
 ### Deprecated
@@ -25,6 +25,7 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Fixed
 
+- The gem now ships its MIT license text (`MIT-LICENSE`). Earlier releases declared MIT but the file was missing.
 - Queues whose names contain a dot (e.g. `billing.charges`) can now be opened, paused and resumed; their links used to 404.
 - The dashboard's Queues count now includes paused queues that have no jobs, so it matches the Queues page.
 - Auto-refresh now updates the Workers and Recurring badges in the navbar along with the page content. They used to lag until the next navigation.
@@ -33,7 +34,7 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Internal
 
-- Removed dead code: the unused `icon` argument of `NavLinkComponent` (now `NavLinkComponent.new(path:, label:, active:, badge:)`), unused CSS rules and test setup, and the empty `JobHarbor::ApplicationHelper`.
+- Removed dead code: unused CSS rules and test setup, and the empty `JobHarbor::ApplicationHelper`.
 - System tests (Capybara with headless Chrome) now run the auto-refresh script in a real browser. `bin/ci` and the lockfile CI lane run them.
 
 ## 0.7.1 - 2026-10-23
