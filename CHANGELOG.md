@@ -11,7 +11,7 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Changed
 
-- The dashboard, Queues page and Jobs filters now read queue and class names from the index instead of scanning every job, so they stay fast with millions of jobs (about 26 ms to 0.2 ms at 1M jobs on PostgreSQL).
+- On PostgreSQL and SQLite, the dashboard, Queues page and Jobs filters now read queue and class names from the index instead of scanning every job, so they stay fast with millions of jobs (about 26 ms to 0.2 ms at 1M jobs on PostgreSQL). MySQL already did this.
 
 ### Removed
 
