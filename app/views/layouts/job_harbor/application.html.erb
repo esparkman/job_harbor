@@ -160,9 +160,16 @@
         return !!active && active !== document.body && el.contains(active);
       }
 
-      // Leave the page alone while the operator is using it: focus inside the content, or selected text
+      // A typed-in field that differs from its default holds input the operator has not submitted yet
+      function hasUnsubmittedInput(el) {
+        return Array.prototype.some.call(el.querySelectorAll('input, textarea'), function(f) {
+          return f.value !== f.defaultValue;
+        });
+      }
+
+      // Leave the page alone while the operator is using it: focus inside the content, unsubmitted input, or selected text
       function operatorBusy(content) {
-        if (focusWithin(content)) return true;
+        if (focusWithin(content) || hasUnsubmittedInput(content)) return true;
         var selection = window.getSelection();
         return !!selection && selection.toString() !== '';
       }

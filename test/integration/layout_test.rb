@@ -107,6 +107,15 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_includes script, "getSelection", "Selected text must block the swap"
   end
 
+  test "the refresh script keeps an unsubmitted form field through a poll, so a half-typed queue name survives blur" do
+    get "/job_harbor/queues"
+
+    assert_select "[data-refresh-target=content] input[name=name]", count: 1
+    script = css_select("script").find { |tag| tag.text.include?("jh-refresh-interval") }.text
+    assert_includes script, "f.value !== f.defaultValue", "A field whose value differs from its default is unsubmitted input and must block the swap"
+    assert_includes script, "if (focusWithin(content) || hasUnsubmittedInput(content)) return true;", "The busy check must consult unsubmitted input, not only focus"
+  end
+
   test "every table sits in a scrolling wrapper so a wide table scrolls inside its card, not the whole page on a phone" do
     failed = enqueue_job(FlakyPaymentJob, 42)
     fail_job(failed, worker: register_worker(name: "worker-1"))
