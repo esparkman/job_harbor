@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## Unreleased
+
+### Changed
+
+- The "Back to App" link is hidden unless `return_to_app_path` is set, as the README already documented. It used to fall back to the host app's root path. A proc that returns `nil` also hides it.
+
 ## 0.8.1 - 2026-10-26
 
 ### Changed
