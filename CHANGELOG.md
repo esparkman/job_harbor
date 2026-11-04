@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## Unreleased
+
+### Added
+
+- `bin/rails generate job_harbor:install` creates `config/initializers/job_harbor.rb` with every setting documented and commented out at its default.
+
 ## 0.8.1 - 2026-10-26
 
 ### Changed

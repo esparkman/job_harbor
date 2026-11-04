@@ -1,0 +1,36 @@
+# JobHarbor configuration. Every setting below is shown at its default; uncomment one to change it.
+# See https://github.com/esparkman/job_harbor#configuration for details.
+JobHarbor.configure do |config|
+  # Authorization: a lambda run in the dashboard controller (instance_exec), so it can call your
+  # app's helpers such as current_user. Return a truthy value to allow the request.
+  # Unset, the dashboard is open in development and test and denied in every other environment.
+  # config.authorize_with = -> { current_user&.admin? }
+
+  # Theme: :dark or :light
+  # config.theme = :dark
+
+  # Jobs per page
+  # config.jobs_per_page = 25
+
+  # Auto-refresh polling interval in seconds.
+  # The selector offers Off, 15, 30, 60 and 300; any other value is added as its own option.
+  # config.poll_interval = 30
+
+  # Features
+  # config.enable_recurring_tasks = true
+  # config.enable_real_time_updates = true # false removes auto-refresh entirely
+  # config.enable_failure_stats = true
+  # config.enable_charts = true
+
+  # Default chart time range
+  # config.default_chart_range = "24h"
+
+  # "Back to App" link in the navbar. Takes a path or a proc run in the dashboard controller.
+  # config.return_to_app_path = -> { main_app.root_path }
+  # config.return_to_app_label = "Back to App"
+
+  # Sensitive values in job arguments, payloads and recurring task arguments.
+  # nil uses your app's config.filter_parameters; an Array of Strings, Symbols, Regexps and Procs
+  # replaces that list; false shows raw values and brings back searching by argument.
+  # config.filter_parameters = nil
+end
