@@ -19,7 +19,7 @@
 
       <%= render JobHarbor::InfoLineComponent.new(label: "Schedule", value: @task.schedule) %>
 
-      <%= render JobHarbor::InfoLineComponent.new(label: "Queue", value: @task.queue_name || "default") %>
+      <%= render JobHarbor::InfoLineComponent.new(label: "Queue", value: @task_queue.name || "—") %>
 
       <% if @task_arguments.present? %>
         <div class="mt-3">

@@ -5,6 +5,7 @@ class RecurringTasksPagesTest < ActionDispatch::IntegrationTest
     @nightly = SolidQueue::RecurringTask.create!(key: "nightly_report", schedule: "every day at 3am",
       class_name: "ReportJob", arguments: [ "nightly" ], queue_name: "reports")
     @cleanup = SolidQueue::RecurringTask.create!(key: "cleanup_sessions", schedule: "every hour", command: "Session.sweep")
+    @digest = SolidQueue::RecurringTask.create!(key: "weekly_digest", schedule: "every monday at 9am", class_name: "DigestJob")
   end
 
   test "operator opens Recurring Tasks and sees every task's class, schedule, and queue" do
@@ -13,10 +14,10 @@ class RecurringTasksPagesTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "h1", text: "Recurring Tasks"
     rows = css_select("table.sqd-table tbody tr").map { |tr| tr.css("td")[0..3].map { |td| td.text.strip } }
-    assert_equal [ [ "cleanup_sessions", "", "every hour", "default" ], [ "nightly_report", "ReportJob", "every day at 3am", "reports" ] ], rows
+    assert_equal [ [ "cleanup_sessions", "", "every hour", "solid_queue_recurring" ], [ "nightly_report", "ReportJob", "every day at 3am", "reports" ], [ "weekly_digest", "DigestJob", "every monday at 9am", "digests" ] ], rows
     assert_select "a[href=?]", "/job_harbor/recurring_tasks/#{@nightly.id}", text: "nightly_report"
     assert_select "form[action=?] button", "/job_harbor/recurring_tasks/#{@nightly.id}/enqueue_now", text: "Run Now"
-    assert_select "a[href=?] .sqd-nav-badge", "/job_harbor/recurring_tasks", text: "2"
+    assert_select "a[href=?] .sqd-nav-badge", "/job_harbor/recurring_tasks", text: "3"
   end
 
   test "operator opens a recurring task and sees its details and the jobs it has enqueued" do
@@ -66,6 +67,12 @@ class RecurringTasksPagesTest < ActionDispatch::IntegrationTest
     assert_select "tbody td", text: "2026-03-05 03:00:00"
     assert_select "tbody td", text: "2026-03-01 03:00:00"
     assert_select "tbody td", text: /2026-03-10/, count: 0
+  end
+
+  test "operator opens a task with no queue set and sees the queue its job class runs on" do
+    get "/job_harbor/recurring_tasks/#{@digest.id}"
+
+    assert_select ".info-line", text: /Queue\s*digests/
   end
 
   test "operator opens a recurring task that has never run and sees zero executions" do
