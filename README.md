@@ -75,6 +75,15 @@ Then run:
 bundle install
 ```
 
+Generate the initializer:
+
+```bash
+bin/rails generate job_harbor:install
+```
+
+This creates `config/initializers/job_harbor.rb` with every setting commented out at its
+default, so installing it changes nothing until you uncomment a line.
+
 ## Mounting
 
 Mount the engine in your routes:
@@ -96,7 +105,7 @@ end
 
 ## Configuration
 
-Create an initializer at `config/initializers/job_harbor.rb`:
+Settings live in `config/initializers/job_harbor.rb`, created by `bin/rails generate job_harbor:install`:
 
 ```ruby
 JobHarbor.configure do |config|
