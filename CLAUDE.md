@@ -6,51 +6,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Job Harbor is a Rails engine (gem) providing a web UI for monitoring and managing Solid Queue jobs. Built with ViewComponents and precompiled Tailwind CSS, with no runtime styling dependencies.
 
-## CRITICAL Workflow Requirements
+## Workflow
 
-**These rules are MANDATORY and must be followed without exception.**
+The global `~/.claude/CLAUDE.md` and `~/.claude/rails-rules.md` apply here. This section covers what is specific to this repo.
 
-### Session Management
-- **ALWAYS run `/session-startup` at the beginning of every new session**
-- **ALWAYS save memories and context to Pensieve BEFORE auto-compact occurs**
+### Sessions
+- Start with `/session-start`, which loads context from the Obsidian vault (`~/Documents/Obsidian Vault/job_harbor/`).
+- End with `/session-end`, or `/handoff` before a `/clear`, so the next session picks up from the vault.
 
-### Development Methodology
-- **ALWAYS use TDD** - Write tests first, then implement. No exceptions.
-- **ALWAYS use ViewComponents** - All UI components must be ViewComponents, not partials.
-- **ALWAYS use the Presenter pattern** - UI logic belongs in presenters, not views or models.
+### Lanes
+Pick the lightest lane that fits:
+- **Small fix**: a typo, copy change, config tweak or one-line fix. Branch, fix it, run `bin/ci`, then commit.
+- **Story**: one feature or bug you could describe in a paragraph. Write it up with `story-writer` first, then build it, get `bin/ci` green and review it once at the end.
 
-## ⚠️ Global Rules Active — Read ~/.claude/CLAUDE.md
+Bigger than one story? Split it into stories you could ship on their own.
 
-The global `~/.claude/CLAUDE.md` is loaded and ALL of its rules apply to this project.
+### Building
+- **TDD.** Write the failing test first. Every user-visible change gets at least one operator-story test.
+- **ViewComponents, not partials**, for UI.
+- **Presenters and query objects** in `app/models/job_harbor/` hold UI and query logic, not views or controllers.
+- Write the code directly. The agents in `.claude/agents/` (symlinked, never committed) are specialists to call when they earn it: `@rails-architect` for cross-cutting design, `@rails-security-performance` for a second pass on sensitive changes, `@rails-qa` for real-browser QA after behavior changes.
+- Ground structural claims (schema, routes, associations) in live introspection: the rails MCP, else `bin/rails runner`.
 
-1. Follow the **Session Initialization** instructions from the global CLAUDE.md FIRST
-2. Emit the status block and delegation commitment BEFORE doing anything else
-3. All delegation mandates and Rails engineering standards from the global file are in effect
+### Review
+Run `@dhh-code-reviewer` (or `blind-review`) once, after `bin/ci` is green, when the change adds a public interface (model, controller, generator, config setting), touches auth, deletion or security settings, or is larger than about 50 lines. Otherwise skip it and say so in one line.
 
-## MANDATORY: Sub-Agent Delegation
-
-Claude Code MUST delegate ALL code generation to the [Sub-Agents](https://docs.anthropic.com/en/docs/claude-code/sub-agents#example-subagents) in `.claude/agents/`. This is **NOT optional**.
-
-**Do NOT use built-in Explore/Plan/Code agents for any code tasks.** Use rails-agents instead:
-
-| Task Domain | Delegate To |
-|---|---|
-| Investigation, architecture, system design | `@rails-architect` |
-| Models, migrations, database | `@rails-model-engineer` |
-| Controllers, routing, API endpoints | `@rails-controller-engineer` |
-| Views, Hotwire, Stimulus, frontend | `@rails-hotwire-engineer` |
-| ViewComponents, component-driven UI | `@rails-viewcomponent-engineer` |
-| Authentication, sessions, magic links | `@rails-authentication` |
-| Background jobs, queues, async | `@rails-background-jobs` |
-| Mailers, email templates | `@rails-mailer` |
-| Tests, fixtures, quality assurance | `@rails-testing-expert` |
-| Security and performance | `@rails-security-performance` |
-| Deployment, Docker, infrastructure | `@rails-deployment` |
-
-**Never write code directly. Never skip delegation. Even for "simple" changes.**
-
-### Pre-Commit Requirements
-- **`bin/ci` MUST be green before committing or pushing.** It runs rubocop, bundler-audit, brakeman, the test suite and a seed replant.
+### Pre-commit
+- **`bin/ci` must be green before committing or pushing.** It runs rubocop, bundler-audit, brakeman, the unit and system tests and a seed replant.
+- Chain it: `bin/ci && git commit && git push`, never with `;`.
+- One branch and PR per change. Never commit `.claude/` (this is a public repo).
 
 ### Git Commit & PR Rules
 - **NEVER mention AI assistance in commit messages or PR descriptions**
@@ -98,7 +82,7 @@ bin/rails routes
 - The host app mounts it wherever it likes; there is no built-in default. The README documents `mount JobHarbor::Engine, at: "/job_harbor"`
 
 ### Key Patterns
-- **ViewComponents** (18 in `app/components/job_harbor/`, all inheriting `ApplicationComponent`): Badge, Chart, EmptyState, FailureRates, InfoLine, JobFilters, JobRow, JobSearchForm, JobsTable, NavLink, Pagination, PerPageSelector, QueueCard, RefreshSelector, StatCard, StatusTabs, ThemeToggle, WorkerCard
+- **ViewComponents** (19 in `app/components/job_harbor/`, all inheriting `ApplicationComponent`): Badge, Chart, EmptyState, FailureRates, InfoLine, JobFilters, JobRow, JobSearchForm, JobsTable, NavLink, Pagination, PerPageSelector, QueueCard, QueuePauseForm, RefreshSelector, StatCard, StatusTabs, ThemeToggle, WorkerCard
 - **Presenter and query objects** (`app/models/job_harbor/`):
   - `JobPresenter` wraps SolidQueue::Job with UI logic (status, error handling, can_retry?, can_discard?)
   - `JobQuery` builds the filtered, searched, paginated job lists per status tab
@@ -109,12 +93,15 @@ bin/rails routes
   - `Processes` decides worker liveness
   - `SensitiveValueFilter` masks sensitive payload, error and argument values
   - `RecurringTaskArguments` reads a recurring task's stored arguments
+  - `RecurringTaskQueue` resolves the queue a recurring task runs on (its own, else the job class's `queue_as`)
+  - `DistinctJobValues` lists distinct queue and class names with a loose index scan (plain DISTINCT on MySQL)
 
-### Controllers (5 endpoint controllers in `app/controllers/job_harbor/`)
+### Controllers (6 endpoint controllers in `app/controllers/job_harbor/`)
 - `ApplicationController` - auth base (`authorize_access`), layout and shared helpers; not an endpoint
 - `DashboardController` - Root view with stats and recent failures
 - `JobsController` - Index, show, search, retry/discard, bulk retry/discard
-- `QueuesController` - Pause/resume queues
+- `QueuesController` - Index, show, pause/resume queues
+- `Queues::PausesController` - Pause a queue by name, including one with no jobs yet
 - `WorkersController` - Monitor active workers
 - `RecurringTasksController` - Index, show, manual enqueue
 
