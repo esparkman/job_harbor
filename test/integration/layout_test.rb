@@ -147,6 +147,41 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_operator tables, :>=, 6, "The pages should render their tables, otherwise this guard checks nothing"
   end
 
+  test "the back to app link is hidden when no return path is configured" do
+    get "/job_harbor"
+
+    assert_response :success
+    assert_select "nav.navbar a[title=?]", "Back to App", count: 0
+  end
+
+  test "the back to app link shows a configured string path" do
+    JobHarbor.configure { |config| config.return_to_app_path = "/admin" }
+
+    get "/job_harbor"
+
+    assert_select "nav.navbar a[href=?][title=?]", "/admin", "Back to App", count: 1
+  end
+
+  test "the back to app link is hidden when a configured proc returns nil" do
+    JobHarbor.configure { |config| config.return_to_app_path = -> { nil } }
+
+    get "/job_harbor"
+
+    assert_response :success
+    assert_select "nav.navbar a[title=?]", "Back to App", count: 0
+  end
+
+  test "the back to app link resolves a configured proc in the controller context" do
+    JobHarbor.configure do |config|
+      config.return_to_app_path = -> { main_app.root_path }
+      config.return_to_app_label = "Home"
+    end
+
+    get "/job_harbor"
+
+    assert_select "nav.navbar a[href=?][title=?]", "/", "Home", count: 1
+  end
+
   test "the navbar wraps on small screens so every section stays reachable" do
     get "/job_harbor"
 

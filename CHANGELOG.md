@@ -13,6 +13,10 @@ Earlier releases are documented in git history and GitHub releases.
 
 - `bin/rails generate job_harbor:install` creates `config/initializers/job_harbor.rb` with every setting documented and commented out at its default.
 
+### Changed
+
+- The "Back to App" link is hidden unless `return_to_app_path` is set, as the README already documented. It used to fall back to the host app's root path. A proc that returns `nil` also hides it.
+
 ## 0.8.1 - 2026-10-26
 
 ### Changed
