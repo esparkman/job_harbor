@@ -15,7 +15,11 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Changed
 
-- The "Back to App" link is hidden unless `return_to_app_path` is set, as the README already documented. It used to fall back to the host app's root path. A proc that returns `nil` also hides it.
+- The "Back to App" link is hidden unless `return_to_app_path` is set, as the README already documented. It used to fall back to the host app's root path. A proc that returns `nil` or a blank string also hides it.
+
+### Fixed
+
+- Recurring Tasks show the queue a task actually runs on. Without a `queue:` in `recurring.yml` that is the job class's `queue_as` (or `solid_queue_recurring` for a `command:` task), not "default". A task whose job class isn't defined shows "—".
 
 ## 0.8.1 - 2026-10-26
 

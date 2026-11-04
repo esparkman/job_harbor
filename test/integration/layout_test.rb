@@ -171,6 +171,25 @@ class LayoutTest < ActionDispatch::IntegrationTest
     assert_select "nav.navbar a[title=?]", "Back to App", count: 0
   end
 
+  test "the back to app link is hidden when the configured path is blank" do
+    JobHarbor.configure { |config| config.return_to_app_path = -> { "" } }
+
+    get "/job_harbor"
+
+    assert_response :success
+    assert_select "nav.navbar a[title=?]", "Back to App", count: 0
+  end
+
+  test "a configured return path proc runs once per page" do
+    calls = 0
+    JobHarbor.configure { |config| config.return_to_app_path = -> { calls += 1; "/admin" } }
+
+    get "/job_harbor"
+
+    assert_select "nav.navbar a[href=?]", "/admin", count: 1
+    assert_equal 1, calls, "The layout should resolve the return path once, not once per use"
+  end
+
   test "the back to app link resolves a configured proc in the controller context" do
     JobHarbor.configure do |config|
       config.return_to_app_path = -> { main_app.root_path }

@@ -31,6 +31,20 @@ class InstallGeneratorTest < Rails::Generators::TestCase
     end
   end
 
+  test "every setting the initializer shows is at its real default, so uncommenting one changes nothing" do
+    run_generator
+    defaults = JobHarbor::Configuration.new
+
+    assert_file "config/initializers/job_harbor.rb" do |content|
+      shown = content.scan(/^\s*# config\.(\w+) = (.+?)(?:\s+#.*)?$/)
+      assert_not_empty shown
+
+      shown.each do |setting, value|
+        assert defaults.public_send(setting) == eval(value), "config.#{setting} is shown as #{value}, which isn't its default"
+      end
+    end
+  end
+
   test "the initializer leaves out the deprecated primary_color setting" do
     run_generator
 
