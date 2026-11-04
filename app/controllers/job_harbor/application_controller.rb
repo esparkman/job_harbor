@@ -47,7 +47,7 @@ module JobHarbor
 
     def return_to_app_path
       configured = sq_config.return_to_app_path
-      configured.respond_to?(:call) ? instance_exec(&configured) : configured
+      (configured.respond_to?(:call) ? instance_exec(&configured) : configured).presence
     rescue
       "/"
     end

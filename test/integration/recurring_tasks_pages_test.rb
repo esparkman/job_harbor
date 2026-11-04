@@ -20,6 +20,15 @@ class RecurringTasksPagesTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?] .sqd-nav-badge", "/job_harbor/recurring_tasks", text: "3"
   end
 
+  test "operator sees a dash for a task whose job class this app doesn't define" do
+    SolidQueue::RecurringTask.new(key: "legacy_export", schedule: "every day", class_name: "MissingJob").save!(validate: false)
+
+    get "/job_harbor/recurring_tasks"
+
+    row = css_select("table.sqd-table tbody tr").find { |tr| tr.css("td")[0].text.strip == "legacy_export" }
+    assert_equal "—", row.css("td")[3].text.strip
+  end
+
   test "operator opens a recurring task and sees its details and the jobs it has enqueued" do
     @nightly.enqueue(at: 2.days.ago)
     @nightly.enqueue(at: 1.day.ago)

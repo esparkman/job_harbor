@@ -4,7 +4,8 @@ JobHarbor.configure do |config|
   # Authorization: a lambda run in the dashboard controller (instance_exec), so it can call your
   # app's helpers such as current_user. Return a truthy value to allow the request.
   # Unset, the dashboard is open in development and test and denied in every other environment.
-  # config.authorize_with = -> { current_user&.admin? }
+  # config.authorize_with = nil
+  # For example: config.authorize_with = -> { current_user&.admin? }
 
   # Theme: :dark or :light
   # config.theme = :dark
@@ -25,8 +26,10 @@ JobHarbor.configure do |config|
   # Default chart time range
   # config.default_chart_range = "24h"
 
-  # "Back to App" link in the navbar. Takes a path or a proc run in the dashboard controller.
-  # config.return_to_app_path = -> { main_app.root_path }
+  # "Back to App" link in the navbar, hidden until set. Takes a path or a proc run in the dashboard
+  # controller; a blank result hides the link.
+  # config.return_to_app_path = nil
+  # For example: config.return_to_app_path = -> { main_app.root_path }
   # config.return_to_app_label = "Back to App"
 
   # Sensitive values in job arguments, payloads and recurring task arguments.
