@@ -35,6 +35,8 @@
     value: "#{@stats.throughput_per_hour}/hr",
     type: :throughput
   ) %>
+
+  <%= render JobHarbor::QueueLatencyCardComponent.new(queue: @stats.longest_waiting_queue) %>
 </div>
 
 <% if @chart_data.present? %>

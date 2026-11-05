@@ -3,7 +3,7 @@
 module JobHarbor
   class DashboardStats
     attr_reader :status_counts, :finished_last_24h, :workers_count, :queues_count, :throughput_per_hour,
-                :recent_failures
+                :recent_failures, :longest_waiting_queue
 
     def initialize
       calculate_stats
@@ -18,6 +18,7 @@ module JobHarbor
       @queues_count = queues_count_calc
       @throughput_per_hour = calculate_throughput
       @recent_failures = fetch_recent_failures
+      @longest_waiting_queue = QueueStats.longest_waiting
     end
 
     def finished_last_24h_count

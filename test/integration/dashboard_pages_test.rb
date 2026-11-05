@@ -33,7 +33,8 @@ class DashboardPagesTest < ActionDispatch::IntegrationTest
       "Blocked" => "Blocked Jobs",
       "Finished (24h)" => "Finished Jobs",
       "Active Workers" => "Workers",
-      "Queues" => "Queues"
+      "Queues" => "Queues",
+      "Queue Latency" => "Queue: default"
     }
 
     get "/job_harbor"

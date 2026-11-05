@@ -23,6 +23,7 @@ module JobHarbor
           content_tag(:div, class: "card-content") do
             safe_join([
               stats,
+              latency,
               actions
             ])
           end
@@ -44,6 +45,12 @@ module JobHarbor
           content_tag(:div, value, class: "text-xl font-bold"),
           content_tag(:div, label, class: "text-xs text-muted-foreground uppercase tracking-wide")
         ])
+      end
+    end
+
+    def latency
+      content_tag(:div, class: "mb-4") do
+        render(InfoLineComponent.new(label: "Latency", value: render(QueueLatencyComponent.new(queue: @queue))))
       end
     end
 

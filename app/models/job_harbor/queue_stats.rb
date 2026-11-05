@@ -7,13 +7,20 @@ module JobHarbor
 
     attr_reader :name
 
-    def initialize(name)
+    def initialize(name, oldest_ready_at: nil)
       @name = name
+      @oldest_ready_at = oldest_ready_at if oldest_ready_at
     end
 
     def count(status) = status.count(queue_name: @name)
 
     delegate :paused?, to: :solid_queue
+
+    def oldest_ready_at
+      return @oldest_ready_at if defined?(@oldest_ready_at)
+
+      @oldest_ready_at = SolidQueue::ReadyExecution.where(queue_name: @name).minimum(:created_at)
+    end
 
     def pause
       solid_queue.pause
@@ -40,6 +47,13 @@ module JobHarbor
 
       def find(name)
         new(name) if SolidQueue::Job.exists?(queue_name: name) || SolidQueue::Pause.exists?(queue_name: name)
+      end
+
+      # A paused queue's wait only grows, so it would always win.
+      def longest_waiting
+        name, oldest_ready_at = SolidQueue::ReadyExecution.where.not(queue_name: SolidQueue::Pause.select(:queue_name))
+          .order(:created_at, :id).pick(:queue_name, :created_at)
+        new(name, oldest_ready_at:) if name
       end
 
       def names
