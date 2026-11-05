@@ -64,6 +64,56 @@ module JobHarbor
       assert_nil QueueStats.find("nope")
     end
 
+    test "oldest ready at is when the longest-waiting ready job became ready, ignoring scheduled and running jobs" do
+      freeze_time
+      travel_to(2.hours.ago) { enqueue_job(ReportJob, "old", queue: "slow") }
+      travel_to(10.minutes.ago) { enqueue_job(ReportJob, "new", queue: "slow") }
+      travel_to(3.days.ago) do
+        enqueue_job(NewsletterJob, "overdue", queue: "slow", at: 1.hour.from_now)
+        claim_job(enqueue_job(ReportJob, "running", queue: "slow"), worker: @worker)
+      end
+
+      assert_equal 2.hours.ago, QueueStats.new("slow").oldest_ready_at
+    end
+
+    test "a scheduled job starts waiting when it is dispatched, not when it was enqueued" do
+      freeze_time
+      travel_to(3.days.ago) { enqueue_job(NewsletterJob, "digest", queue: "slow", at: 1.hour.from_now) }
+      # Dispatch stamps ready executions with the database clock, which time travel can't move, so dispatch now and wait.
+      SolidQueue::ScheduledExecution.dispatch_next_batch(10)
+      travel 5.minutes
+
+      assert_in_delta 5.minutes.ago, QueueStats.new("slow").oldest_ready_at, 1.second
+    end
+
+    test "a queue with no ready jobs has no oldest ready time" do
+      claim_job(enqueue_job(ReportJob, "running", queue: "busy"), worker: @worker)
+
+      assert_nil QueueStats.new("busy").oldest_ready_at
+    end
+
+    test "oldest ready at takes a single query" do
+      assert_equal 1, capture_sql { QueueStats.new("mailers").oldest_ready_at }.size
+    end
+
+    test "longest waiting is the unpaused queue whose oldest ready job has waited longest" do
+      freeze_time
+      travel_to(2.hours.ago) { enqueue_job(ReportJob, "old", queue: "slow") }
+      travel_to(3.days.ago) { enqueue_job(ReportJob, "older", queue: "stopped") }
+      SolidQueue::Pause.create!(queue_name: "stopped")
+
+      waiting = QueueStats.longest_waiting
+
+      assert_equal "slow", waiting.name
+      assert_no_queries { assert_equal 2.hours.ago, waiting.oldest_ready_at }
+    end
+
+    test "longest waiting is nil when every queue with ready jobs is paused" do
+      SolidQueue::ReadyExecution.distinct.pluck(:queue_name).each { |name| SolidQueue::Pause.create!(queue_name: name) }
+
+      assert_nil QueueStats.longest_waiting
+    end
+
     private
       def seed_queue(queue, ready:, later:, running:, failed:, throttled:, done:)
         ready.times { |n| enqueue_job(ReportJob, "ready-#{n}", queue: queue) }

@@ -11,11 +11,12 @@ module JobHarbor
       stale: "zinc"
     }.freeze
 
-    def initialize(label:, value:, type: nil, link: nil)
+    def initialize(label:, value:, type: nil, link: nil, detail: nil)
       @label = label
       @value = value
       @type = type&.to_sym
       @link = link
+      @detail = detail
     end
 
     def call
@@ -26,7 +27,8 @@ module JobHarbor
       content_tag(tag, **opts) do
         safe_join([
           label_display,
-          value_display
+          value_display,
+          detail_display
         ])
       end
     end
@@ -53,6 +55,10 @@ module JobHarbor
 
     def value_display
       content_tag(:div, @value, class: "stat-card-value")
+    end
+
+    def detail_display
+      content_tag(:div, @detail, class: "stat-card-detail text-xs text-muted-foreground mt-1") if @detail
     end
   end
 end

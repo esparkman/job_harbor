@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## Unreleased
+
+### Added
+
+- Queue latency: how long the oldest ready job in a queue has waited. It shows on each queue card and on the queue page, and a dashboard card names the slowest queue and links to it. Paused queues show their own latency but are left out of the dashboard card. A scheduled job starts waiting when it becomes due and is dispatched, not when it was enqueued. Solid Queue has no index on when a job became ready, so the dashboard card scans the ready jobs on each load, which is worth knowing with a very large backlog.
+
 ## 0.9.0 - 2026-11-04
 
 ### Added
