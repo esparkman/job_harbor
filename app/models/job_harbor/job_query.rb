@@ -22,10 +22,11 @@ module JobHarbor
       end
     end
 
-    def initialize(status: nil, class_name: nil, queue_name: nil, search: nil)
+    def initialize(status: nil, class_name: nil, queue_name: nil, error_class: nil, search: nil)
       @status = status
       @class_name = class_name
       @queue_name = queue_name
+      @error_class = error_class
       @search = search
     end
 
@@ -61,6 +62,7 @@ module JobHarbor
     def filtered(scope)
       scope = scope.where(class_name: @class_name) if @class_name.present?
       scope = scope.where(queue_name: @queue_name) if @queue_name.present?
+      scope = scope.where(id: ErrorGroup.matching(@error_class).select(:job_id)) if @error_class.present?
       scope = scope.merge(matching_search) if @search.present?
       scope
     end
@@ -82,24 +84,8 @@ module JobHarbor
       scope
     end
 
-    # NULL for rows that aren't a JSON object, so a bad row can't break search.
     def job_arguments_sql
-      column = "#{SolidQueue::Job.quoted_table_name}.arguments"
-      adapter, version = SolidQueue::Job.with_connection { |connection| [ connection.adapter_name, connection.database_version ] }
-
-      case adapter
-      when /postg/i
-        if version >= 160_000
-          "CASE WHEN pg_input_is_valid(#{column}, 'jsonb') THEN (#{column}::jsonb -> 'arguments')::text END"
-        else
-          # Best effort below PostgreSQL 16, which has no pg_input_is_valid.
-          "CASE WHEN #{column} ~ '^\\s*\\{.*\\}\\s*$' THEN (#{column}::jsonb -> 'arguments')::text END"
-        end
-      when /mysql|trilogy/i
-        "CASE WHEN JSON_VALID(#{column}) THEN CAST(JSON_EXTRACT(#{column}, '$.arguments') AS CHAR) END"
-      when /sqlite/i
-        "CASE WHEN json_valid(#{column}) THEN json_extract(#{column}, '$.arguments') END"
-      end
+      JsonColumn.value(SolidQueue::Job, :arguments, "arguments")
     end
   end
 end

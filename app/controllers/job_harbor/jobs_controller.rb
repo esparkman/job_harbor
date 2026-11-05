@@ -3,6 +3,7 @@
 module JobHarbor
   class JobsController < ApplicationController
     BULK_BATCH_SIZE = 500
+    JOB_FILTERS = %i[ class_name queue_name error_class ].freeze
 
     before_action :set_job, only: [ :show, :retry, :discard ]
     before_action :reject_malformed_filters, only: [ :retry_all, :discard_all ]
@@ -12,6 +13,8 @@ module JobHarbor
       @per_page = per_page_param
       @class_name = filter_param(:class_name)
       @queue_name = filter_param(:queue_name)
+      @error_class = filter_param(:error_class)
+      @filters = { class_name: @class_name, queue_name: @queue_name }.compact_blank
 
       @page_info, @jobs = job_query.page(params[:page], per_page: @per_page)
       @counts = JobQuery.counts
@@ -56,12 +59,12 @@ module JobHarbor
 
     def retry_all
       count = retry_all_jobs
-      redirect_to bulk_redirect_path, notice: "#{helpers.pluralize(count, "job")} queued for retry."
+      redirect_to return_path || bulk_redirect_path, allow_other_host: false, notice: "#{helpers.pluralize(count, "job")} queued for retry."
     end
 
     def discard_all
       count = discard_all_jobs
-      redirect_to bulk_redirect_path, notice: "#{helpers.pluralize(count, "job")} discarded."
+      redirect_to return_path || bulk_redirect_path, allow_other_host: false, notice: "#{helpers.pluralize(count, "job")} discarded."
     end
 
     private
@@ -111,19 +114,17 @@ module JobHarbor
     end
 
     def job_query
-      @job_query ||= JobQuery.new(status: params[:status], class_name: filter_param(:class_name), queue_name: filter_param(:queue_name))
+      @job_query ||= JobQuery.new(status: params[:status], **JOB_FILTERS.index_with { |key| filter_param(key) })
     end
 
+    # A blank exception filter would drop out and widen a group's action to every failed job.
     def reject_malformed_filters
-      head :bad_request unless %i[ class_name queue_name ].all? { |key| params[key].nil? || params[key].is_a?(String) }
-    end
-
-    def filter_param(key)
-      params[key] if params[key].is_a?(String)
+      malformed = JOB_FILTERS.any? { |key| !params[key].nil? && !params[key].is_a?(String) }
+      head :bad_request if malformed || (params.key?(:error_class) && params[:error_class].blank?)
     end
 
     def bulk_redirect_path
-      jobs_path(status: params[:status], class_name: filter_param(:class_name).presence, queue_name: filter_param(:queue_name).presence)
+      jobs_path(status: params[:status], **JOB_FILTERS.index_with { |key| filter_param(key).presence })
     end
 
     def retry_all_jobs

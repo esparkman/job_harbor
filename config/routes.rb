@@ -16,6 +16,7 @@ JobHarbor::Engine.routes.draw do
   JobHarbor::JobStatus.all.each do |job_status|
     get "jobs/status/#{job_status.key}", to: "jobs#index", defaults: { status: job_status.key }, as: job_status.route_name
   end
+  get "jobs/status/failed/groups", to: "jobs/error_groups#index", as: :failed_job_groups
 
   # Queue names are free text; generation escapes them and format: false keeps dots in the name.
   resources :queues, only: [ :index, :show ], param: :name, constraints: { name: /.+/ }, format: false do

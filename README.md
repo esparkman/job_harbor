@@ -8,6 +8,7 @@ A modern, beautiful dashboard for monitoring and managing [Solid Queue](https://
 
 - **Dashboard Overview** - Real-time statistics, job activity charts, failure rates, and recent failures at a glance
 - **Job Management** - View, search, filter, retry, and discard jobs with full argument and error inspection
+- **Error Groups** - Group failed jobs by exception class, then retry or discard a whole group at once
 - **Queue Management** - Monitor queue health, pause and resume queues
 - **Worker Monitoring** - Track active workers with heartbeat status and hostname details
 - **Recurring Tasks** - View schedules and manually trigger recurring jobs
