@@ -15,6 +15,10 @@ Earlier releases are documented in git history and GitHub releases.
 
 - Queue latency: how long the oldest ready job in a queue has waited. It shows on each queue card and on the queue page, and a dashboard card names the slowest queue and links to it. Paused queues show their own latency but are left out of the dashboard card. A scheduled job starts waiting when it becomes due and is dispatched, not when it was enqueued. Solid Queue has no index on when a job became ready, so the dashboard card scans the ready jobs on each load, which is worth knowing with a very large backlog.
 
+### Fixed
+
+- Page links on the status tabs and on search results now keep the tab, the class, queue and exception filters, the page size and the search text. Page 2 used to open page 2 of All Jobs unfiltered, and the next page of search results went back to the jobs list.
+
 ## 0.9.0 - 2026-11-04
 
 ### Added
