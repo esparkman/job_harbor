@@ -24,7 +24,7 @@ module JobHarbor
 
     def prev_link
       if @page_info.prev
-        link_to "\u2190 Prev", url_for(page: @page_info.prev), class: "pagination-link"
+        link_to "\u2190 Prev", page_url(@page_info.prev), class: "pagination-link"
       else
         content_tag(:span, "\u2190 Prev", class: "pagination-link pagination-disabled")
       end
@@ -32,7 +32,7 @@ module JobHarbor
 
     def next_link
       if @page_info.next
-        link_to "Next \u2192", url_for(page: @page_info.next), class: "pagination-link"
+        link_to "Next \u2192", page_url(@page_info.next), class: "pagination-link"
       else
         content_tag(:span, "Next \u2192", class: "pagination-link pagination-disabled")
       end
@@ -45,12 +45,17 @@ module JobHarbor
           if item == @page_info.page
             content_tag(:span, item, class: "pagination-link pagination-active")
           else
-            link_to item, url_for(page: item), class: "pagination-link"
+            link_to item, page_url(item), class: "pagination-link"
           end
         when :gap
           content_tag(:span, "\u2026", class: "pagination-link pagination-disabled")
         end
       end
+    end
+
+    # Status tabs carry their status as a route default, which url_for(page:) drops along with the filters.
+    def page_url(page)
+      "#{request.path}?#{request.query_parameters.merge("page" => page).to_query}"
     end
 
     def series
