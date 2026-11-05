@@ -21,7 +21,7 @@
       "cwe_id": [
         89
       ],
-      "note": "job_arguments_sql is built only from fixed per-adapter SQL and quoted_table_name; the search text is bound as :pattern, never interpolated."
+      "note": "job_arguments_sql comes from JsonColumn.value, built only from fixed per-adapter SQL, quoted_table_name and a word-character key; the search text is bound as :pattern, never interpolated."
     }
   ],
   "brakeman_version": "8.0.6"

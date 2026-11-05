@@ -30,6 +30,11 @@ module JobHarbor
       @page_title = title
     end
 
+    # A filter crafted as a hash or array is ignored, so the page falls back to unfiltered.
+    def filter_param(key)
+      params[key] if params[key].is_a?(String)
+    end
+
     def nav_counts
       @nav_counts ||= {
         workers: Processes.live_workers.count,

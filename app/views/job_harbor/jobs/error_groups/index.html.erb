@@ -1,0 +1,26 @@
+<% content_for :header_actions do %>
+  <%= render JobHarbor::JobSearchFormComponent.new(query: params[:q]) %>
+<% end %>
+
+<%= render JobHarbor::StatusTabsComponent.new(status: "failed", counts: @counts) %>
+
+<%= render JobHarbor::JobFiltersComponent.new(
+  class_names: @filter_data[:class_names],
+  queue_names: @filter_data[:queue_names],
+  current_class: @class_name,
+  current_queue: @queue_name,
+  current_path: request.path,
+  params: request.query_parameters
+) %>
+
+<%= render JobHarbor::FailedViewToggleComponent.new(grouped: true, filters: @filters) %>
+
+<% if @groups.empty? %>
+  <%= render JobHarbor::EmptyStateComponent.new(
+    title: "No jobs found",
+    description: @filters.any? ? "No failed jobs match these filters." : "There are no failed jobs.",
+    icon: :jobs
+  ) %>
+<% else %>
+  <%= render JobHarbor::ErrorGroupsTableComponent.new(groups: @groups, filters: @filters) %>
+<% end %>

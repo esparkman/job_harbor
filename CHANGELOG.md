@@ -11,6 +11,8 @@ Earlier releases are documented in git history and GitHub releases.
 
 ### Added
 
+- Error groups: a Grouped view on the Failed tab groups failed jobs by exception class. It shows how many failed, when the first and last failures happened, and the most recent failure's message, masked like everywhere else. Groups are sorted by size, and ties go to the most recent failure. The class and queue filters still apply. Each group links to its failures in the list, and has Retry all and Discard all buttons that ask for confirmation and run in batches like the other bulk actions. A failure with no exception class goes under "Unknown error".
+
 - Queue latency: how long the oldest ready job in a queue has waited. It shows on each queue card and on the queue page, and a dashboard card names the slowest queue and links to it. Paused queues show their own latency but are left out of the dashboard card. A scheduled job starts waiting when it becomes due and is dispatched, not when it was enqueued. Solid Queue has no index on when a job became ready, so the dashboard card scans the ready jobs on each load, which is worth knowing with a very large backlog.
 
 ## 0.9.0 - 2026-11-04
