@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Earlier releases are documented in git history and GitHub releases.
 
+## Unreleased
+
+### Fixed
+
+- Error messages and backtraces no longer show as `[FILTERED]` when the host app filters a key named `message` or `backtrace` (a common entry, kept for contact forms and the like). Since 0.7.0 the filter matched those words against the names the dashboard gave the error's parts, so it masked the whole text. Error text now goes through the filter with no key names, so only a host Proc filter can change it, as the 0.7.0 notes describe.
+
 ## 0.10.0 - 2026-11-05
 
 ### Added

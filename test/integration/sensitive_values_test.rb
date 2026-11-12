@@ -89,6 +89,20 @@ class SensitiveValuesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a host filter on keys named message or backtrace still shows the error on the job page and dashboard" do
+    failed = fail_job(enqueue_job(FlakyPaymentJob, "order-7"), worker: @worker)
+
+    with_host_filter_parameters(:message, :backtrace) do
+      get "/job_harbor/jobs/#{failed.id}"
+      assert_select ".card", { text: /Error Message\s*Card declined for order order-7/ },
+        "A host filter on a key named message hid the whole error message"
+      assert_select "pre.code-block", text: /flaky_payment_job\.rb/
+
+      get "/job_harbor"
+      assert_select "td", text: /Card declined for order order-7/
+    end
+  end
+
   test "a host Proc filter scrubs the backtrace on the job page" do
     failed = fail_job(enqueue_job(FlakyPaymentJob, 42), worker: @worker)
     scrubber = ->(_key, value) { value.gsub!("flaky_payment_job", "[SCRUBBED]") if value.is_a?(String) }
