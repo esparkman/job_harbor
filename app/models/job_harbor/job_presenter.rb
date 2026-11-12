@@ -41,7 +41,7 @@ module JobHarbor
     end
 
     def error_message
-      filtered_error_part("message")
+      filtered_error_part(0)
     end
 
     def error_class
@@ -49,7 +49,7 @@ module JobHarbor
     end
 
     def error_backtrace
-      Array(filtered_error_part("backtrace")).join("\n")
+      Array(filtered_error_part(1)).join("\n")
     end
 
     def failed_at
@@ -103,13 +103,14 @@ module JobHarbor
       @filtered_payload ||= SensitiveValueFilter.filter(serialized_payload)
     end
 
-    # Messages and backtraces go through the same filter so a host Proc can scrub them.
-    def filtered_error_part(key)
+    # Messages and backtraces go through the same filter so a host Proc can scrub them. They travel as a
+    # keyless array: in a hash, a host filter such as :message would match the key and mask the whole text.
+    def filtered_error_part(index)
       error = parsed_error
       return nil unless error
 
-      @filtered_error ||= SensitiveValueFilter.filter("message" => error["message"], "backtrace" => error["backtrace"])
-      @filtered_error.is_a?(Hash) ? @filtered_error[key] : @filtered_error
+      @filtered_error ||= SensitiveValueFilter.filter([ error["message"], error["backtrace"] ])
+      @filtered_error.is_a?(Array) ? @filtered_error[index] : @filtered_error
     end
 
     def parsed_error
